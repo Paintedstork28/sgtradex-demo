@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SGTraDEX — Freight Matching</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    *{box-sizing:border-box;} body{font-family:'Inter',sans-serif;background:#f0ede8;margin:0;}
+    /* login */
+    #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0ede8;}
+    .role-card{border:2px solid #e5e0d8;border-radius:14px;padding:14px;cursor:pointer;transition:all .15s;background:#fff;}
+    .role-card:hover{border-color:#93c5fd;background:#f5f8ff;}
+    .role-card.sel{border-color:#1d4ed8;background:#eff6ff;}
+    /* portal */
+    #portal-wrap{display:none;flex-direction:column;align-items:center;min-height:100vh;padding:0 0 40px;}
+    /* tab bar */
+    .tab-btn{padding:8px 14px;font-size:12px;font-weight:600;border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;color:#94a3b8;transition:all .15s;white-space:nowrap;}
+    .tab-btn.active{color:#1d4ed8;border-bottom-color:#1d4ed8;}
+    .tab-pane{display:none;width:100%;} .tab-pane.active{display:block;}
+    /* status pipeline */
+    .status-step{display:flex;flex-direction:column;align-items:center;flex:1;}
+    .status-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #e2e8f0;background:#fff;flex-shrink:0;z-index:1;}
+    .status-dot.done{background:#1d4ed8;border-color:#1d4ed8;}
+    .status-dot.current{background:#fff;border-color:#1d4ed8;box-shadow:0 0 0 4px #bfdbfe;}
+    .status-line{flex:1;height:2px;margin-top:10px;}
+    /* zone pill */
+    .zone-pill{background:#f1f5f9;border:1px solid #e2e8f0;color:#475569;cursor:pointer;transition:all .15s;font-size:11px;padding:5px 12px;border-radius:20px;}
+    .zone-pill.selected{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;font-weight:600;}
+    /* match card */
+    .match-card{border:1px solid #e2e8f0;border-radius:12px;padding:14px;cursor:pointer;transition:all .15s;}
+    .match-card:hover{border-color:#93c5fd;}
+    /* regulator */
+    #reg-screen{display:none;width:100vw;height:100vh;flex-direction:row;position:relative;}
+    #reg-screen.active{display:flex;}
+    #sg-map{flex:1;height:100%;z-index:1;}
+    /* km breakdown panel */
+    #km-panel{position:absolute;top:0;right:0;width:360px;height:100%;background:#fff;border-left:1px solid #e5e0d8;z-index:30;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow:hidden;display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(0,0,0,.08);}
+    #km-panel.open{transform:translateX(0);}
+    .trip-card{background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;padding:12px 14px;margin-bottom:8px;}
+    .trip-row{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;margin-bottom:3px;}
+    .km-link{cursor:pointer;border-bottom:1px dashed #3b82f6;color:#1d4ed8;transition:opacity .1s;}
+    .km-link:hover{opacity:.7;}
+    #reg-sidebar{width:300px;min-width:300px;height:100vh;overflow-y:auto;background:#fff;border-right:1px solid #e5e0d8;display:flex;flex-direction:column;z-index:10;}
+    .zone-row{cursor:pointer;transition:background .12s;border-left:3px solid transparent;}
+    .zone-row:hover{background:#f8f7f4;} .zone-row.selected{background:#eff6ff;border-left-color:#1d4ed8;}
+    .leaflet-popup-content-wrapper{border-radius:12px!important;box-shadow:0 8px 24px rgba(0,0,0,.12)!important;padding:0!important;overflow:hidden;}
+    .leaflet-popup-content{margin:0!important;} .leaflet-popup-tip{background:#fff!important;}
+    .util-bar{height:6px;border-radius:3px;background:#e5e0d8;overflow:hidden;}
+    .util-fill{height:100%;border-radius:3px;transition:width .4s;}
+    .slot-btn{flex:1;padding:6px 0;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;}
+    select,input{outline:none;font-family:'Inter',sans-serif;}
+    select:focus,input:focus{border-color:#3b82f6!important;box-shadow:0 0 0 3px #bfdbfe;}
+    @keyframes spin{to{transform:rotate(360deg);}} .spin{animation:spin 1.2s linear infinite;transform-origin:center;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} .fade-in{animation:fadeIn .3s ease forwards;}
+    .leaflet-tooltip-plain{background:rgba(255,255,255,.92)!important;border:1px solid #e2e8f0!important;border-radius:6px!important;box-shadow:0 2px 8px rgba(0,0,0,.08)!important;padding:3px 7px!important;font-family:'Inter',sans-serif!important;}
+    .leaflet-tooltip-plain::before{display:none!important;}
+    input[type=password]{letter-spacing:.1em;}
+    /* supply incoming */
+    .reason-pill{background:#f1f5f9;border:1px solid #e2e8f0;color:#475569;cursor:pointer;font-size:11px;padding:6px 11px;border-radius:20px;transition:all .12s;display:inline-block;}
+    .reason-pill:hover{border-color:#93c5fd;background:#f5f8ff;}
+    .reason-pill.sel{background:#fef2f2;border-color:#fca5a5;color:#dc2626;font-weight:600;}
+    .req-status-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+    @keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}} .slide-in{animation:slideIn .2s ease forwards;}
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LOGIN
+══════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="fade-in" style="width:420px;padding:16px">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="width:52px;height:52px;border-radius:14px;background:#1d4ed8;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      </div>
+      <h1 style="font-size:20px;font-weight:800;color:#1e293b;margin:0 0 4px">SGTraDEX Freight</h1>
+      <p style="font-size:12px;color:#94a3b8;margin:0">Privacy-preserving supply-demand matching</p>
+    </div>
+
+    <div style="background:#fff;border-radius:20px;border:1px solid #e5e0d8;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.06)">
+      <div style="padding:20px 24px 16px;border-bottom:1px solid #f1f0ec">
+        <h2 style="font-size:15px;font-weight:700;color:#1e293b;margin:0 0 3px">Sign in</h2>
+        <p style="font-size:11px;color:#94a3b8;margin:0">Select your role — credentials will autofill</p>
+      </div>
+      <div style="padding:18px 24px;display:flex;flex-direction:column;gap:12px">
+
+        <!-- Role cards FIRST -->
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:8px">I am signing in as</label>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div class="role-card sel" id="role-demand" onclick="selectRole('demand')">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:34px;height:34px;border-radius:9px;background:#eff6ff;border:1px solid #bfdbfe;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                </div>
+                <div style="flex:1">
+                  <p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 1px">Demand Partner</p>
+                  <p style="font-size:10px;color:#64748b;margin:0">Freight forwarder or shipper needing trucks</p>
+                </div>
+                <div id="check-demand" style="width:17px;height:17px;border-radius:50%;background:#1d4ed8;border:2px solid #1d4ed8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="role-card" id="role-supply" onclick="selectRole('supply')">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:34px;height:34px;border-radius:9px;background:#f0fdf4;border:1px solid #bbf7d0;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                </div>
+                <div style="flex:1">
+                  <p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 1px">Supply Partner (Haulier)</p>
+                  <p style="font-size:10px;color:#64748b;margin:0">Trucking company offering spare capacity</p>
+                </div>
+                <div id="check-supply" style="width:17px;height:17px;border-radius:50%;background:#e2e8f0;border:2px solid #e2e8f0;flex-shrink:0"></div>
+              </div>
+            </div>
+            <div class="role-card" id="role-regulator" onclick="selectRole('regulator')">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:34px;height:34px;border-radius:9px;background:#fffbeb;border:1px solid #fde68a;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                </div>
+                <div style="flex:1">
+                  <p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 1px">Regulator (LTA / MTI)</p>
+                  <p style="font-size:10px;color:#64748b;margin:0">View aggregate utilisation dashboard</p>
+                </div>
+                <div id="check-regulator" style="width:17px;height:17px;border-radius:50%;background:#e2e8f0;border:2px solid #e2e8f0;flex-shrink:0"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1;height:1px;background:#f1f0ec"></div>
+          <span style="font-size:10px;color:#cbd5e1;font-weight:500">CREDENTIALS</span>
+          <div style="flex:1;height:1px;background:#f1f0ec"></div>
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Email address</label>
+          <input type="email" id="login-email" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;color:#374151;background:#fafaf8"/>
+        </div>
+        <!-- Password -->
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Password</label>
+          <input type="password" id="login-pass" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;color:#374151;background:#fafaf8"/>
+        </div>
+
+        <div id="login-error" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:11px;color:#dc2626">
+          Please fill in your credentials.
+        </div>
+
+        <button id="login-btn" onclick="doLogin()" style="width:100%;padding:12px;border-radius:12px;background:#1d4ed8;color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer">
+          Sign In →
+        </button>
+        <p style="text-align:center;font-size:10px;color:#94a3b8;margin:0">Encrypted end-to-end · Powered by Silence Laboratories MPC</p>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:10px;color:#bbb;margin:16px 0 0">SGTraDEX · Singapore Trade Data Exchange · Prototype v0.1</p>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     PORTAL (Demand / Supply) — tabbed
+══════════════════════════════════════════ -->
+<div id="portal-wrap" style="display:none;flex-direction:column;align-items:center;min-height:100vh;">
+
+  <!-- Top nav bar -->
+  <div id="portal-nav" style="width:100%;background:#fff;border-bottom:1px solid #e5e0d8;position:sticky;top:0;z-index:50">
+    <div style="max-width:480px;margin:0 auto;padding:0 16px">
+      <!-- Logo row -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:26px;height:26px;border-radius:7px;background:#1d4ed8;display:flex;align-items:center;justify-content:center">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          </div>
+          <span style="font-size:13px;font-weight:700;color:#1e293b">SGTraDEX</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="role-badge" style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600"></span>
+          <span id="user-name" style="font-size:11px;color:#64748b"></span>
+          <button onclick="doLogout()" style="font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid #e5e0d8;background:#f8f7f4;color:#64748b;cursor:pointer">Logout</button>
+        </div>
+      </div>
+      <!-- Tab row -->
+      <div id="tab-bar" style="display:flex;border-top:1px solid #f1f0ec;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none"></div>
+    </div>
+  </div>
+
+  <!-- Tab content -->
+  <div style="width:100%;max-width:480px;padding:20px 16px;flex:1">
+
+    <!-- ── TAB: HOME / OVERVIEW (demand) ── -->
+    <div id="tab-demand-home" class="tab-pane">
+      <div id="demand-home-content"></div>
+    </div>
+
+    <!-- ── TAB: NEW REQUEST (demand) ── -->
+    <div id="tab-new" class="tab-pane active">
+      <!-- S1 -->
+      <div id="s1" style="background:#fff;border-radius:20px;border:1px solid #e5e0d8;overflow:hidden">
+        <div style="padding:20px 20px 14px;border-bottom:1px solid #f1f0ec">
+          <p style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.12em;text-transform:uppercase;margin:0 0 3px">New Request</p>
+          <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin:0 0 3px">Find available trucks</h2>
+          <p style="font-size:11px;color:#94a3b8;margin:0">Your details are encrypted. Hauliers see only that a match exists.</p>
+        </div>
+        <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+          <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px">Pickup Zone</label><div id="pickup-pills" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+          <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px">Dropoff Zone</label><div id="dropoff-pills" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Date</label><input type="date" id="delivery-date" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/></div>
+            <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Time Slot</label>
+              <select id="time-slot" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151">
+                <option value="">Select</option><option>Morning (8am–12pm)</option><option>Afternoon (12pm–4pm)</option><option>Evening (4pm–8pm)</option>
+              </select></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">No. of Trucks</label><input type="number" id="num-trucks" min="1" max="50" placeholder="e.g. 3" oninput="calcTonnage()" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/></div>
+            <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Tons / Truck</label><input type="number" id="capacity" min="1" max="30" placeholder="e.g. 10" oninput="calcTonnage()" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/></div>
+          </div>
+          <div id="tonnage-display" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:9px 12px;font-size:12px;font-weight:600;color:#1d4ed8">Total tonnage: <span id="tonnage-val"></span> tons</div>
+        </div>
+        <div style="padding:0 20px 20px">
+          <button onclick="runMatch()" style="width:100%;padding:12px;border-radius:12px;background:#1d4ed8;color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer">Find Matching Hauliers →</button>
+          <p style="text-align:center;font-size:10px;color:#94a3b8;margin:7px 0 0">Encrypted matching · Your data is never shared</p>
+        </div>
+      </div>
+      <!-- S2: matching -->
+      <div id="s2" style="display:none;background:#fff;border-radius:20px;border:1px solid #e5e0d8;padding:48px 28px;text-align:center">
+        <div style="width:60px;height:60px;border-radius:16px;background:#eff6ff;display:flex;align-items:center;justify-content:center;margin:0 auto 18px">
+          <svg class="spin" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h2 style="font-size:15px;font-weight:700;color:#1e293b;margin:0 0 6px">Running encrypted match</h2>
+        <p style="font-size:12px;color:#94a3b8;margin:0 0 24px">No raw data shared during this process.</p>
+        <div style="display:flex;flex-direction:column;gap:8px;text-align:left;max-width:260px;margin:0 auto">
+          <div id="step-a" style="display:flex;align-items:center;gap:10px;font-size:12px;color:#94a3b8"><div id="dot-a" style="width:18px;height:18px;border-radius:50%;border:2px solid #e2e8f0;flex-shrink:0;display:flex;align-items:center;justify-content:center"></div>Checking date & time availability</div>
+          <div id="step-b" style="display:flex;align-items:center;gap:10px;font-size:12px;color:#94a3b8"><div id="dot-b" style="width:18px;height:18px;border-radius:50%;border:2px solid #e2e8f0;flex-shrink:0;display:flex;align-items:center;justify-content:center"></div>Verifying tonnage capacity</div>
+          <div id="step-c" style="display:flex;align-items:center;gap:10px;font-size:12px;color:#94a3b8"><div id="dot-c" style="width:18px;height:18px;border-radius:50%;border:2px solid #e2e8f0;flex-shrink:0;display:flex;align-items:center;justify-content:center"></div>Checking zone proximity</div>
+          <div id="step-d" style="display:flex;align-items:center;gap:10px;font-size:12px;color:#94a3b8"><div id="dot-d" style="width:18px;height:18px;border-radius:50%;border:2px solid #e2e8f0;flex-shrink:0;display:flex;align-items:center;justify-content:center"></div>Compiling results</div>
+        </div>
+      </div>
+      <!-- S3: results -->
+      <div id="s3" style="display:none;background:#fff;border-radius:20px;border:1px solid #e5e0d8;overflow:hidden">
+        <div style="padding:18px 20px 14px;border-bottom:1px solid #f1f0ec">
+          <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:3px 10px;border-radius:20px">3 matches found</span>
+          <h2 style="font-size:15px;font-weight:700;color:#1e293b;margin:8px 0 3px">Available hauliers</h2>
+          <p style="font-size:11px;color:#94a3b8;margin:0">Addresses shared only after you confirm.</p>
+        </div>
+        <div style="padding:14px 20px;display:flex;flex-direction:column;gap:8px">
+          <div class="match-card" onclick="selectHaulier(this,'Swift Haulage Pte Ltd')">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start"><div><p style="font-size:13px;font-weight:600;color:#1e293b;margin:0 0 2px">Swift Haulage Pte Ltd</p><p style="font-size:10px;color:#94a3b8;margin:0">Capacity confirmed · Time slot matched</p></div><span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px">Available</span></div>
+            <div style="display:flex;gap:5px;margin-top:8px"><span style="font-size:10px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;padding:2px 8px;border-radius:20px">Jurong → Woodlands</span><span style="font-size:10px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;padding:2px 8px;border-radius:20px">Morning</span></div>
+          </div>
+          <div class="match-card" onclick="selectHaulier(this,'Apex Logistics SG')">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start"><div><p style="font-size:13px;font-weight:600;color:#1e293b;margin:0 0 2px">Apex Logistics SG</p><p style="font-size:10px;color:#94a3b8;margin:0">Capacity confirmed · Time slot matched</p></div><span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px">Available</span></div>
+            <div style="display:flex;gap:5px;margin-top:8px"><span style="font-size:10px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;padding:2px 8px;border-radius:20px">Jurong → Woodlands</span><span style="font-size:10px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;padding:2px 8px;border-radius:20px">Morning</span></div>
+          </div>
+          <div class="match-card" onclick="selectHaulier(this,'Pinnacle Transport')">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start"><div><p style="font-size:13px;font-weight:600;color:#1e293b;margin:0 0 2px">Pinnacle Transport</p><p style="font-size:10px;color:#94a3b8;margin:0">Capacity confirmed · Time slot matched</p></div><span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px">Available</span></div>
+            <div style="display:flex;gap:5px;margin-top:8px"><span style="font-size:10px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;padding:2px 8px;border-radius:20px">Tuas → Yishun</span><span style="font-size:10px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;padding:2px 8px;border-radius:20px">Morning</span></div>
+          </div>
+        </div>
+        <div style="padding:0 20px 20px">
+          <div id="confirm-bar" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:9px 12px;font-size:12px;color:#1d4ed8;margin-bottom:9px">Selected: <strong id="selected-name"></strong></div>
+          <button id="confirm-btn" onclick="confirmMatch()" style="width:100%;padding:12px;border-radius:12px;background:#1d4ed8;color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;opacity:.35;pointer-events:none">Confirm Selection →</button>
+        </div>
+      </div>
+      <!-- S4: confirmed -->
+      <div id="s4" style="display:none;background:#fff;border-radius:20px;border:1px solid #e5e0d8;padding:40px 24px;text-align:center">
+        <div style="width:56px;height:56px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin:0 0 5px">Match confirmed</h2>
+        <p style="font-size:12px;color:#64748b;margin:0 0 3px">Request sent to</p>
+        <p id="confirmed-haulier" style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 20px"></p>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 14px;font-size:11px;color:#166534;margin-bottom:18px">Your operational data was never shared with any other party</div>
+        <button onclick="goNewRequest()" style="width:100%;padding:11px;border-radius:12px;background:#fff;color:#475569;font-size:13px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer">New Request</button>
+        <button onclick="switchTab('tab-active')" style="width:100%;padding:11px;border-radius:12px;background:#eff6ff;color:#1d4ed8;font-size:13px;font-weight:600;border:1px solid #bfdbfe;cursor:pointer;margin-top:8px">View Request Status →</button>
+      </div>
+    </div>
+
+    <!-- ── TAB: HOME / OVERVIEW (supply only) ── -->
+    <div id="tab-home" class="tab-pane">
+      <div id="supply-home-content"></div>
+    </div>
+
+    <!-- ── TAB: INCOMING (supply only) ── -->
+    <div id="tab-incoming" class="tab-pane">
+      <div id="incoming-list" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+
+    <!-- ── TAB: REQUESTS (supply only) ── -->
+    <div id="tab-requests" class="tab-pane">
+      <div id="requests-summary" style="margin-bottom:12px"></div>
+      <div id="requests-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+
+    <!-- ── TAB: ACTIVE REQUESTS ── -->
+    <div id="tab-active" class="tab-pane">
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <!-- Active request 1 — Commercials Agreed (step 2) -->
+        <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden">
+          <div style="padding:14px 16px 12px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
+            <div><p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 1px">#SG-0891 · Jurong → Woodlands</p><p style="font-size:10px;color:#94a3b8;margin:0">Swift Haulage · 30t · 19 Mar · Morning</p></div>
+            <span style="font-size:10px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:3px 8px;border-radius:20px">In progress</span>
+          </div>
+          <div style="padding:16px">
+            <div id="pipeline-0891" style="display:flex;align-items:flex-start"></div>
+            <div style="margin-top:12px;background:#eff6ff;border-radius:8px;padding:9px 12px;font-size:11px;color:#1d4ed8">
+              <strong>Next:</strong> Awaiting pickup confirmation from Swift Haulage Pte Ltd
+            </div>
+          </div>
+        </div>
+
+        <!-- Active request 2 — Picked Up (step 3) -->
+        <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden">
+          <div style="padding:14px 16px 12px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
+            <div><p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 1px">#SG-0892 · Tuas → Tampines</p><p style="font-size:10px;color:#94a3b8;margin:0">Apex Logistics · 50t · 19 Mar · Afternoon</p></div>
+            <span style="font-size:10px;font-weight:700;background:#fefce8;color:#854d0e;border:1px solid #fde68a;padding:3px 8px;border-radius:20px">En route</span>
+          </div>
+          <div style="padding:16px">
+            <div id="pipeline-0892" style="display:flex;align-items:flex-start"></div>
+            <div style="margin-top:12px;background:#fefce8;border-radius:8px;padding:9px 12px;font-size:11px;color:#854d0e">
+              <strong>Status:</strong> Cargo picked up · En route to Tampines Industrial Ave
+            </div>
+          </div>
+        </div>
+
+        <!-- Active request 3 — supply incoming (for supply role only shown differently) -->
+        <div id="supply-active-card" style="display:none;background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden">
+          <div style="padding:14px 16px 12px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
+            <div><p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 1px">#SG-0888 · Pasir Panjang → Yishun</p><p style="font-size:10px;color:#94a3b8;margin:0">Requester: Fairview Cargo · 25t · 19 Mar · Morning</p></div>
+            <span style="font-size:10px;font-weight:700;background:#fefce8;color:#854d0e;border:1px solid #fde68a;padding:3px 8px;border-radius:20px">En route</span>
+          </div>
+          <div style="padding:16px">
+            <div id="pipeline-0888" style="display:flex;align-items:flex-start"></div>
+            <div style="margin-top:12px;background:#fefce8;border-radius:8px;padding:9px 12px;font-size:11px;color:#854d0e">
+              <strong>Status:</strong> Cargo picked up at Pasir Panjang terminal. ETA Yishun: 2:30pm
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── TAB: HISTORY ── -->
+    <div id="tab-history" class="tab-pane">
+      <div style="display:flex;flex-direction:column;gap:8px">
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <p style="font-size:11px;font-weight:600;color:#94a3b8;margin:0">Last 30 days</p>
+          <span style="font-size:10px;background:#f1f5f9;color:#64748b;padding:3px 8px;border-radius:20px;border:1px solid #e2e8f0">4 completed · 1 unfulfilled</span>
+        </div>
+
+        <!-- Completed -->
+        <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+            <div><p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 2px">#SG-0885 · Jurong → Changi</p><p style="font-size:10px;color:#94a3b8;margin:0">Swift Haulage · 40t · 18 Mar</p></div>
+            <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px">Completed</span>
+          </div>
+          <div style="display:flex;gap:12px;font-size:11px;color:#64748b">
+            <span>Pickup: ✓ 08:42</span><span>Delivery: ✓ 11:15</span><span style="color:#16a34a;font-weight:600">On time</span>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+            <div><p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 2px">#SG-0881 · Tuas → Woodlands</p><p style="font-size:10px;color:#94a3b8;margin:0">Apex Logistics · 60t · 17 Mar</p></div>
+            <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px">Completed</span>
+          </div>
+          <div style="display:flex;gap:12px;font-size:11px;color:#64748b">
+            <span>Pickup: ✓ 13:05</span><span>Delivery: ✓ 15:50</span><span style="color:#16a34a;font-weight:600">On time</span>
+          </div>
+        </div>
+
+        <!-- Unfulfilled -->
+        <div style="background:#fff;border-radius:14px;border:1px solid #fecaca;padding:14px 16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+            <div><p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 2px">#SG-0878 · Pasir Panjang → Yishun</p><p style="font-size:10px;color:#94a3b8;margin:0">25t · 15 Mar · Evening</p></div>
+            <span style="font-size:10px;font-weight:700;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:2px 8px;border-radius:20px">Not fulfilled</span>
+          </div>
+          <div style="font-size:11px;color:#dc2626">No available supply matched for this slot. Demand logged to regulator.</div>
+        </div>
+
+        <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+            <div><p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 2px">#SG-0874 · Jurong → Tampines</p><p style="font-size:10px;color:#94a3b8;margin:0">Pinnacle Transport · 35t · 14 Mar</p></div>
+            <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px">Completed</span>
+          </div>
+          <div style="display:flex;gap:12px;font-size:11px;color:#64748b">
+            <span>Pickup: ✓ 09:18</span><span>Delivery: ✓ 11:45</span><span style="color:#16a34a;font-weight:600">On time</span>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+            <div><p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 2px">#SG-0868 · Brani → Woodlands</p><p style="font-size:10px;color:#94a3b8;margin:0">Swift Haulage · 20t · 12 Mar</p></div>
+            <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px">Completed</span>
+          </div>
+          <div style="display:flex;gap:12px;font-size:11px;color:#64748b">
+            <span>Pickup: ✓ 16:10</span><span>Delivery: ✓ 18:22</span><span style="color:#ca8a04;font-weight:600">Slight delay</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div><!-- end portal-wrap -->
+
+
+<!-- ══════════════════════════════════════════
+     REGULATOR SCREEN — full viewport Leaflet
+══════════════════════════════════════════ -->
+<div id="reg-screen">
+  <div id="reg-sidebar">
+    <div style="padding:14px 14px 10px;border-bottom:1px solid #f0ede8;position:sticky;top:0;background:#fff;z-index:10">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div><p style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.12em;text-transform:uppercase;margin:0 0 2px">LTA / MTI</p><h2 style="font-size:14px;font-weight:800;color:#1e293b;margin:0">Freight Utilisation</h2></div>
+        <button onclick="hideReg()" style="font-size:10px;padding:4px 10px;border-radius:20px;border:1px solid #e5e0d8;background:#f8f7f4;color:#475569;cursor:pointer">← Back</button>
+      </div>
+      <div id="slot-toggle" style="display:flex;gap:4px">
+        <button onclick="setSlot(this,'morning')" class="slot-btn" style="background:#1d4ed8;color:#fff;border:none">Morning<br/><span style="font-size:9px;font-weight:400;opacity:.8">8am–12pm</span></button>
+        <button onclick="setSlot(this,'afternoon')" class="slot-btn" style="background:#fff;color:#64748b;border:1px solid #e2e8f0">Afternoon<br/><span style="font-size:9px;font-weight:400">12pm–4pm</span></button>
+        <button onclick="setSlot(this,'evening')" class="slot-btn" style="background:#fff;color:#64748b;border:1px solid #e2e8f0">Evening<br/><span style="font-size:9px;font-weight:400">4pm–8pm</span></button>
+      </div>
+    </div>
+    <div id="summary-stats" style="padding:10px 14px;border-bottom:1px solid #f0ede8;display:grid;grid-template-columns:1fr 1fr;gap:7px"></div>
+    <div style="padding:8px 14px 5px;border-bottom:1px solid #f0ede8"><p style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.1em;margin:0">Zones · sorted by unmet demand</p></div>
+    <div id="zone-list" style="flex:1;overflow-y:auto"></div>
+    <div style="padding:10px 14px;border-top:1px solid #f0ede8;background:#fafaf8">
+      <p style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.1em;margin:0 0 3px">Demand satisfaction</p>
+      <p style="font-size:9px;color:#b0b9c6;margin:0 0 7px">matched / total demand</p>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;align-items:center;gap:7px"><div style="width:10px;height:10px;border-radius:2px;background:#16a34a"></div><span style="font-size:10px;color:#475569">85%+ — Fully matched</span></div>
+        <div style="display:flex;align-items:center;gap:7px"><div style="width:10px;height:10px;border-radius:2px;background:#65a30d"></div><span style="font-size:10px;color:#475569">70–84% — Good</span></div>
+        <div style="display:flex;align-items:center;gap:7px"><div style="width:10px;height:10px;border-radius:2px;background:#ca8a04"></div><span style="font-size:10px;color:#475569">50–69% — Moderate unmet</span></div>
+        <div style="display:flex;align-items:center;gap:7px"><div style="width:10px;height:10px;border-radius:2px;background:#ea580c"></div><span style="font-size:10px;color:#475569">30–49% — High unmet</span></div>
+        <div style="display:flex;align-items:center;gap:7px"><div style="width:10px;height:10px;border-radius:2px;background:#dc2626"></div><span style="font-size:10px;color:#475569">&lt;30% — Critical unmet</span></div>
+        <div style="display:flex;align-items:center;gap:7px"><div style="width:10px;height:10px;border-radius:2px;background:#94a3b8"></div><span style="font-size:10px;color:#475569">No activity</span></div>
+      </div>
+    </div>
+  </div>
+  <div id="sg-map"></div>
+
+  <!-- KM BREAKDOWN PANEL -->
+  <div id="km-panel">
+    <div style="padding:14px 16px 12px;border-bottom:1px solid #f0ede8;background:#fff;flex-shrink:0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div>
+          <p style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.12em;text-transform:uppercase;margin:0 0 2px">Km Saved · Breakdown</p>
+          <h3 id="km-panel-title" style="font-size:14px;font-weight:800;color:#1e293b;margin:0"></h3>
+        </div>
+        <button onclick="closeKmPanel()" style="width:28px;height:28px;border-radius:50%;border:1px solid #e5e0d8;background:#f8f7f4;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <!-- Formula explanation -->
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:9px 12px">
+        <p style="font-size:10px;font-weight:700;color:#92400e;margin:0 0 5px">How km saved is calculated per trip</p>
+        <div style="font-size:10px;color:#78350f;line-height:1.6">
+          <div style="display:flex;justify-content:space-between"><span>Route (pickup → dropoff)</span><strong>+ X km</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>Detour: supply start → pickup</span><strong style="color:#dc2626">− X km</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>Detour: dropoff → supply end</span><strong style="color:#dc2626">− X km</strong></div>
+          <div style="border-top:1px solid #fde68a;margin-top:4px;padding-top:4px;display:flex;justify-content:space-between"><span style="font-weight:700">Km saved this trip</span><strong style="color:#16a34a">= X km</strong></div>
+        </div>
+      </div>
+    </div>
+    <div id="km-panel-body" style="flex:1;overflow-y:auto;padding:14px 16px"></div>
+  </div>
+</div>
+
+
+<script>
+// ══════════════════════════════════════════════
+//  DEMO CREDENTIALS & ROLE CONFIG
+// ══════════════════════════════════════════════
+const CREDS = {
+  demand:    { email:'ops@swiftfreight.com.sg',       pass:'demo123', label:'Demand Partner',  badge:'#eff6ff', badgeText:'#1d4ed8', name:'Swift Freight' },
+  supply:    { email:'dispatch@apexlogistics.com.sg', pass:'demo123', label:'Supply Partner',  badge:'#f0fdf4', badgeText:'#16a34a', name:'Apex Logistics' },
+  regulator: { email:'analyst@lta.gov.sg',            pass:'demo123', label:'Regulator',       badge:'#fffbeb', badgeText:'#92400e', name:'LTA Analyst' },
+};
+
+const TABS = {
+  demand:    [{id:'tab-demand-home', label:'Overview'}, {id:'tab-new', label:'New Request'}, {id:'tab-active', label:'Active (2)'}, {id:'tab-history', label:'History'}],
+  supply:    [{id:'tab-home', label:'Overview'},{id:'tab-incoming', label:'Incoming (2)'},{id:'tab-requests', label:'Requests'},{id:'tab-active', label:'Active Jobs'}],
+  regulator: [],
+};
+
+// ══════════════════════════════════════════════
+//  STATUS PIPELINE
+// ══════════════════════════════════════════════
+const STEPS = ['Matched','Commercials\nAgreed','Picked\nUp','Dropped\nOff','Completed'];
+
+function renderPipeline(containerId, currentStep) {
+  // currentStep is 0-indexed (0=Matched, 1=Comm.Agreed, 2=Picked Up, etc.)
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  let html = '<div style="display:flex;align-items:flex-start;width:100%">';
+  STEPS.forEach((label, i) => {
+    const done = i < currentStep;
+    const active = i === currentStep;
+    const dotBg    = done ? '#1d4ed8' : active ? '#fff' : '#f1f5f9';
+    const dotBorder= done ? '#1d4ed8' : active ? '#1d4ed8' : '#e2e8f0';
+    const shadow   = active ? '0 0 0 3px #bfdbfe' : 'none';
+    const textCol  = done ? '#1d4ed8' : active ? '#1d4ed8' : '#94a3b8';
+    const fontW    = active ? '700' : done ? '600' : '400';
+    const checkMark= done ? `<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>` : '';
+    html += `<div style="display:flex;flex-direction:column;align-items:center;flex:1">
+      <div style="width:20px;height:20px;border-radius:50%;background:${dotBg};border:2px solid ${dotBorder};box-shadow:${shadow};display:flex;align-items:center;justify-content:center;z-index:1">${checkMark}</div>
+      <span style="font-size:9px;font-weight:${fontW};color:${textCol};text-align:center;margin-top:5px;white-space:pre-line;line-height:1.2">${label}</span>
+    </div>`;
+    if (i < STEPS.length - 1) {
+      const lineColor = i < currentStep ? '#1d4ed8' : '#e2e8f0';
+      html += `<div style="flex:1;height:2px;background:${lineColor};margin-top:10px;margin-left:-2px;margin-right:-2px"></div>`;
+    }
+  });
+  html += '</div>';
+  c.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+//  LOGIN
+// ══════════════════════════════════════════════
+let selectedRole = 'demand';
+
+function selectRole(role) {
+  selectedRole = role;
+  ['demand','supply','regulator'].forEach(r => {
+    const card  = document.getElementById('role-'+r);
+    const check = document.getElementById('check-'+r);
+    if (r === role) {
+      card.classList.add('sel');
+      check.style.cssText = 'width:17px;height:17px;border-radius:50%;background:#1d4ed8;border:2px solid #1d4ed8;display:flex;align-items:center;justify-content:center;flex-shrink:0';
+      check.innerHTML = `<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`;
+    } else {
+      card.classList.remove('sel');
+      check.style.cssText = 'width:17px;height:17px;border-radius:50%;background:#e2e8f0;border:2px solid #e2e8f0;flex-shrink:0';
+      check.innerHTML = '';
+    }
+  });
+  // Autofill
+  document.getElementById('login-email').value = CREDS[role].email;
+  document.getElementById('login-pass').value  = CREDS[role].pass;
+}
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  if (!email || !pass) { document.getElementById('login-error').style.display='block'; return; }
+  document.getElementById('login-error').style.display = 'none';
+  const btn = document.getElementById('login-btn');
+  btn.textContent = 'Signing in…'; btn.style.opacity='.7'; btn.style.pointerEvents='none';
+
+  setTimeout(() => {
+    document.getElementById('login-screen').style.display = 'none';
+    if (selectedRole === 'regulator') { showReg(); return; }
+    setupPortal(selectedRole);
+    document.getElementById('portal-wrap').style.display = 'flex';
+  }, 800);
+}
+
+function setupPortal(role) {
+  const cfg = CREDS[role];
+  // Role badge
+  document.getElementById('role-badge').textContent = cfg.label;
+  document.getElementById('role-badge').style.cssText = `font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;background:${cfg.badge};color:${cfg.badgeText};border:1px solid ${cfg.badgeText}33`;
+  document.getElementById('user-name').textContent = cfg.name;
+  // Build tab bar
+  const bar = document.getElementById('tab-bar');
+  bar.innerHTML = '';
+  TABS[role].forEach((t, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i===0?' active':'');
+    btn.textContent = t.label;
+    btn.onclick = () => switchTab(t.id);
+    bar.appendChild(btn);
+  });
+  // Show/hide supply-specific card
+  const supplyCard = document.getElementById('supply-active-card');
+  if (supplyCard) supplyCard.style.display = role==='supply' ? 'block' : 'none';
+  // Activate first tab
+  switchTab(TABS[role][0].id);
+  // Render pipelines (demand/shared)
+  renderPipeline('pipeline-0891', 1);
+  renderPipeline('pipeline-0892', 2);
+  renderPipeline('pipeline-0888', 2);
+  // Role-specific init
+  if (role === 'supply') {
+    renderSupplyHome();
+    renderIncoming();
+    renderRequests();
+    updateRequestsBadge();
+  }
+  if (role === 'demand') {
+    renderDemandHome();
+  }
+}
+
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    const role = selectedRole;
+    const tDef = TABS[role].find(t => t.label === b.textContent || t.id === tabId);
+    b.classList.remove('active');
+  });
+  // Match tab button by corresponding tabId
+  const role = selectedRole;
+  TABS[role].forEach((t, i) => {
+    const btns = document.querySelectorAll('.tab-btn');
+    if (btns[i]) btns[i].classList.toggle('active', t.id === tabId);
+  });
+}
+
+function doLogout() {
+  document.getElementById('portal-wrap').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  const btn = document.getElementById('login-btn');
+  btn.textContent = 'Sign In →'; btn.style.opacity='1'; btn.style.pointerEvents='auto';
+}
+
+// ══════════════════════════════════════════════
+//  SUPPLY — REQUEST MANAGEMENT
+// ══════════════════════════════════════════════
+const DECLINE_REASONS = [
+  'No available trucks for this slot',
+  'Route not serviceable by our fleet',
+  'Capacity already committed',
+  'Commercial terms not suitable',
+  'Insufficient lead time',
+  'Weight exceeds vehicle limit',
+];
+
+let supplyRequests = [
+  {id:'SG-0895', route:'Jurong → Changi',           date:'20 Mar', slot:'Morning',   tonnage:'40 tons (4 trucks)', requester:'Cargotec SG Pte Ltd', ago:'8 min ago',  status:'pending',   step:null, declineReason:null},
+  {id:'SG-0893', route:'Tuas → Tampines',            date:'20 Mar', slot:'Afternoon', tonnage:'50 tons (5 trucks)', requester:'—',                   ago:'2h ago',      status:'pending',   step:null, declineReason:null},
+  {id:'SG-0888', route:'Pasir Panjang → Yishun',    date:'19 Mar', slot:'Morning',   tonnage:'25 tons (3 trucks)', requester:'Fairview Cargo',       ago:'1d ago',      status:'active',    step:2,    declineReason:null},
+  {id:'SG-0882', route:'Jurong → Woodlands',         date:'18 Mar', slot:'Morning',   tonnage:'30 tons (3 trucks)', requester:'Swift Freight SG',     ago:'2d ago',      status:'completed', step:4,    declineReason:null},
+  {id:'SG-0876', route:'Tuas → Changi',              date:'16 Mar', slot:'Afternoon', tonnage:'45 tons (5 trucks)', requester:'GlobeTrans SG',        ago:'4d ago',      status:'declined',  step:null, declineReason:'Route not serviceable by our fleet'},
+];
+
+// which card is currently showing the decline reason picker
+let decliningId = null;
+// stored chosen reason before confirm
+let chosenReason = {};
+
+function renderDemandHome() {
+  const c = document.getElementById('demand-home-content');
+  if (!c) return;
+  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now    = new Date();
+  const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+
+  // Active requests data (mirrors what tab-active shows)
+  const activeRequests = [
+    {id:'SG-0891', route:'Jurong → Woodlands',  detail:'Swift Haulage · 30t · 19 Mar · Morning',   step:1, statusLabel:'Commercials agreed', statusBg:'#eff6ff',  statusText:'#1d4ed8', statusBorder:'#bfdbfe', note:'Awaiting pickup confirmation from Swift Haulage Pte Ltd'},
+    {id:'SG-0892', route:'Tuas → Tampines',     detail:'Apex Logistics · 50t · 19 Mar · Afternoon', step:2, statusLabel:'En route',           statusBg:'#fefce8',  statusText:'#854d0e', statusBorder:'#fde68a', note:'Cargo picked up · En route to Tampines Industrial Ave'},
+  ];
+  const completedCount = 4;
+  const unfulfilledCount = 1;
+
+  c.innerHTML = `
+    <!-- Greeting -->
+    <div style="background:#fff;border-radius:20px;border:1px solid #e5e0d8;padding:20px 22px;margin-bottom:14px">
+      <p style="font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase;margin:0 0 3px">${dateStr}</p>
+      <h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0 0 4px">Good morning, Swift Freight</h2>
+      <p style="font-size:12px;color:#64748b;margin:0 0 14px">You have ${activeRequests.length} active shipments in progress.</p>
+      <button onclick="switchTab('tab-new');showFormStep('s1')" style="width:100%;padding:12px;border-radius:12px;background:#1d4ed8;color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer">
+        + New matching request
+      </button>
+    </div>
+
+    <!-- Stats row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+      <div onclick="switchTab('tab-active')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+        <p style="font-size:24px;font-weight:800;color:#1d4ed8;margin:0 0 3px">${activeRequests.length}</p>
+        <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Active</p>
+      </div>
+      <div onclick="switchTab('tab-history')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+        <p style="font-size:24px;font-weight:800;color:#16a34a;margin:0 0 3px">${completedCount}</p>
+        <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Completed</p>
+      </div>
+      <div onclick="switchTab('tab-history')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+        <p style="font-size:24px;font-weight:800;color:#dc2626;margin:0 0 3px">${unfulfilledCount}</p>
+        <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Unfulfilled</p>
+      </div>
+    </div>
+
+    <!-- Active shipments -->
+    <p style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.1em;margin:0 0 8px">Active shipments</p>
+    ${activeRequests.map((r, idx) => `
+      <div onclick="switchTab('tab-active')" style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:10px;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+        <div style="padding:12px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
+            <p style="font-size:10px;color:#94a3b8;margin:0">${r.detail}</p>
+          </div>
+          <span style="font-size:10px;font-weight:700;background:${r.statusBg};color:${r.statusText};border:1px solid ${r.statusBorder};padding:2px 8px;border-radius:20px;white-space:nowrap">${r.statusLabel}</span>
+        </div>
+        <div style="padding:12px 16px 14px">
+          <div id="dhome-pipeline-${idx}"></div>
+          <p style="font-size:11px;color:#64748b;margin:8px 0 0">${r.note}</p>
+        </div>
+      </div>`).join('')}
+
+    <!-- Privacy note -->
+    <div style="background:#f8f7f4;border-radius:12px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px;margin-top:4px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <p style="font-size:11px;color:#94a3b8;margin:0;line-height:1.5">Matching runs on encrypted data. Hauliers see only that a match exists — your cargo details, volumes, and routes are never shared until you confirm.</p>
+    </div>`;
+
+  // Render pipelines after DOM is ready
+  activeRequests.forEach((r, idx) => {
+    setTimeout(() => renderPipeline('dhome-pipeline-'+idx, r.step), 0);
+  });
+}
+
+function renderSupplyHome() {
+  const c = document.getElementById('supply-home-content');
+  if (!c) return;
+  const pending   = supplyRequests.filter(r => r.status === 'pending').length;
+  const active    = supplyRequests.filter(r => r.status === 'active').length;
+  const accepted  = supplyRequests.filter(r => r.status === 'accepted').length;
+  const completed = supplyRequests.filter(r => r.status === 'completed').length;
+  const declined  = supplyRequests.filter(r => r.status === 'declined').length;
+  const activeJob = supplyRequests.find(r => r.status === 'active');
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now = new Date();
+  const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+
+  c.innerHTML = `
+    <!-- Greeting -->
+    <div style="background:#fff;border-radius:20px;border:1px solid #e5e0d8;padding:20px 22px;margin-bottom:14px">
+      <p style="font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase;margin:0 0 3px">${dateStr}</p>
+      <h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0 0 4px">Good morning, Apex Logistics</h2>
+      <p style="font-size:12px;color:#64748b;margin:0">Here's where things stand today.</p>
+    </div>
+
+    <!-- Action alert — only shown if there are pending requests -->
+    ${pending > 0 ? `
+    <div onclick="switchTab('tab-incoming')" style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:16px;padding:14px 18px;margin-bottom:14px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:background .12s" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffbeb'">
+      <div style="width:38px;height:38px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2.2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+      <div style="flex:1">
+        <p style="font-size:13px;font-weight:700;color:#92400e;margin:0 0 2px">${pending} request${pending>1?'s':''} need${pending===1?'s':''} your action</p>
+        <p style="font-size:11px;color:#a16207;margin:0">Tap to review and accept or decline</p>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a16207" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+    </div>` : `
+    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:16px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px">
+      <div style="width:38px;height:38px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <div>
+        <p style="font-size:13px;font-weight:700;color:#166534;margin:0 0 2px">All requests actioned</p>
+        <p style="font-size:11px;color:#16a34a;margin:0">Nothing pending right now</p>
+      </div>
+    </div>`}
+
+    <!-- Stats row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+      <div onclick="switchTab('tab-active')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+        <p style="font-size:24px;font-weight:800;color:#1d4ed8;margin:0 0 3px">${active + accepted}</p>
+        <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Active jobs</p>
+      </div>
+      <div onclick="switchTab('tab-requests')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+        <p style="font-size:24px;font-weight:800;color:#16a34a;margin:0 0 3px">${completed}</p>
+        <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Completed</p>
+      </div>
+      <div onclick="switchTab('tab-requests')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+        <p style="font-size:24px;font-weight:800;color:#dc2626;margin:0 0 3px">${declined}</p>
+        <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Declined</p>
+      </div>
+    </div>
+
+    <!-- Active job in progress -->
+    ${activeJob ? `
+    <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:14px">
+      <div style="padding:12px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
+        <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0">Current job in progress</p>
+        <span style="font-size:10px;font-weight:700;background:#fefce8;color:#854d0e;border:1px solid #fde68a;padding:2px 8px;border-radius:20px">En route</span>
+      </div>
+      <div style="padding:12px 16px 6px">
+        <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0 0 2px">#${activeJob.id} · ${activeJob.route}</p>
+        <p style="font-size:11px;color:#64748b;margin:0 0 12px">${activeJob.date} · ${activeJob.slot} · ${activeJob.tonnage}</p>
+        <div id="home-pipeline" style="margin-bottom:4px"></div>
+      </div>
+      <div style="padding:6px 16px 14px">
+        <button onclick="switchTab('tab-active')" style="width:100%;padding:9px;border-radius:9px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:600;border:1px solid #bfdbfe;cursor:pointer">View active jobs →</button>
+      </div>
+    </div>` : ''}
+
+    <!-- Privacy note -->
+    <div style="background:#f8f7f4;border-radius:12px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <p style="font-size:11px;color:#94a3b8;margin:0;line-height:1.5">Your fleet schedule and capacity data are encrypted. Demand partners see only match confirmation — never your routes, customers, or schedule.</p>
+    </div>`;
+
+  // Render pipeline in home view if active job exists
+  if (activeJob) {
+    setTimeout(() => renderPipeline('home-pipeline', activeJob.step || 0), 0);
+  }
+}
+
+function updateIncomingBadge() {
+  const pending = supplyRequests.filter(r => r.status === 'pending').length;
+  const btns = document.querySelectorAll('.tab-btn');
+  TABS[selectedRole].forEach((t,i) => {
+    if (t.id === 'tab-incoming' && btns[i]) btns[i].textContent = pending > 0 ? `Incoming (${pending})` : 'Incoming';
+  });
+}
+
+function updateRequestsBadge() {
+  const btns = document.querySelectorAll('.tab-btn');
+  TABS[selectedRole].forEach((t,i) => {
+    if (t.id === 'tab-requests' && btns[i]) btns[i].textContent = `Requests (${supplyRequests.length})`;
+  });
+}
+
+function renderIncoming() {
+  updateIncomingBadge();
+  const c = document.getElementById('incoming-list');
+  if (!c) return;
+  const pending = supplyRequests.filter(r => r.status === 'pending');
+  if (pending.length === 0) {
+    c.innerHTML = `
+      <div style="text-align:center;padding:44px 20px">
+        <div style="width:44px;height:44px;border-radius:50%;background:#f0fdf4;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0 0 5px">All requests actioned</p>
+        <p style="font-size:11px;color:#94a3b8;margin:0 0 14px">No pending requests.</p>
+        <button onclick="goToRequests()" style="font-size:12px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:8px 16px;border-radius:9px;cursor:pointer">View all requests →</button>
+      </div>`;
+    return;
+  }
+  // Re-render all pending cards from state — no partial DOM patching
+  c.innerHTML = pending.map(r => buildIncomingCard(r)).join('');
+}
+
+function buildIncomingCard(r) {
+  const isNew   = r.ago.includes('min');
+  const border  = isNew ? '#fde68a' : '#e5e0d8';
+  const headerBg= isNew ? '#fffbeb' : '#f8f7f4';
+  const headerBd= isNew ? '#fde68a' : '#f0ede8';
+  const labelCol= isNew ? '#92400e' : '#94a3b8';
+  const subCol  = isNew ? '#78350f' : '#94a3b8';
+  const badgeBg = isNew ? '#fef3c7' : '#f1f5f9';
+  const badgeCol= isNew ? '#92400e' : '#64748b';
+  const badgeBd = isNew ? '#fde68a' : '#e2e8f0';
+  const badgeTxt= isNew ? 'Action needed' : 'Pending';
+  const label   = isNew ? 'New Match Request' : 'Match Request';
+
+  const details = `
+    <div style="padding:12px 16px;display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#64748b">Route</span><strong style="color:#1e293b">${r.route}</strong></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#64748b">Date & Slot</span><strong style="color:#1e293b">${r.date} · ${r.slot}</strong></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#64748b">Tonnage</span><strong style="color:#1e293b">${r.tonnage}</strong></div>
+      ${r.requester !== '—' ? `<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#64748b">Requester</span><strong style="color:#1e293b">${r.requester}</strong></div>` : ''}
+    </div>`;
+
+  let actions;
+  if (decliningId === r.id) {
+    // --- DECLINE REASON PICKER STATE ---
+    const reasonPills = DECLINE_REASONS.map((reason, idx) => {
+      const sel = chosenReason[r.id] === reason;
+      return `<span class="reason-pill${sel?' sel':''}" onclick="pickReason('${r.id}',${idx})" style="margin-bottom:4px">${reason}</span>`;
+    }).join('');
+    const hasReason = !!chosenReason[r.id];
+    actions = `
+      <div style="padding:0 16px 16px">
+        <p style="font-size:11px;font-weight:600;color:#475569;margin:0 0 10px">Select a reason for declining:</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">${reasonPills}</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="cancelDecline()" style="flex:1;padding:10px;border-radius:9px;background:#fff;color:#64748b;font-size:12px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer">← Back</button>
+          <button onclick="confirmDecline('${r.id}')" ${hasReason?'':'disabled'}
+            style="flex:2;padding:10px;border-radius:9px;background:#dc2626;color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer;opacity:${hasReason?1:.35};pointer-events:${hasReason?'auto':'none'}">
+            Confirm Decline
+          </button>
+        </div>
+      </div>`;
+  } else {
+    // --- NORMAL BUTTONS STATE ---
+    actions = `
+      <div style="padding:0 16px 14px;display:flex;gap:8px">
+        <button onclick="acceptRequest('${r.id}')" style="flex:1;padding:10px;border-radius:9px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer">Accept</button>
+        <button onclick="startDecline('${r.id}')" style="flex:1;padding:10px;border-radius:9px;background:#fff;color:#64748b;font-size:12px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer">Decline</button>
+      </div>`;
+  }
+
+  return `
+    <div id="icard-${r.id}" class="slide-in" style="background:#fff;border-radius:16px;border:2px solid ${border};transition:border .2s">
+      <div style="padding:13px 16px 10px;background:${headerBg};border-bottom:1px solid ${headerBd};border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <p style="font-size:10px;font-weight:700;color:${labelCol};text-transform:uppercase;letter-spacing:.1em;margin:0 0 1px">${label}</p>
+          <p style="font-size:11px;color:${subCol};margin:0">#${r.id} · Received ${r.ago}</p>
+        </div>
+        <span style="font-size:10px;font-weight:700;background:${badgeBg};color:${badgeCol};border:1px solid ${badgeBd};padding:3px 9px;border-radius:20px">${badgeTxt}</span>
+      </div>
+      ${details}
+      ${actions}
+    </div>`;
+}
+
+function acceptRequest(id) {
+  const req = supplyRequests.find(r => r.id === id);
+  req.status = 'accepted';
+  req.step = 0;
+  decliningId = null;
+  // Update the card immediately to show confirmation
+  const card = document.getElementById('icard-'+id);
+  if (card) {
+    card.style.border = '2px solid #bbf7d0';
+    card.innerHTML = `
+      <div style="padding:20px 18px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="width:40px;height:40px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <div>
+            <p style="font-size:14px;font-weight:700;color:#166534;margin:0">Request accepted</p>
+            <p style="font-size:11px;color:#16a34a;margin:0">#${req.id} · ${req.route}</p>
+          </div>
+        </div>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+          <p style="font-size:12px;font-weight:600;color:#166534;margin:0 0 4px">Your contact details have been shared</p>
+          <p style="font-size:11px;color:#15803d;margin:0">${req.requester !== '—' ? req.requester : 'The requester'} will contact you to confirm pickup logistics. This request will move to Active Jobs once confirmed.</p>
+        </div>
+        <button onclick="goToRequests()" style="width:100%;padding:11px;border-radius:10px;background:#1d4ed8;color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer">View my requests →</button>
+      </div>`;
+  }
+  // Refresh data immediately — no setTimeout
+  renderRequests();
+  updateRequestsBadge();
+  updateIncomingBadge();
+}
+
+function startDecline(id) {
+  decliningId = id;
+  // Don't reset chosen reason if user toggled back and forth
+  renderIncoming();
+}
+
+function cancelDecline() {
+  decliningId = null;
+  renderIncoming();
+}
+
+function pickReason(id, idx) {
+  chosenReason[id] = DECLINE_REASONS[idx];
+  // Re-render just this card's actions without full list re-render
+  decliningId = id;
+  renderIncoming();
+}
+
+function confirmDecline(id) {
+  const req = supplyRequests.find(r => r.id === id);
+  const reason = chosenReason[id];
+  if (!reason) return;
+  req.status = 'declined';
+  req.declineReason = reason;
+  decliningId = null;
+  delete chosenReason[id];
+  // Show confirmation on the card
+  const card = document.getElementById('icard-'+id);
+  if (card) {
+    card.style.border = '1px solid #fecaca';
+    card.innerHTML = `
+      <div style="padding:20px 18px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="width:40px;height:40px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </div>
+          <div>
+            <p style="font-size:14px;font-weight:700;color:#dc2626;margin:0">Request declined</p>
+            <p style="font-size:11px;color:#f87171;margin:0">#${req.id} · SGTraDEX notified</p>
+          </div>
+        </div>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+          <p style="font-size:11px;font-weight:600;color:#b91c1c;margin:0 0 3px">Reason given</p>
+          <p style="font-size:12px;color:#dc2626;margin:0">${reason}</p>
+        </div>
+        <button onclick="goToRequests()" style="width:100%;padding:11px;border-radius:10px;background:#f8f7f4;color:#475569;font-size:13px;font-weight:700;border:1px solid #e5e0d8;cursor:pointer">View my requests →</button>
+      </div>`;
+  }
+  // Refresh data immediately
+  renderRequests();
+  updateRequestsBadge();
+  updateIncomingBadge();
+}
+
+function goToRequests() {
+  renderRequests();
+  switchTab('tab-requests');
+}
+
+function renderRequests() {
+  const cs = document.getElementById('requests-summary');
+  const cl = document.getElementById('requests-list');
+  if (!cs || !cl) return;
+  const total     = supplyRequests.length;
+  const accepted  = supplyRequests.filter(r => ['accepted','active','completed'].includes(r.status)).length;
+  const declined  = supplyRequests.filter(r => r.status === 'declined').length;
+  const pending   = supplyRequests.filter(r => r.status === 'pending').length;
+  cs.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:4px">
+      <div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:9px 10px;text-align:center">
+        <p style="font-size:18px;font-weight:800;color:#1e293b;margin:0">${total}</p>
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Total</p>
+      </div>
+      <div style="background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;padding:9px 10px;text-align:center">
+        <p style="font-size:18px;font-weight:800;color:#1d4ed8;margin:0">${accepted}</p>
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Accepted</p>
+      </div>
+      <div style="background:#fef2f2;border-radius:10px;border:1px solid #fecaca;padding:9px 10px;text-align:center">
+        <p style="font-size:18px;font-weight:800;color:#dc2626;margin:0">${declined}</p>
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Declined</p>
+      </div>
+      <div style="background:#fffbeb;border-radius:10px;border:1px solid #fde68a;padding:9px 10px;text-align:center">
+        <p style="font-size:18px;font-weight:800;color:#92400e;margin:0">${pending}</p>
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Pending</p>
+      </div>
+    </div>`;
+  const statusCfg = {
+    pending:   {label:'Pending',   bg:'#fffbeb', text:'#92400e', border:'#fde68a'},
+    accepted:  {label:'Accepted',  bg:'#eff6ff', text:'#1d4ed8', border:'#bfdbfe'},
+    active:    {label:'Active',    bg:'#fefce8', text:'#854d0e', border:'#fde68a'},
+    completed: {label:'Completed', bg:'#dcfce7', text:'#166534', border:'#bbf7d0'},
+    declined:  {label:'Declined',  bg:'#fef2f2', text:'#dc2626', border:'#fecaca'},
+  };
+  cl.innerHTML = supplyRequests.map(r => {
+    const sc = statusCfg[r.status];
+    const needsPipeline = ['accepted','active','completed'].includes(r.status);
+    const pipelineId = 'rpipe-'+r.id;
+    return `<div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden">
+      <div style="padding:12px 14px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
+          <p style="font-size:10px;color:#94a3b8;margin:0">${r.date} · ${r.slot} · ${r.tonnage}</p>
+        </div>
+        <span class="req-status-badge" style="background:${sc.bg};color:${sc.text};border:1px solid ${sc.border}">${sc.label}</span>
+      </div>
+      <div style="padding:10px 14px">
+        ${r.requester && r.requester !== '—' ? `<p style="font-size:11px;color:#64748b;margin:0 0 ${needsPipeline?'10px':'4px'}">Requester: <strong style="color:#1e293b">${r.requester}</strong></p>` : ''}
+        ${r.declineReason ? `<p style="font-size:11px;color:#dc2626;margin:0">Reason: ${r.declineReason}</p>` : ''}
+        ${needsPipeline ? `<div id="${pipelineId}" style="margin-top:4px"></div>` : ''}
+        ${r.status==='pending' ? `<div style="display:flex;gap:7px;margin-top:8px">
+          <button onclick="acceptRequest('${r.id}')" style="flex:1;padding:7px;border-radius:8px;background:#1d4ed8;color:#fff;font-size:11px;font-weight:600;border:none;cursor:pointer">Accept</button>
+          <button onclick="startDecline('${r.id}');switchTab('tab-incoming')" style="flex:1;padding:7px;border-radius:8px;background:#fff;color:#64748b;font-size:11px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer">Decline</button>
+        </div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  // render pipelines for accepted/active/completed rows
+  supplyRequests.filter(r => ['accepted','active','completed'].includes(r.status)).forEach(r => {
+    renderPipeline('rpipe-'+r.id, r.step || 0);
+  });
+}
+
+function acceptIncoming(btn){} // legacy no-op
+
+// ══════════════════════════════════════════════
+//  DEMAND PORTAL (new request flow)
+// ══════════════════════════════════════════════
+const pickupZones  = ['Jurong','Tuas','Pasir Panjang','Brani','Tanjong Pagar'];
+const dropoffZones = ['Woodlands','Yishun','Seletar','Changi','Tampines'];
+let selectedHaulier = null;
+
+function buildPills(id, zones) {
+  document.getElementById(id).innerHTML = zones.map(z =>
+    `<span class="zone-pill" onclick="selectPill(this)">${z}</span>`).join('');
+}
+function selectPill(el) {
+  el.closest('div').querySelectorAll('.zone-pill').forEach(p=>p.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function calcTonnage() {
+  const t=parseInt(document.getElementById('num-trucks').value)||0;
+  const c=parseInt(document.getElementById('capacity').value)||0;
+  const d=document.getElementById('tonnage-display');
+  if(t>0&&c>0){document.getElementById('tonnage-val').textContent=t*c;d.style.display='block';}
+  else d.style.display='none';
+}
+function showFormStep(id) {
+  ['s1','s2','s3','s4'].forEach(s=>document.getElementById(s).style.display='none');
+  document.getElementById(id).style.display='block';
+}
+function runMatch() {
+  showFormStep('s2');
+  ['a','b','c','d'].forEach((l,i)=>{
+    setTimeout(()=>{
+      const dot=document.getElementById('dot-'+l);
+      dot.innerHTML=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="3.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`;
+      dot.style.borderColor='#1d4ed8'; dot.style.background='#eff6ff';
+      document.getElementById('step-'+l).style.color='#1d4ed8';
+      if(i===3) setTimeout(()=>showFormStep('s3'),500);
+    },750*(i+1));
+  });
+}
+function selectHaulier(el,name){
+  document.querySelectorAll('.match-card').forEach(c=>{c.style.borderColor='';c.style.background='';});
+  el.style.borderColor='#3b82f6'; el.style.background='#f5f8ff';
+  selectedHaulier=name;
+  document.getElementById('selected-name').textContent=name;
+  document.getElementById('confirm-bar').style.display='block';
+  const btn=document.getElementById('confirm-btn');
+  btn.style.opacity='1'; btn.style.pointerEvents='auto';
+}
+function confirmMatch(){
+  document.getElementById('confirmed-haulier').textContent=selectedHaulier;
+  showFormStep('s4');
+  // Add to active tab badge
+  const tabs=document.querySelectorAll('.tab-btn');
+  TABS[selectedRole].forEach((t,i)=>{
+    if(t.id==='tab-active' && tabs[i]) tabs[i].textContent='Active (3)';
+  });
+}
+function goNewRequest(){
+  selectedHaulier=null;
+  document.getElementById('confirm-bar').style.display='none';
+  const btn=document.getElementById('confirm-btn');
+  btn.style.opacity='.35'; btn.style.pointerEvents='none';
+  document.querySelectorAll('.match-card').forEach(c=>{c.style.borderColor='';c.style.background='';});
+  ['a','b','c','d'].forEach(l=>{
+    const dot=document.getElementById('dot-'+l);
+    dot.innerHTML=''; dot.style.borderColor=''; dot.style.background='';
+    document.getElementById('step-'+l).style.color='';
+  });
+  showFormStep('s1');
+}
+
+// ══════════════════════════════════════════════
+//  REGULATOR — Leaflet map
+// ══════════════════════════════════════════════
+const ZONE_DATA = {
+  morning: [
+    {name:'Tuas',type:'Port / Industrial',trucks:68,supply:850,demand:620,matched:310,kmSaved:142,coords:[[1.295,103.618],[1.338,103.618],[1.338,103.662],[1.295,103.662]]},
+    {name:'Jurong',type:'Industrial',trucks:96,supply:1200,demand:980,matched:840,kmSaved:218,coords:[[1.315,103.662],[1.375,103.662],[1.375,103.738],[1.315,103.738]]},
+    {name:'Clementi',type:'Residential',trucks:30,supply:380,demand:290,matched:220,kmSaved:48,coords:[[1.295,103.738],[1.340,103.738],[1.340,103.800],[1.295,103.800]]},
+    {name:'Pasir Panjang',type:'Port',trucks:58,supply:720,demand:690,matched:580,kmSaved:167,coords:[[1.258,103.780],[1.295,103.780],[1.295,103.830],[1.258,103.830]]},
+    {name:'Brani / Tg. Pagar',type:'Port',trucks:51,supply:640,demand:720,matched:580,kmSaved:134,coords:[[1.258,103.830],[1.295,103.830],[1.295,103.872],[1.258,103.872]]},
+    {name:'Central',type:'Commercial',trucks:45,supply:560,demand:610,matched:470,kmSaved:89,coords:[[1.295,103.820],[1.355,103.820],[1.355,103.872],[1.295,103.872]]},
+    {name:'Ang Mo Kio',type:'Residential / Ind.',trucks:27,supply:340,demand:280,matched:240,kmSaved:55,coords:[[1.355,103.838],[1.395,103.838],[1.395,103.878],[1.355,103.878]]},
+    {name:'Woodlands',type:'Industrial / Gateway',trucks:74,supply:920,demand:840,matched:780,kmSaved:201,coords:[[1.420,103.760],[1.470,103.760],[1.470,103.820],[1.420,103.820]]},
+    {name:'Yishun',type:'Industrial',trucks:38,supply:480,demand:320,matched:290,kmSaved:76,coords:[[1.395,103.820],[1.440,103.820],[1.440,103.862],[1.395,103.862]]},
+    {name:'Seletar',type:'Industrial / Airport',trucks:23,supply:290,demand:410,matched:180,kmSaved:41,coords:[[1.390,103.862],[1.428,103.862],[1.428,103.918],[1.390,103.918]]},
+    {name:'Tampines',type:'Industrial',trucks:52,supply:650,demand:590,matched:530,kmSaved:123,coords:[[1.342,103.918],[1.390,103.918],[1.390,103.962],[1.342,103.962]]},
+    {name:'Changi',type:'Port / Airport',trucks:70,supply:880,demand:810,matched:790,kmSaved:198,coords:[[1.335,103.962],[1.385,103.962],[1.385,104.040],[1.335,104.040]]},
+  ],
+  afternoon: [
+    {name:'Tuas',type:'Port / Industrial',trucks:68,supply:850,demand:780,matched:540,kmSaved:168,coords:[[1.295,103.618],[1.338,103.618],[1.338,103.662],[1.295,103.662]]},
+    {name:'Jurong',type:'Industrial',trucks:96,supply:1200,demand:1100,matched:970,kmSaved:245,coords:[[1.315,103.662],[1.375,103.662],[1.375,103.738],[1.315,103.738]]},
+    {name:'Clementi',type:'Residential',trucks:30,supply:380,demand:210,matched:195,kmSaved:32,coords:[[1.295,103.738],[1.340,103.738],[1.340,103.800],[1.295,103.800]]},
+    {name:'Pasir Panjang',type:'Port',trucks:58,supply:720,demand:740,matched:670,kmSaved:188,coords:[[1.258,103.780],[1.295,103.780],[1.295,103.830],[1.258,103.830]]},
+    {name:'Brani / Tg. Pagar',type:'Port',trucks:51,supply:640,demand:820,matched:615,kmSaved:145,coords:[[1.258,103.830],[1.295,103.830],[1.295,103.872],[1.258,103.872]]},
+    {name:'Central',type:'Commercial',trucks:45,supply:560,demand:480,matched:440,kmSaved:75,coords:[[1.295,103.820],[1.355,103.820],[1.355,103.872],[1.295,103.872]]},
+    {name:'Ang Mo Kio',type:'Residential / Ind.',trucks:27,supply:340,demand:190,matched:180,kmSaved:38,coords:[[1.355,103.838],[1.395,103.838],[1.395,103.878],[1.355,103.878]]},
+    {name:'Woodlands',type:'Industrial / Gateway',trucks:74,supply:920,demand:760,matched:710,kmSaved:188,coords:[[1.420,103.760],[1.470,103.760],[1.470,103.820],[1.420,103.820]]},
+    {name:'Yishun',type:'Industrial',trucks:38,supply:480,demand:290,matched:255,kmSaved:61,coords:[[1.395,103.820],[1.440,103.820],[1.440,103.862],[1.395,103.862]]},
+    {name:'Seletar',type:'Industrial / Airport',trucks:23,supply:290,demand:340,matched:145,kmSaved:28,coords:[[1.390,103.862],[1.428,103.862],[1.428,103.918],[1.390,103.918]]},
+    {name:'Tampines',type:'Industrial',trucks:52,supply:650,demand:640,matched:580,kmSaved:138,coords:[[1.342,103.918],[1.390,103.918],[1.390,103.962],[1.342,103.962]]},
+    {name:'Changi',type:'Port / Airport',trucks:70,supply:880,demand:870,matched:840,kmSaved:210,coords:[[1.335,103.962],[1.385,103.962],[1.385,104.040],[1.335,104.040]]},
+  ],
+  evening: [
+    {name:'Tuas',type:'Port / Industrial',trucks:68,supply:850,demand:420,matched:210,kmSaved:88,coords:[[1.295,103.618],[1.338,103.618],[1.338,103.662],[1.295,103.662]]},
+    {name:'Jurong',type:'Industrial',trucks:96,supply:1200,demand:540,matched:430,kmSaved:102,coords:[[1.315,103.662],[1.375,103.662],[1.375,103.738],[1.315,103.738]]},
+    {name:'Clementi',type:'Residential',trucks:30,supply:380,demand:140,matched:105,kmSaved:18,coords:[[1.295,103.738],[1.340,103.738],[1.340,103.800],[1.295,103.800]]},
+    {name:'Pasir Panjang',type:'Port',trucks:58,supply:720,demand:560,matched:490,kmSaved:124,coords:[[1.258,103.780],[1.295,103.780],[1.295,103.830],[1.258,103.830]]},
+    {name:'Brani / Tg. Pagar',type:'Port',trucks:51,supply:640,demand:490,matched:440,kmSaved:98,coords:[[1.258,103.830],[1.295,103.830],[1.295,103.872],[1.258,103.872]]},
+    {name:'Central',type:'Commercial',trucks:45,supply:560,demand:210,matched:175,kmSaved:34,coords:[[1.295,103.820],[1.355,103.820],[1.355,103.872],[1.295,103.872]]},
+    {name:'Ang Mo Kio',type:'Residential / Ind.',trucks:27,supply:340,demand:120,matched:105,kmSaved:22,coords:[[1.355,103.838],[1.395,103.838],[1.395,103.878],[1.355,103.878]]},
+    {name:'Woodlands',type:'Industrial / Gateway',trucks:74,supply:920,demand:380,matched:290,kmSaved:78,coords:[[1.420,103.760],[1.470,103.760],[1.470,103.820],[1.420,103.820]]},
+    {name:'Yishun',type:'Industrial',trucks:38,supply:480,demand:180,matched:145,kmSaved:31,coords:[[1.395,103.820],[1.440,103.820],[1.440,103.862],[1.395,103.862]]},
+    {name:'Seletar',type:'Industrial / Airport',trucks:23,supply:290,demand:220,matched:120,kmSaved:19,coords:[[1.390,103.862],[1.428,103.862],[1.428,103.918],[1.390,103.918]]},
+    {name:'Tampines',type:'Industrial',trucks:52,supply:650,demand:290,matched:255,kmSaved:58,coords:[[1.342,103.918],[1.390,103.918],[1.390,103.962],[1.342,103.962]]},
+    {name:'Changi',type:'Port / Airport',trucks:70,supply:880,demand:640,matched:590,kmSaved:148,coords:[[1.335,103.962],[1.385,103.962],[1.385,104.040],[1.335,104.040]]},
+  ]
+};
+
+// ── Trip-level data for km saved breakdown ───
+// km_saved = dRoute − dToPickup − dFromDrop
+// dRoute     = dist(demand pickup → demand dropoff)
+// dToPickup  = dist(supply start → demand pickup)
+// dFromDrop  = dist(demand dropoff → supply end)
+const ZONE_TRIPS = {
+  'Jurong': [
+    {id:'SG-0885', haulier:'Swift Haulage Pte Ltd',  pickup:'Jurong Port Terminal',        dropoff:'Woodlands Checkpoint',      supplyFrom:'Tuas Industrial Estate',     supplyTo:'Woodlands Ave 12',      dRoute:27, dToPickup:4, dFromDrop:2},
+    {id:'SG-0881', haulier:'Apex Logistics SG',      pickup:'Jurong Island Terminal',       dropoff:'Changi Airport Cargo Ctr',  supplyFrom:'Jurong West St 63',          supplyTo:'Pasir Ris Industrial',  dRoute:38, dToPickup:5, dFromDrop:3},
+    {id:'SG-0891', haulier:'Pinnacle Transport',     pickup:'Jurong East Industrial Park',  dropoff:'Woodlands North Ind Park',  supplyFrom:'Pioneer Road',               supplyTo:'Woodlands Checkpoint',  dRoute:25, dToPickup:3, dFromDrop:2},
+    {id:'SG-0877', haulier:'GlobeTrans SG',          pickup:'Jurong West Industrial',       dropoff:'Yishun Industrial Park',    supplyFrom:'Tuas South Ave 3',           supplyTo:'Yishun Ave 11',         dRoute:30, dToPickup:6, dFromDrop:3},
+  ],
+  'Tuas': [
+    {id:'SG-0892', haulier:'Apex Logistics SG',      pickup:'Tuas Ave 1 Industrial',        dropoff:'Tampines Industrial Est',   supplyFrom:'Tuas South Ave 2',           supplyTo:'Tampines Ave 11',       dRoute:40, dToPickup:4, dFromDrop:3},
+    {id:'SG-0879', haulier:'GlobeTrans SG',          pickup:'Tuas Port Terminal Gate 2',    dropoff:'Changi Airport Cargo Ctr',  supplyFrom:'Tuas West Drive',            supplyTo:'Changi South',          dRoute:43, dToPickup:5, dFromDrop:4},
+    {id:'SG-0871', haulier:'CargoPrime SG',          pickup:'Tuas Checkpoint (S)',           dropoff:'Woodlands Checkpoint',      supplyFrom:'Tuas Industrial Crescent',   supplyTo:'Woodlands Close',       dRoute:18, dToPickup:3, dFromDrop:2},
+  ],
+  'Pasir Panjang': [
+    {id:'SG-0883', haulier:'Swift Haulage Pte Ltd',  pickup:'Pasir Panjang Terminal T1',    dropoff:'Changi Airport Cargo Ctr',  supplyFrom:'Harbourfront Centre',        supplyTo:'Changi South Ave',      dRoute:32, dToPickup:2, dFromDrop:3},
+    {id:'SG-0878', haulier:'Pinnacle Transport',     pickup:'Pasir Panjang Rd Warehouse',   dropoff:'Yishun Industrial Park',    supplyFrom:'West Coast Industrial',      supplyTo:'Yishun Ave 2',          dRoute:28, dToPickup:4, dFromDrop:3},
+    {id:'SG-0866', haulier:'Fairview Cargo',         pickup:'Pandan Loop Industrial',       dropoff:'Woodlands Ind Park E',      supplyFrom:'Pasir Panjang Crescent',     supplyTo:'Woodlands Ring Rd',     dRoute:30, dToPickup:3, dFromDrop:2},
+  ],
+  'Woodlands': [
+    {id:'SG-0882', haulier:'Swift Haulage Pte Ltd',  pickup:'Woodlands Ind Park Blk 3',    dropoff:'Jurong Port Terminal',      supplyFrom:'Woodlands Checkpoint',       supplyTo:'Tuas Industrial Est',   dRoute:28, dToPickup:3, dFromDrop:4},
+    {id:'SG-0875', haulier:'Apex Logistics SG',      pickup:'Woodlands Ave 12 Depot',      dropoff:'Tampines Industrial Est',   supplyFrom:'Woodlands North Ind Park',   supplyTo:'Tampines Ave 9',        dRoute:35, dToPickup:2, dFromDrop:3},
+    {id:'SG-0868', haulier:'Pinnacle Transport',     pickup:'Woodlands Ring Rd Depot',     dropoff:'Changi Airport Cargo Ctr',  supplyFrom:'Woodlands St 82',            supplyTo:'Changi South',          dRoute:42, dToPickup:3, dFromDrop:5},
+  ],
+  'Changi': [
+    {id:'SG-0886', haulier:'Swift Haulage Pte Ltd',  pickup:'Changi Airport Cargo Ctr',    dropoff:'Jurong Port Terminal',      supplyFrom:'Changi South Ave 1',         supplyTo:'Jurong East Industrial',dRoute:38, dToPickup:2, dFromDrop:4},
+    {id:'SG-0880', haulier:'Apex Logistics SG',      pickup:'Changi Export Cargo Depot',   dropoff:'Woodlands Checkpoint',      supplyFrom:'Changi Aviation Park',       supplyTo:'Woodlands North',       dRoute:45, dToPickup:3, dFromDrop:4},
+    {id:'SG-0873', haulier:'CargoPrime SG',          pickup:'Changi Airfreight Centre',    dropoff:'Tuas Industrial Ave',       supplyFrom:'Changi Logistics Centre',    supplyTo:'Tuas South Ave',        dRoute:44, dToPickup:2, dFromDrop:3},
+  ],
+  'Brani / Tg. Pagar': [
+    {id:'SG-0884', haulier:'Fairview Cargo',         pickup:'Tanjong Pagar Terminal',      dropoff:'Woodlands Ind Park',        supplyFrom:'Keppel Logistics Hub',       supplyTo:'Woodlands Checkpoint',  dRoute:30, dToPickup:2, dFromDrop:3},
+    {id:'SG-0869', haulier:'GlobeTrans SG',          pickup:'Brani Terminal Gate 1',       dropoff:'Changi Airport Cargo Ctr',  supplyFrom:'Harbourfront Ave',           supplyTo:'Changi South',          dRoute:33, dToPickup:3, dFromDrop:4},
+  ],
+  'Central': [
+    {id:'SG-0876', haulier:'Pinnacle Transport',     pickup:'Kallang Industrial Estate',   dropoff:'Jurong Port Terminal',      supplyFrom:'City Fringe Depot',          supplyTo:'Jurong East',           dRoute:20, dToPickup:4, dFromDrop:3},
+    {id:'SG-0862', haulier:'Swift Haulage Pte Ltd',  pickup:'MacPherson Industrial',       dropoff:'Woodlands Industrial',      supplyFrom:'Toa Payoh Industrial',       supplyTo:'Woodlands Ave 2',       dRoute:25, dToPickup:3, dFromDrop:4},
+  ],
+  'Tampines': [
+    {id:'SG-0887', haulier:'Apex Logistics SG',      pickup:'Tampines Industrial Ave 3',   dropoff:'Jurong Port Terminal',      supplyFrom:'Tampines Ave 11',            supplyTo:'Jurong Island',         dRoute:38, dToPickup:3, dFromDrop:5},
+    {id:'SG-0874', haulier:'CargoPrime SG',          pickup:'Tampines Logistics Hub',      dropoff:'Woodlands Checkpoint',      supplyFrom:'Tampines East Industrial',   supplyTo:'Woodlands Ring Rd',     dRoute:35, dToPickup:2, dFromDrop:4},
+  ],
+  'Ang Mo Kio': [
+    {id:'SG-0870', haulier:'Fairview Cargo',         pickup:'Ang Mo Kio Industrial Park',  dropoff:'Jurong East Industrial',    supplyFrom:'AMK Ave 10 Depot',           supplyTo:'Pioneer Road',          dRoute:22, dToPickup:3, dFromDrop:3},
+    {id:'SG-0858', haulier:'Swift Haulage Pte Ltd',  pickup:'AMK Tech Park',               dropoff:'Pasir Panjang Terminal',    supplyFrom:'AMK Industrial Cres',        supplyTo:'West Coast Industrial', dRoute:24, dToPickup:2, dFromDrop:3},
+  ],
+  'Yishun': [
+    {id:'SG-0872', haulier:'Pinnacle Transport',     pickup:'Yishun Industrial Park Blk2', dropoff:'Tuas Industrial Ave',       supplyFrom:'Yishun Ave 11 Depot',        supplyTo:'Tuas South',            dRoute:32, dToPickup:4, dFromDrop:3},
+    {id:'SG-0865', haulier:'GlobeTrans SG',          pickup:'Yishun Ave Industrial Zone',  dropoff:'Changi Airport Cargo Ctr',  supplyFrom:'Yishun Ring Road',           supplyTo:'Changi South',          dRoute:30, dToPickup:2, dFromDrop:3},
+  ],
+  'Seletar': [
+    {id:'SG-0867', haulier:'CargoPrime SG',          pickup:'Seletar Aerospace Park',      dropoff:'Tampines Industrial Est',   supplyFrom:'Seletar West Farmway',       supplyTo:'Tampines Ave 9',        dRoute:20, dToPickup:4, dFromDrop:3},
+  ],
+  'Clementi': [
+    {id:'SG-0863', haulier:'Swift Haulage Pte Ltd',  pickup:'Clementi Industrial Est',     dropoff:'Jurong Port Terminal',      supplyFrom:'West Coast Road Depot',      supplyTo:'Jurong Island Ave',     dRoute:15, dToPickup:3, dFromDrop:2},
+  ],
+};
+
+function showKmBreakdown(zoneName, slot) {
+  const panel = document.getElementById('km-panel');
+  const title = document.getElementById('km-panel-title');
+  const body  = document.getElementById('km-panel-body');
+  const slotLabel = {morning:'Morning · 8am–12pm', afternoon:'Afternoon · 12pm–4pm', evening:'Evening · 4pm–8pm'}[slot];
+
+  if (zoneName) {
+    const trips = ZONE_TRIPS[zoneName] || [];
+    const zoneData = ZONE_DATA[slot].find(z => z.name === zoneName);
+    const totalKm = zoneData ? zoneData.kmSaved : 0;
+    title.textContent = zoneName + ' · ' + slotLabel;
+    const sampleTotal = trips.reduce((a,t) => a + Math.max(t.dRoute - t.dToPickup - t.dFromDrop, 0), 0);
+    body.innerHTML = `
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+        <div><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Total km saved (all trips)</p><p style="font-size:22px;font-weight:800;color:#16a34a;margin:0">${totalKm} km</p></div>
+        <div style="text-align:right"><p style="font-size:9px;color:#94a3b8;margin:0 0 1px">Sample shown</p><p style="font-size:13px;font-weight:700;color:#475569;margin:0">${sampleTotal} km</p><p style="font-size:9px;color:#94a3b8;margin:0">${trips.length} of ~${zoneData?zoneData.trucks:''} trips</p></div>
+      </div>
+      ${trips.length === 0 ? '<p style="text-align:center;color:#94a3b8;font-size:12px;padding:20px">No trip data for this zone.</p>' :
+        trips.map(t => {
+          const saved = t.dRoute - t.dToPickup - t.dFromDrop;
+          const savedColor = saved > 0 ? '#16a34a' : '#dc2626';
+          return `<div class="trip-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div><p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 1px">#${t.id}</p><p style="font-size:10px;color:#94a3b8;margin:0">${t.haulier}</p></div>
+              <span style="font-size:13px;font-weight:800;color:${savedColor}">${saved > 0 ? '+' : ''}${saved} km</span>
+            </div>
+            <div class="trip-row" style="background:#eff6ff;border-radius:6px;padding:5px 8px;margin-bottom:6px">
+              <span style="color:#1d4ed8;font-weight:600">📍 ${t.pickup}</span>
+              <span style="color:#475569;font-size:10px">→ ${t.dropoff}</span>
+            </div>
+            <div class="trip-row"><span style="color:#475569">Route distance (pickup → dropoff)</span><strong style="color:#1e293b">+${t.dRoute} km</strong></div>
+            <div class="trip-row" style="color:#dc2626">
+              <span style="color:#64748b">Detour: <em>${t.supplyFrom}</em> → pickup</span>
+              <strong>−${t.dToPickup} km</strong>
+            </div>
+            <div class="trip-row" style="color:#dc2626">
+              <span style="color:#64748b">Detour: dropoff → <em>${t.supplyTo}</em></span>
+              <strong>−${t.dFromDrop} km</strong>
+            </div>
+            <div style="border-top:1px solid #e2e8f0;margin-top:7px;padding-top:7px;display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:11px;font-weight:700;color:#475569">Km saved this trip</span>
+              <span style="font-size:14px;font-weight:800;color:${savedColor}">${saved > 0 ? '+' : ''}${saved} km</span>
+            </div>
+          </div>`;
+        }).join('')
+      }
+      <p style="font-size:10px;color:#b0b9c6;text-align:center;margin-top:6px">Sample trips — representative of matched supply/demand pairs for this zone and time slot.</p>`;
+  } else {
+    // Global — show top trips across all zones
+    title.textContent = 'All Zones · ' + slotLabel;
+    const allTrips = Object.entries(ZONE_TRIPS).flatMap(([zone, trips]) =>
+      trips.map(t => ({...t, zone}))
+    );
+    const totalKm = ZONE_DATA[slot].reduce((a,z) => a + z.kmSaved, 0);
+    const sampleTotal = allTrips.reduce((a,t) => a + Math.max(t.dRoute - t.dToPickup - t.dFromDrop, 0), 0);
+    body.innerHTML = `
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+        <div><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Total km saved today</p><p style="font-size:22px;font-weight:800;color:#16a34a;margin:0">${totalKm.toLocaleString()} km</p></div>
+        <div style="text-align:right"><p style="font-size:9px;color:#94a3b8;margin:0 0 1px">Sample shown</p><p style="font-size:13px;font-weight:700;color:#475569;margin:0">${sampleTotal} km</p><p style="font-size:9px;color:#94a3b8;margin:0">${allTrips.length} trips across ${Object.keys(ZONE_TRIPS).length} zones</p></div>
+      </div>
+      ${allTrips.map(t => {
+        const saved = t.dRoute - t.dToPickup - t.dFromDrop;
+        const savedColor = saved > 0 ? '#16a34a' : '#dc2626';
+        return `<div class="trip-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div><p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 1px">#${t.id} · <span style="color:#64748b;font-weight:400">${t.zone}</span></p><p style="font-size:10px;color:#94a3b8;margin:0">${t.haulier}</p></div>
+            <span style="font-size:13px;font-weight:800;color:${savedColor}">${saved > 0 ? '+' : ''}${saved} km</span>
+          </div>
+          <div class="trip-row" style="background:#eff6ff;border-radius:6px;padding:5px 8px;margin-bottom:6px">
+            <span style="color:#1d4ed8;font-weight:600;font-size:10px">${t.pickup}</span>
+            <span style="color:#475569;font-size:10px">→ ${t.dropoff}</span>
+          </div>
+          <div class="trip-row"><span style="color:#475569">Route (pickup → dropoff)</span><strong>+${t.dRoute} km</strong></div>
+          <div class="trip-row"><span style="color:#64748b">Detour: ${t.supplyFrom} → pickup</span><strong style="color:#dc2626">−${t.dToPickup} km</strong></div>
+          <div class="trip-row"><span style="color:#64748b">Detour: dropoff → ${t.supplyTo}</span><strong style="color:#dc2626">−${t.dFromDrop} km</strong></div>
+          <div style="border-top:1px solid #e2e8f0;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between">
+            <span style="font-size:11px;font-weight:700;color:#475569">Km saved</span>
+            <span style="font-size:14px;font-weight:800;color:${savedColor}">${saved > 0 ? '+' : ''}${saved} km</span>
+          </div>
+        </div>`;
+      }).join('')}`;
+  }
+  panel.classList.add('open');
+  sgMap && sgMap.invalidateSize();
+}
+
+function closeKmPanel() {
+  document.getElementById('km-panel').classList.remove('open');
+  sgMap && setTimeout(() => sgMap.invalidateSize(), 300);
+}
+
+function derive(z){
+  const util=Math.round(z.matched/z.supply*100);
+  const demandSat=z.demand>0?Math.round(z.matched/z.demand*100):100;
+  return{...z,util,demandSat,unused:z.supply-z.matched,unmet:Math.max(z.demand-z.matched,0)};
+}
+function utilColor(u){if(u===0)return'#94a3b8';if(u>=85)return'#16a34a';if(u>=70)return'#65a30d';if(u>=50)return'#ca8a04';if(u>=30)return'#ea580c';return'#dc2626';}
+
+let sgMap=null, polyLayers=[], currentSlot='morning', selZone=null;
+
+function initMap(){
+  if(sgMap)return;
+  sgMap=L.map('sg-map',{zoomControl:true}).setView([1.352,103.820],11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:16}).addTo(sgMap);
+  renderPolygons(); renderSidebar();
+}
+function renderPolygons(){
+  polyLayers.forEach(l=>sgMap.removeLayer(l)); polyLayers=[];
+  ZONE_DATA[currentSlot].map(derive).forEach((z,i)=>{
+    const c=utilColor(z.demandSat);
+    const p=L.polygon(z.coords,{fillColor:c,fillOpacity:.65,color:'#fff',weight:1.5}).addTo(sgMap);
+    p.bindTooltip(`<div style="font-size:11px;font-weight:700;color:#1e293b;padding:2px 6px">${z.name}</div>`,{permanent:true,direction:'center',className:'leaflet-tooltip-plain',opacity:1});
+    p.on('mouseover',()=>showZonePopup(i));
+    p.on('click',()=>showZonePopup(i));
+    polyLayers.push(p);
+  });
+}
+function showZonePopup(i){
+  selZone=i;
+  const z=ZONE_DATA[currentSlot].map(derive)[i];
+  polyLayers.forEach((p,idx)=>p.setStyle({weight:idx===i?3:1.5,color:idx===i?'#1d4ed8':'#fff'}));
+  const slotLabel={'morning':'Morning · 8am–12pm','afternoon':'Afternoon · 12pm–4pm','evening':'Evening · 4pm–8pm'}[currentSlot];
+  const unmetColor=z.unmet>0?'#dc2626':'#166534';
+  const unmetBg=z.unmet>0?'#fef2f2':'#f0fdf4';
+  const unmetBorder=z.unmet>0?'#fecaca':'#bbf7d0';
+  L.popup({closeButton:true,maxWidth:280,autoPan:false}).setLatLng(polyLayers[i].getBounds().getCenter()).setContent(`
+    <div style="padding:14px 16px;font-family:'Inter',sans-serif;min-width:240px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0 0 2px">${z.name}</p>
+          <p style="font-size:10px;color:#94a3b8;margin:0">${z.type}</p>
+        </div>
+        <span style="font-size:9px;font-weight:600;background:#f1f5f9;color:#475569;padding:3px 7px;border-radius:20px;white-space:nowrap;margin-left:8px">${slotLabel}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px">
+        <div style="background:#f8fafc;border-radius:7px;padding:7px 8px;text-align:center">
+          <p style="font-size:8px;color:#94a3b8;margin:0 0 2px;text-transform:uppercase;letter-spacing:.06em">Total Trucks</p>
+          <p style="font-size:16px;font-weight:800;color:#1e293b;margin:0">${z.trucks}</p>
+        </div>
+        <div style="background:#f8fafc;border-radius:7px;padding:7px 8px;text-align:center">
+          <p style="font-size:8px;color:#94a3b8;margin:0 0 2px;text-transform:uppercase;letter-spacing:.06em">Utilisation</p>
+          <p style="font-size:16px;font-weight:800;color:${utilColor(z.util)};margin:0">${z.util}%</p>
+          <p style="font-size:8px;color:#94a3b8;margin:0">matched/supply</p>
+        </div>
+        <div onclick="showKmBreakdown('${z.name}','${currentSlot}')" style="background:#eff6ff;border-radius:7px;padding:7px 8px;text-align:center;cursor:pointer;border:1px solid transparent;transition:border .15s" onmouseover="this.style.border='1px solid #93c5fd'" onmouseout="this.style.border='1px solid transparent'">
+          <p style="font-size:8px;color:#94a3b8;margin:0 0 2px;text-transform:uppercase;letter-spacing:.06em">Km Saved ↗</p>
+          <p style="font-size:16px;font-weight:800;color:#1d4ed8;margin:0">${z.kmSaved}</p>
+          <p style="font-size:8px;color:#94a3b8;margin:0">km · tap for breakdown</p>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;font-size:11px">
+        <div style="display:flex;justify-content:space-between;padding:5px 9px;background:#f8fafc;border-radius:5px">
+          <span style="color:#475569">Total tonnage (supply)</span><strong>${z.supply.toLocaleString()} t</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:5px 9px;background:#f8fafc;border-radius:5px">
+          <span style="color:#475569">Total demand</span><strong>${z.demand.toLocaleString()} t</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:5px 9px;background:#f8fafc;border-radius:5px">
+          <span style="color:#475569">Matched tonnage</span><strong style="color:#166534">${z.matched.toLocaleString()} t</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:5px 9px;border-radius:5px;border:1px solid ${unmetBorder};background:${unmetBg}">
+          <span style="color:#475569;font-weight:600">Unfulfilled demand</span>
+          <strong style="color:${unmetColor}">${z.unmet.toLocaleString()} t</strong>
+        </div>
+      </div>
+    </div>`).openOn(sgMap);
+  document.querySelectorAll('.zone-row').forEach((r,idx)=>r.classList.toggle('selected',idx===i));
+}
+// keep old name as alias for sidebar click
+function selectMapZone(i){showZonePopup(i);}
+function renderSidebar(){
+  const zones=ZONE_DATA[currentSlot].map(derive);
+  const tS=zones.reduce((a,z)=>a+z.supply,0), tM=zones.reduce((a,z)=>a+z.matched,0);
+  const tUn=zones.reduce((a,z)=>a+z.unused,0), tUmet=zones.reduce((a,z)=>a+z.unmet,0);
+  const tKm=zones.reduce((a,z)=>a+z.kmSaved,0), util=Math.round(tM/tS*100);
+  const tTonnage=zones.reduce((a,z)=>a+z.supply,0);
+  const tMatched=zones.reduce((a,z)=>a+z.matched,0);
+  document.getElementById('summary-stats').innerHTML=`
+    <div style="background:#f8fafc;border-radius:7px;padding:7px 9px"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Total Trucks</p><p style="font-size:17px;font-weight:800;color:#1e293b;margin:0">${zones.reduce((a,z)=>a+z.trucks,0)}</p></div>
+    <div style="background:#f8fafc;border-radius:7px;padding:7px 9px"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Total Tonnage</p><p style="font-size:17px;font-weight:800;color:#1e293b;margin:0">${(tTonnage/1000).toFixed(1)}kt</p></div>
+    <div style="background:${util>=70?'#f0fdf4':util>=50?'#fffbeb':'#fef2f2'};border-radius:7px;padding:7px 9px"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Utilisation</p><p style="font-size:17px;font-weight:800;color:${utilColor(util)};margin:0">${util}%</p><p style="font-size:8px;color:#94a3b8;margin:0">matched/supply</p></div>
+    <div style="background:${tUmet>0?'#fef2f2':'#f0fdf4'};border-radius:7px;padding:7px 9px"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Unfulfilled Demand</p><p style="font-size:17px;font-weight:800;color:${tUmet>0?'#dc2626':'#166534'};margin:0">${tUmet.toLocaleString()}t</p></div>
+    <div onclick="showKmBreakdown(null,'${currentSlot}')" style="grid-column:span 2;background:#eff6ff;border-radius:7px;padding:7px 9px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border:1px solid #bfdbfe;transition:background .12s" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><p style="font-size:11px;font-weight:600;color:#475569;margin:0">Km saved today <span style="font-size:9px;color:#93c5fd">↗ see how</span></p><p style="font-size:13px;font-weight:700;color:#1d4ed8;margin:0">${tKm.toLocaleString()} km</p></div>`;
+  const sorted=[...zones].map((z,i)=>({...z,origIdx:i})).sort((a,b)=>b.unmet-a.unmet);
+  document.getElementById('zone-list').innerHTML=sorted.map(z=>`
+    <div class="zone-row ${z.origIdx===selZone?'selected':''}" onclick="showZonePopup(${z.origIdx})" style="padding:9px 14px;border-bottom:1px solid #f5f3f0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <div><p style="font-size:11px;font-weight:600;color:#1e293b;margin:0 0 1px">${z.name}</p><p style="font-size:9px;color:#94a3b8;margin:0">${z.type}</p></div>
+        <div style="text-align:right">
+          <span style="font-size:11px;font-weight:700;color:${utilColor(z.demandSat)}">${z.demandSat}%</span>
+          <p style="font-size:8px;color:#94a3b8;margin:0">demand met</p>
+        </div>
+      </div>
+      <div class="util-bar"><div class="util-fill" style="width:${z.demandSat}%;background:${utilColor(z.demandSat)}"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:#94a3b8">
+        <span>Unmet: <strong style="color:${z.unmet>0?'#dc2626':'#16a34a'}">${z.unmet.toLocaleString()}t</strong></span>
+        <span>Util: <strong style="color:#475569">${z.util}%</strong></span>
+        <span>${z.trucks} trucks</span>
+      </div>
+    </div>`).join('');
+}
+function setSlot(btn,slot){
+  currentSlot=slot; selZone=null;
+  document.querySelectorAll('.slot-btn').forEach(b=>{b.style.background='#fff';b.style.color='#64748b';b.style.border='1px solid #e2e8f0';});
+  btn.style.background='#1d4ed8'; btn.style.color='#fff'; btn.style.border='none';
+  if(sgMap){sgMap.closePopup();renderPolygons();renderSidebar();}
+}
+function showReg(){
+  document.getElementById('portal-wrap').style.display='none';
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('reg-screen').classList.add('active');
+  setTimeout(()=>{initMap();sgMap.invalidateSize();},80);
+}
+function hideReg(){
+  document.getElementById('reg-screen').classList.remove('active');
+  document.getElementById('login-screen').style.display='flex';
+  const btn=document.getElementById('login-btn');
+  if(btn){btn.textContent='Sign In →';btn.style.opacity='1';btn.style.pointerEvents='auto';}
+}
+
+// ── Init ──────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  buildPills('pickup-pills', pickupZones);
+  buildPills('dropoff-pills', dropoffZones);
+  const d=new Date(); d.setDate(d.getDate()+1);
+  document.getElementById('delivery-date').value=d.toISOString().split('T')[0];
+  selectRole('demand'); // trigger autofill on load
+});
+</script>
+</body>
+</html>
