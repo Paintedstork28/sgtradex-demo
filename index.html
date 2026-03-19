@@ -211,9 +211,22 @@
           <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin:0 0 3px">Find available trucks</h2>
           <p style="font-size:11px;color:#94a3b8;margin:0">Your details are encrypted. Hauliers see only that a match exists.</p>
         </div>
-        <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
-          <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px">Pickup Zone</label><div id="pickup-pills" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
-          <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px">Dropoff Zone</label><div id="dropoff-pills" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+        <div style="padding:12px 20px 0">
+          <button onclick="applyDemandProfile()" style="width:100%;padding:9px 12px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;font-size:11px;font-weight:600;cursor:pointer;text-align:left">
+            ↩ Use saved preferences — Jurong → Woodlands · Morning · 3 trucks
+          </button>
+        </div>
+        <div style="padding:14px 20px 0;display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px">Pickup Zone</label>
+            <div id="pickup-pills" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+            <input id="pickup-address" type="text" placeholder="Exact pickup address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fafaf8"/>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px">Dropoff Zone</label>
+            <div id="dropoff-pills" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+            <input id="dropoff-address" type="text" placeholder="Exact dropoff address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fafaf8"/>
+          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Date</label><input type="date" id="delivery-date" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/></div>
             <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Time Slot</label>
@@ -653,6 +666,147 @@ let decliningId = null;
 // stored chosen reason before confirm
 let chosenReason = {};
 
+function renderProfileSection(editMode) {
+  const sec = document.getElementById('demand-profile-section');
+  if (!sec) return;
+
+  if (editMode) {
+    // ── EDIT FORM ──────────────────────────────────
+    const allZones = [...pickupZones, ...dropoffZones];
+    const p = demandProfile || {};
+    sec.innerHTML = `
+      <div style="background:#fff;border-radius:16px;border:1.5px solid #bfdbfe;padding:16px 18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">Edit default request settings</p>
+          <button onclick="renderProfileSection(false)" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+
+          <div>
+            <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Pickup zone</label>
+            <div id="ep-pickup-pills" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px">
+              ${[...pickupZones,...dropoffZones].map(z => `<span class="zone-pill${p.pickupZone===z?' selected':''}" onclick="epSelectZone(this,'pickup')">${z}</span>`).join('')}
+            </div>
+            <input id="ep-pickup-addr" type="text" value="${p.pickupAddress||''}" placeholder="Exact pickup address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fafaf8"/>
+          </div>
+
+          <div>
+            <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Dropoff zone</label>
+            <div id="ep-dropoff-pills" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px">
+              ${[...pickupZones,...dropoffZones].map(z => `<span class="zone-pill${p.dropoffZone===z?' selected':''}" onclick="epSelectZone(this,'dropoff')">${z}</span>`).join('')}
+            </div>
+            <input id="ep-dropoff-addr" type="text" value="${p.dropoffAddress||''}" placeholder="Exact dropoff address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fafaf8"/>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">Default date</label>
+              <input type="date" id="ep-date" value="${p.date||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/>
+            </div>
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">Time slot</label>
+              <select id="ep-slot" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151">
+                <option ${p.slot==='Morning (8am–12pm)'?'selected':''}>Morning (8am–12pm)</option>
+                <option ${p.slot==='Afternoon (12pm–4pm)'?'selected':''}>Afternoon (12pm–4pm)</option>
+                <option ${p.slot==='Evening (4pm–8pm)'?'selected':''}>Evening (4pm–8pm)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">No. of trucks</label>
+              <input type="number" id="ep-trucks" min="1" max="50" value="${p.trucks||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/>
+            </div>
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">Tons / truck</label>
+              <input type="number" id="ep-capacity" min="1" max="30" value="${p.capacity||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/>
+            </div>
+          </div>
+
+          <button onclick="saveDemandProfile()" style="width:100%;padding:11px;border-radius:10px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Save settings</button>
+        </div>
+      </div>`;
+
+  } else {
+    // ── DISPLAY CARD ───────────────────────────────
+    if (!demandProfile) {
+      sec.innerHTML = `
+        <div style="background:#fffbeb;border:1.5px dashed #fde68a;border-radius:14px;padding:16px 18px;text-align:center">
+          <p style="font-size:13px;font-weight:700;color:#92400e;margin:0 0 4px">Set your default request</p>
+          <p style="font-size:11px;color:#a16207;margin:0 0 12px">Save your typical pickup/dropoff, load size, and time slot — pre-fills your next request in one tap.</p>
+          <button onclick="renderProfileSection(true)" style="font-size:12px;font-weight:600;color:#92400e;background:#fef3c7;border:1px solid #fde68a;padding:8px 16px;border-radius:9px;cursor:pointer">Set up now →</button>
+        </div>`;
+      return;
+    }
+    const p = demandProfile;
+    const tons = (p.trucks || 0) * (p.capacity || 0);
+    sec.innerHTML = `
+      <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden">
+        <div style="padding:11px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
+          <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">Default request settings</p>
+          <button onclick="renderProfileSection(true)" style="font-size:10px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;cursor:pointer">Edit</button>
+        </div>
+        <div style="padding:12px 16px;display:flex;flex-direction:column;gap:7px">
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <div style="flex:1">
+              <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 2px">Pickup</p>
+              <p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 1px">${p.pickupZone}</p>
+              <p style="font-size:10px;color:#64748b;margin:0">${p.pickupAddress}</p>
+            </div>
+            <div style="padding-top:14px;color:#94a3b8;font-size:14px">→</div>
+            <div style="flex:1">
+              <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 2px">Dropoff</p>
+              <p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 1px">${p.dropoffZone}</p>
+              <p style="font-size:10px;color:#64748b;margin:0">${p.dropoffAddress}</p>
+            </div>
+          </div>
+          <div style="height:1px;background:#f0ede8"></div>
+          <div style="display:flex;gap:14px;font-size:11px">
+            <span style="color:#64748b">${p.slot.split(' ')[0]}</span>
+            <span style="color:#64748b">${p.trucks} trucks</span>
+            <span style="color:#64748b">${tons > 0 ? tons+'t total' : ''}</span>
+          </div>
+        </div>
+        <div style="padding:0 16px 14px">
+          <button onclick="switchTab('tab-new');showFormStep('s1');applyDemandProfile()" style="width:100%;padding:9px;border-radius:9px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:600;border:1px solid #bfdbfe;cursor:pointer">Use these settings for a new request →</button>
+        </div>
+      </div>`;
+  }
+}
+
+function epSelectZone(el, side) {
+  const groupId = side === 'pickup' ? 'ep-pickup-pills' : 'ep-dropoff-pills';
+  document.getElementById(groupId).querySelectorAll('.zone-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  const zone = el.textContent.trim();
+  const addrId = side === 'pickup' ? 'ep-pickup-addr' : 'ep-dropoff-addr';
+  const inp = document.getElementById(addrId);
+  if (inp && !inp.value) inp.value = ZONE_ADDRESSES[zone] || '';
+}
+
+function saveDemandProfile() {
+  const pickupSel  = document.querySelector('#ep-pickup-pills .zone-pill.selected');
+  const dropoffSel = document.querySelector('#ep-dropoff-pills .zone-pill.selected');
+  demandProfile = {
+    pickupZone:     pickupSel  ? pickupSel.textContent.trim()  : '',
+    pickupAddress:  document.getElementById('ep-pickup-addr').value.trim(),
+    dropoffZone:    dropoffSel ? dropoffSel.textContent.trim() : '',
+    dropoffAddress: document.getElementById('ep-dropoff-addr').value.trim(),
+    date:           document.getElementById('ep-date').value,
+    slot:           document.getElementById('ep-slot').value,
+    trucks:         parseInt(document.getElementById('ep-trucks').value) || 0,
+    capacity:       parseInt(document.getElementById('ep-capacity').value) || 0,
+  };
+  renderProfileSection(false);
+  // also update the "use saved settings" button label in New Request
+  const btn = document.querySelector('#s1 button[onclick*="applyDemandProfile"]');
+  if (btn && demandProfile.pickupZone) {
+    const tons = demandProfile.trucks * demandProfile.capacity;
+    btn.textContent = `↩ Use saved preferences — ${demandProfile.pickupZone} → ${demandProfile.dropoffZone} · ${demandProfile.slot.split(' ')[0]} · ${demandProfile.trucks} trucks`;
+  }
+}
+
 function renderDemandHome() {
   const c = document.getElementById('demand-home-content');
   if (!c) return;
@@ -713,16 +867,20 @@ function renderDemandHome() {
         </div>
       </div>`).join('')}
 
+    <!-- Default request settings card -->
+    <div id="demand-profile-section" style="margin-top:4px"></div>
+
     <!-- Privacy note -->
-    <div style="background:#f8f7f4;border-radius:12px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px;margin-top:4px">
+    <div style="background:#f8f7f4;border-radius:12px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px;margin-top:10px">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       <p style="font-size:11px;color:#94a3b8;margin:0;line-height:1.5">Matching runs on encrypted data. Hauliers see only that a match exists — your cargo details, volumes, and routes are never shared until you confirm.</p>
     </div>`;
 
-  // Render pipelines after DOM is ready
+  // Render pipelines + profile section after DOM is ready
   activeRequests.forEach((r, idx) => {
     setTimeout(() => renderPipeline('dhome-pipeline-'+idx, r.step), 0);
   });
+  setTimeout(() => renderProfileSection(false), 0);
 }
 
 function renderSupplyHome() {
@@ -1074,6 +1232,34 @@ function acceptIncoming(btn){} // legacy no-op
 // ══════════════════════════════════════════════
 //  DEMAND PORTAL (new request flow)
 // ══════════════════════════════════════════════
+// Default addresses per zone — autofilled when zone is selected
+const ZONE_ADDRESSES = {
+  'Jurong':        '31 Jurong Port Road, Singapore 619115',
+  'Tuas':          '30 Tuas Ave 1, Singapore 639494',
+  'Pasir Panjang': '12 Pasir Panjang Road, Singapore 117438',
+  'Brani':         '1 Keppel Distripark, Singapore 099452',
+  'Tanjong Pagar': '6 Tanjong Pagar Road, Singapore 088516',
+  'Woodlands':     '21 Woodlands Close, Singapore 737854',
+  'Yishun':        '3 Yishun Industrial Street 1, Singapore 768160',
+  'Seletar':       '6 Seletar Aerospace View, Singapore 797549',
+  'Changi':        '30 Airport Boulevard, Singapore 819642',
+  'Tampines':      '3 Tampines Industrial Avenue 2, Singapore 528763',
+  'Ang Mo Kio':    '2 Ang Mo Kio Industrial Park 2, Singapore 569506',
+  'Central':       '33 Ubi Avenue 3, Singapore 408868',
+};
+
+// Saved demand preferences — pre-populated for demo
+let demandProfile = {
+  pickupZone:     'Jurong',
+  pickupAddress:  '31 Jurong Port Road, Singapore 619115',
+  dropoffZone:    'Woodlands',
+  dropoffAddress: '21 Woodlands Close, Singapore 737854',
+  date:           '2026-03-20',
+  slot:           'Morning (8am–12pm)',
+  trucks:         3,
+  capacity:       10,
+};
+
 const pickupZones  = ['Jurong','Tuas','Pasir Panjang','Brani','Tanjong Pagar'];
 const dropoffZones = ['Woodlands','Yishun','Seletar','Changi','Tampines'];
 let selectedHaulier = null;
@@ -1083,8 +1269,19 @@ function buildPills(id, zones) {
     `<span class="zone-pill" onclick="selectPill(this)">${z}</span>`).join('');
 }
 function selectPill(el) {
-  el.closest('div').querySelectorAll('.zone-pill').forEach(p=>p.classList.remove('selected'));
+  const group = el.closest('div');
+  group.querySelectorAll('.zone-pill').forEach(p => p.classList.remove('selected'));
   el.classList.add('selected');
+  const zone = el.textContent.trim();
+  const addr = ZONE_ADDRESSES[zone] || '';
+  // Autofill the corresponding address input
+  if (group.id === 'pickup-pills') {
+    const inp = document.getElementById('pickup-address');
+    if (inp) { inp.value = addr; inp.style.borderColor = '#bbf7d0'; }
+  } else if (group.id === 'dropoff-pills') {
+    const inp = document.getElementById('dropoff-address');
+    if (inp) { inp.value = addr; inp.style.borderColor = '#bbf7d0'; }
+  }
 }
 function calcTonnage() {
   const t=parseInt(document.getElementById('num-trucks').value)||0;
@@ -1127,6 +1324,28 @@ function confirmMatch(){
     if(t.id==='tab-active' && tabs[i]) tabs[i].textContent='Active (3)';
   });
 }
+function applyDemandProfile() {
+  if (!demandProfile) return;
+  // Select zone pills
+  document.querySelectorAll('#pickup-pills .zone-pill').forEach(p => {
+    p.classList.toggle('selected', p.textContent.trim() === demandProfile.pickupZone);
+  });
+  document.querySelectorAll('#dropoff-pills .zone-pill').forEach(p => {
+    p.classList.toggle('selected', p.textContent.trim() === demandProfile.dropoffZone);
+  });
+  // Fill addresses
+  const pa = document.getElementById('pickup-address');
+  const da = document.getElementById('dropoff-address');
+  if (pa) { pa.value = demandProfile.pickupAddress; pa.style.borderColor = '#bbf7d0'; }
+  if (da) { da.value = demandProfile.dropoffAddress; da.style.borderColor = '#bbf7d0'; }
+  // Fill other fields
+  document.getElementById('delivery-date').value = demandProfile.date;
+  document.getElementById('time-slot').value = demandProfile.slot;
+  document.getElementById('num-trucks').value = demandProfile.trucks;
+  document.getElementById('capacity').value = demandProfile.capacity;
+  calcTonnage();
+}
+
 function goNewRequest(){
   selectedHaulier=null;
   document.getElementById('confirm-bar').style.display='none';
