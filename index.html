@@ -309,6 +309,11 @@
       <div id="incoming-list" style="display:flex;flex-direction:column;gap:10px"></div>
     </div>
 
+    <!-- ── TAB: SCHEDULE & CAPACITY (supply only) ── -->
+    <div id="tab-schedule" class="tab-pane">
+      <div id="schedule-tab-content"></div>
+    </div>
+
     <!-- ── TAB: REQUESTS (supply only) ── -->
     <div id="tab-requests" class="tab-pane">
       <div id="requests-summary" style="margin-bottom:12px"></div>
@@ -504,7 +509,7 @@ const CREDS = {
 
 const TABS = {
   demand:    [{id:'tab-demand-home', label:'Overview'}, {id:'tab-new', label:'New Request'}, {id:'tab-active', label:'Active (2)'}, {id:'tab-history', label:'History'}],
-  supply:    [{id:'tab-home', label:'Overview'},{id:'tab-incoming', label:'Incoming (2)'},{id:'tab-requests', label:'Requests'},{id:'tab-active', label:'Active Jobs'}],
+  supply:    [{id:'tab-home', label:'Overview'},{id:'tab-incoming', label:'Incoming (2)'},{id:'tab-schedule', label:'Schedule'},{id:'tab-requests', label:'Requests'},{id:'tab-active', label:'Active Jobs'}],
   regulator: [],
 };
 
@@ -632,6 +637,7 @@ function switchTab(tabId) {
     const btns = document.querySelectorAll('.tab-btn');
     if (btns[i]) btns[i].classList.toggle('active', t.id === tabId);
   });
+  if (tabId === 'tab-schedule') renderScheduleTab();
 }
 
 function doLogout() {
@@ -960,12 +966,6 @@ function renderSupplyHome() {
       </div>
     </div>` : ''}
 
-    <!-- Supply schedule section (today's availability) -->
-    <div id="supply-schedule-section" style="margin-bottom:14px"></div>
-
-    <!-- Supply profile section (fleet details) -->
-    <div id="supply-profile-section" style="margin-bottom:14px"></div>
-
     <!-- Privacy note -->
     <div style="background:#f8f7f4;border-radius:12px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -976,147 +976,59 @@ function renderSupplyHome() {
   if (activeJob) {
     setTimeout(() => renderPipeline('home-pipeline', activeJob.step || 0), 0);
   }
-  setTimeout(() => { renderSupplyScheduleSection(false); renderSupplyProfileSection(false); }, 0);
 }
 
-// ── SUPPLY DAILY SCHEDULE SECTION ────────────────────────────────────────────
+// ── SUPPLY SCHEDULE & CAPACITY TAB ───────────────────────────────────────────
 const SLOT_KEYS = ['morning','afternoon','evening'];
 const SLOT_LABELS = {'morning':'Morning (8am–12pm)','afternoon':'Afternoon (12pm–4pm)','evening':'Evening (4pm–8pm)'};
 const ALL_SUPPLY_ZONES = ['Jurong','Tuas','Pasir Panjang','Brani','Tanjong Pagar','Woodlands','Yishun','Seletar','Changi','Tampines','Ang Mo Kio','Central'];
 
-function renderSupplyScheduleSection(editMode) {
-  const sec = document.getElementById('supply-schedule-section');
-  if (!sec) return;
+// Per-date overrides: { 'YYYY-MM-DD': { morning:{...}, afternoon:{...}, evening:{...} } }
+let scheduledOverrides = {};
 
-  if (editMode) {
-    const rows = SLOT_KEYS.map(key => {
-      const s = supplySchedule[key];
-      const zPills = ALL_SUPPLY_ZONES.map(z =>
-        `<span class="zone-pill${s.zones.includes(z)?' selected':''}" onclick="spToggleZone(this,'${key}')">${z}</span>`
-      ).join('');
-      return `
-        <div id="sch-slot-${key}" style="border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${SLOT_LABELS[key]}</p>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-              <span style="font-size:10px;color:#64748b">Available</span>
-              <input type="checkbox" id="sch-avail-${key}" ${s.available?'checked':''} onchange="spToggleAvail('${key}')" style="cursor:pointer">
-            </label>
-          </div>
-          <div id="sch-fields-${key}" style="${s.available?'':'display:none'}">
-            <div style="display:flex;flex-direction:column;gap:8px">
-              <div>
-                <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Start address (where your truck starts)</label>
-                <input id="sch-start-${key}" type="text" value="${s.startAddress}" placeholder="e.g. 21 Tuas Ave 1, Singapore 639504" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;color:#374151;background:#fafaf8"/>
-              </div>
-              <div>
-                <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">End address (where truck ends up)</label>
-                <input id="sch-end-${key}" type="text" value="${s.endAddress}" placeholder="e.g. 21 Woodlands Close, Singapore 737854" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;color:#374151;background:#fafaf8"/>
-              </div>
-              <div>
-                <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Trucks available this slot</label>
-                <input id="sch-trucks-${key}" type="number" min="0" max="50" value="${s.trucks}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;color:#374151"/>
-              </div>
-              <div>
-                <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Zones you can cover</label>
-                <div style="display:flex;flex-wrap:wrap;gap:5px">${zPills}</div>
-              </div>
-            </div>
-          </div>
-        </div>`;
-    }).join('');
+// Schedule tab state
+let scheduleMode = 'today'; // 'today' | 'range'
+let scheduleProfileEdit = false;
 
-    sec.innerHTML = `
-      <div style="background:#fff;border-radius:16px;border:1.5px solid #bfdbfe;padding:16px 18px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">Update today's schedule</p>
-          <button onclick="renderSupplyScheduleSection(false)" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
-        </div>
-        ${rows}
-        <button onclick="saveSupplySchedule()" style="width:100%;padding:11px;border-radius:10px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Save today's schedule</button>
-      </div>`;
-
-  } else {
-    // ── DISPLAY VIEW ──
-    const cards = SLOT_KEYS.map(key => {
-      const s = supplySchedule[key];
-      if (!s.available) {
-        return `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;background:#f8f7f4;border-radius:10px">
-            <div>
-              <p style="font-size:11px;font-weight:600;color:#94a3b8;margin:0">${SLOT_LABELS[key]}</p>
-            </div>
-            <span style="font-size:10px;font-weight:600;background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;padding:2px 8px;border-radius:20px">Unavailable</span>
-          </div>`;
-      }
-      const zoneList = s.zones.slice(0,3).join(', ') + (s.zones.length > 3 ? ` +${s.zones.length-3}` : '');
-      return `
-        <div style="padding:9px 14px;background:#f0fdf4;border-radius:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <p style="font-size:11px;font-weight:700;color:#166534;margin:0">${SLOT_LABELS[key]}</p>
-            <span style="font-size:10px;font-weight:600;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px">${s.trucks} trucks</span>
-          </div>
-          <p style="font-size:10px;color:#16a34a;margin:0">${zoneList || 'No zones set'}</p>
-        </div>`;
-    }).join('');
-
-    sec.innerHTML = `
-      <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden">
-        <div style="padding:11px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
-          <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">Today's schedule</p>
-          <button onclick="renderSupplyScheduleSection(true)" style="font-size:10px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;cursor:pointer">Update</button>
-        </div>
-        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:7px">
-          ${cards}
-        </div>
-      </div>`;
-  }
+function isoDate(d) {
+  return d.toISOString().split('T')[0];
+}
+function todayIso() { return isoDate(new Date()); }
+function addDays(iso, n) {
+  const d = new Date(iso); d.setDate(d.getDate() + n); return isoDate(d);
+}
+function shortDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
 }
 
-function spToggleAvail(key) {
-  const checked = document.getElementById(`sch-avail-${key}`).checked;
-  const fields = document.getElementById(`sch-fields-${key}`);
-  if (fields) fields.style.display = checked ? '' : 'none';
+// Get effective schedule for a date (override first, fallback to supplySchedule defaults)
+function scheduleForDate(iso) {
+  return scheduledOverrides[iso] || JSON.parse(JSON.stringify(supplySchedule));
 }
 
-function spToggleZone(el, key) {
-  el.classList.toggle('selected');
-}
+function renderScheduleTab() {
+  const c = document.getElementById('schedule-tab-content');
+  if (!c) return;
 
-function saveSupplySchedule() {
-  SLOT_KEYS.forEach(key => {
-    const avail = document.getElementById(`sch-avail-${key}`);
-    const start = document.getElementById(`sch-start-${key}`);
-    const end   = document.getElementById(`sch-end-${key}`);
-    const trucks = document.getElementById(`sch-trucks-${key}`);
-    const available = avail ? avail.checked : false;
-    const zonePills = document.querySelectorAll(`#sch-slot-${key} .zone-pill.selected`);
-    supplySchedule[key] = {
-      available,
-      startAddress: start ? start.value.trim() : '',
-      endAddress:   end   ? end.value.trim()   : '',
-      trucks:       trucks ? parseInt(trucks.value) || 0 : 0,
-      zones:        Array.from(zonePills).map(p => p.textContent.trim()),
-    };
-  });
-  renderSupplyScheduleSection(false);
-}
+  const today = todayIso();
 
-// ── SUPPLY FLEET PROFILE SECTION ─────────────────────────────────────────────
-function renderSupplyProfileSection(editMode) {
-  const sec = document.getElementById('supply-profile-section');
-  if (!sec) return;
+  // ── FLEET PROFILE CARD ──────────────────────────────────────────────────
+  const p = supplyProfile;
+  const zoneList = (p.zones||[]).slice(0,4).join(', ') + ((p.zones||[]).length > 4 ? ` +${p.zones.length-4} more` : '');
 
-  if (editMode) {
-    const p = supplyProfile || {};
+  let profileCard;
+  if (scheduleProfileEdit) {
     const zPills = ALL_SUPPLY_ZONES.map(z =>
       `<span class="zone-pill${(p.zones||[]).includes(z)?' selected':''}" onclick="this.classList.toggle('selected')">${z}</span>`
     ).join('');
-    sec.innerHTML = `
-      <div style="background:#fff;border-radius:16px;border:1.5px solid #bfdbfe;padding:16px 18px">
+    profileCard = `
+      <div style="background:#fff;border-radius:16px;border:1.5px solid #bfdbfe;padding:16px 18px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">Edit fleet profile</p>
-          <button onclick="renderSupplyProfileSection(false)" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
+          <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">Fleet profile</p>
+          <button onclick="scheduleProfileEdit=false;renderScheduleTab()" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
         </div>
         <div style="display:flex;flex-direction:column;gap:12px">
           <div>
@@ -1140,24 +1052,12 @@ function renderSupplyProfileSection(editMode) {
           <button onclick="saveSupplyProfile()" style="width:100%;padding:11px;border-radius:10px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Save fleet profile</button>
         </div>
       </div>`;
-
   } else {
-    if (!supplyProfile) {
-      sec.innerHTML = `
-        <div style="background:#fffbeb;border:1.5px dashed #fde68a;border-radius:14px;padding:16px 18px;text-align:center">
-          <p style="font-size:13px;font-weight:700;color:#92400e;margin:0 0 4px">Set up your fleet profile</p>
-          <p style="font-size:11px;color:#a16207;margin:0 0 12px">Add your home base, operating zones, and fleet size to appear in matching.</p>
-          <button onclick="renderSupplyProfileSection(true)" style="font-size:12px;font-weight:600;color:#92400e;background:#fef3c7;border:1px solid #fde68a;padding:8px 16px;border-radius:9px;cursor:pointer">Set up now →</button>
-        </div>`;
-      return;
-    }
-    const p = supplyProfile;
-    const zoneList = (p.zones||[]).slice(0,4).join(', ') + ((p.zones||[]).length > 4 ? ` +${p.zones.length-4} more` : '');
-    sec.innerHTML = `
-      <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden">
+    profileCard = `
+      <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:14px">
         <div style="padding:11px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
           <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">Fleet profile</p>
-          <button onclick="renderSupplyProfileSection(true)" style="font-size:10px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;cursor:pointer">Edit</button>
+          <button onclick="scheduleProfileEdit=true;renderScheduleTab()" style="font-size:10px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;cursor:pointer">Edit</button>
         </div>
         <div style="padding:12px 16px;display:flex;flex-direction:column;gap:7px">
           <div>
@@ -1178,17 +1078,177 @@ function renderSupplyProfileSection(editMode) {
         </div>
       </div>`;
   }
+
+  // ── MODE TOGGLE ──────────────────────────────────────────────────────────
+  const modeToggle = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;background:#f1f5f9;border-radius:10px;padding:3px;margin-bottom:14px">
+      <button onclick="scheduleMode='today';renderScheduleTab()" style="padding:7px;border-radius:8px;font-size:11px;font-weight:600;border:none;cursor:pointer;transition:all .12s;${scheduleMode==='today'?'background:#fff;color:#1e293b;box-shadow:0 1px 3px #0002':'background:transparent;color:#64748b'}">Update for today</button>
+      <button onclick="scheduleMode='range';renderScheduleTab()" style="padding:7px;border-radius:8px;font-size:11px;font-weight:600;border:none;cursor:pointer;transition:all .12s;${scheduleMode==='range'?'background:#fff;color:#1e293b;box-shadow:0 1px 3px #0002':'background:transparent;color:#64748b'}">Set for a date range</button>
+    </div>`;
+
+  // ── SLOT FORM (shared by both modes) ────────────────────────────────────
+  // For today mode, use supplySchedule; for range mode, use supplySchedule as default
+  const baseSchedule = scheduleMode === 'today' ? supplySchedule : supplySchedule;
+
+  const slotForm = SLOT_KEYS.map(key => {
+    const s = baseSchedule[key];
+    const zPills = ALL_SUPPLY_ZONES.map(z =>
+      `<span class="zone-pill${s.zones.includes(z)?' selected':''}" onclick="this.classList.toggle('selected')" data-slot="${key}" data-zone="${z}">${z}</span>`
+    ).join('');
+    return `
+      <div id="sch-slot-${key}" style="border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${SLOT_LABELS[key]}</p>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <span style="font-size:10px;color:#64748b">Available</span>
+            <input type="checkbox" id="sch-avail-${key}" ${s.available?'checked':''} onchange="spToggleAvail('${key}')" style="cursor:pointer">
+          </label>
+        </div>
+        <div id="sch-fields-${key}" style="${s.available?'':'display:none'}">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Start address</label>
+              <input id="sch-start-${key}" type="text" value="${s.startAddress}" placeholder="Where this slot's trucks start" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;color:#374151;background:#fafaf8"/>
+            </div>
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">End address</label>
+              <input id="sch-end-${key}" type="text" value="${s.endAddress}" placeholder="Where trucks end up" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;color:#374151;background:#fafaf8"/>
+            </div>
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Trucks available</label>
+              <input id="sch-trucks-${key}" type="number" min="0" max="50" value="${s.trucks}" style="width:80px;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;color:#374151"/>
+            </div>
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Zones covered</label>
+              <div style="display:flex;flex-wrap:wrap;gap:5px">${zPills}</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // ── DATE RANGE PICKER (range mode only) ─────────────────────────────────
+  const maxDate = addDays(today, 30);
+  const datePicker = scheduleMode === 'range' ? `
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:center">
+      <div style="flex:1">
+        <label style="font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">From</label>
+        <input type="date" id="range-from" value="${today}" min="${today}" max="${maxDate}" style="width:100%;font-size:11px;border:1px solid #fde68a;border-radius:7px;padding:6px 8px;color:#374151"/>
+      </div>
+      <div style="flex:1">
+        <label style="font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">To</label>
+        <input type="date" id="range-to" value="${maxDate}" min="${today}" max="${maxDate}" style="width:100%;font-size:11px;border:1px solid #fde68a;border-radius:7px;padding:6px 8px;color:#374151"/>
+      </div>
+    </div>
+    <p style="font-size:10px;color:#92400e;margin:0 0 12px;background:#fffbeb;padding:7px 12px;border-radius:8px">Set availability for every day in this range. This becomes your default schedule — you can override individual days later.</p>` : '';
+
+  const saveLabel = scheduleMode === 'today' ? 'Save today\'s schedule' : 'Apply to selected date range';
+  const saveAction = scheduleMode === 'today' ? 'saveSupplyScheduleToday()' : 'saveSupplyScheduleRange()';
+
+  // ── 7-DAY UPCOMING PREVIEW ───────────────────────────────────────────────
+  const upcomingDays = Array.from({length:7}, (_,i) => addDays(today, i));
+  const dayCards = upcomingDays.map(iso => {
+    const sch = scheduleForDate(iso);
+    const dots = SLOT_KEYS.map(k => {
+      const color = sch[k].available ? '#16a34a' : '#cbd5e1';
+      return `<span title="${SLOT_LABELS[k]}" style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></span>`;
+    }).join('');
+    const label = iso === today ? 'Today' : iso === addDays(today,1) ? 'Tomorrow' : shortDate(iso);
+    const hasOverride = !!scheduledOverrides[iso];
+    return `
+      <div style="background:#fff;border-radius:10px;border:1px solid ${hasOverride?'#bfdbfe':'#e5e0d8'};padding:10px 10px;text-align:center;min-width:0">
+        <p style="font-size:9px;font-weight:700;color:${iso===today?'#1d4ed8':'#64748b'};text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</p>
+        <div style="display:flex;justify-content:center;gap:4px">${dots}</div>
+        ${hasOverride?`<p style="font-size:8px;color:#1d4ed8;margin:4px 0 0;font-weight:600">Custom</p>`:''}
+      </div>`;
+  }).join('');
+
+  // ── ASSEMBLE ─────────────────────────────────────────────────────────────
+  c.innerHTML = `
+    ${profileCard}
+
+    <!-- Schedule section -->
+    <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:14px">
+      <div style="padding:12px 16px 12px;background:#f8f7f4;border-bottom:1px solid #f0ede8">
+        <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">Update schedule & capacity</p>
+        ${modeToggle}
+        ${datePicker}
+        ${slotForm}
+        <button onclick="${saveAction}" style="width:100%;padding:11px;border-radius:10px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">${saveLabel}</button>
+      </div>
+    </div>
+
+    <!-- 7-day upcoming preview -->
+    <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden">
+      <div style="padding:11px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8">
+        <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">Next 7 days</p>
+        <p style="font-size:10px;color:#94a3b8;margin:3px 0 0">Green dot = available that slot · Custom = day-specific override</p>
+      </div>
+      <div style="padding:10px 12px">
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">${dayCards}</div>
+      </div>
+    </div>`;
+}
+
+function spToggleAvail(key) {
+  const checked = document.getElementById(`sch-avail-${key}`).checked;
+  const fields = document.getElementById(`sch-fields-${key}`);
+  if (fields) fields.style.display = checked ? '' : 'none';
+}
+
+function _readSlotForm() {
+  const result = {};
+  SLOT_KEYS.forEach(key => {
+    const avail  = document.getElementById(`sch-avail-${key}`);
+    const start  = document.getElementById(`sch-start-${key}`);
+    const end    = document.getElementById(`sch-end-${key}`);
+    const trucks = document.getElementById(`sch-trucks-${key}`);
+    const available = avail ? avail.checked : false;
+    const zonePills = document.querySelectorAll(`#sch-slot-${key} .zone-pill.selected`);
+    result[key] = {
+      available,
+      startAddress: start  ? start.value.trim()          : '',
+      endAddress:   end    ? end.value.trim()             : '',
+      trucks:       trucks ? parseInt(trucks.value) || 0 : 0,
+      zones:        Array.from(zonePills).map(p => p.textContent.trim()),
+    };
+  });
+  return result;
+}
+
+function saveSupplyScheduleToday() {
+  const data = _readSlotForm();
+  Object.assign(supplySchedule, data);
+  // Also store as today's override so the calendar reflects it
+  scheduledOverrides[todayIso()] = JSON.parse(JSON.stringify(data));
+  renderScheduleTab();
+}
+
+function saveSupplyScheduleRange() {
+  const from = document.getElementById('range-from')?.value || todayIso();
+  const to   = document.getElementById('range-to')?.value   || todayIso();
+  const data = _readSlotForm();
+  // Apply to every day in range
+  let cur = from;
+  while (cur <= to) {
+    scheduledOverrides[cur] = JSON.parse(JSON.stringify(data));
+    cur = addDays(cur, 1);
+  }
+  // Also update the base schedule so it becomes the new default
+  Object.assign(supplySchedule, data);
+  renderScheduleTab();
 }
 
 function saveSupplyProfile() {
   const zonePills = document.querySelectorAll('#sp-zone-pills .zone-pill.selected');
   supplyProfile = {
-    homeBase:  document.getElementById('sp-home').value.trim(),
+    homeBase:  (document.getElementById('sp-home')?.value || '').trim(),
     zones:     Array.from(zonePills).map(p => p.textContent.trim()),
-    fleetSize: parseInt(document.getElementById('sp-fleet').value) || 0,
-    capacity:  parseInt(document.getElementById('sp-cap').value) || 0,
+    fleetSize: parseInt(document.getElementById('sp-fleet')?.value) || 0,
+    capacity:  parseInt(document.getElementById('sp-cap')?.value)   || 0,
   };
-  renderSupplyProfileSection(false);
+  scheduleProfileEdit = false;
+  renderScheduleTab();
 }
 
 function updateIncomingBadge() {
