@@ -198,6 +198,11 @@
   <!-- Tab content -->
   <div style="width:100%;max-width:480px;padding:20px 16px;flex:1">
 
+    <!-- ── TAB: SPARE CAPACITY (supply only) ── -->
+    <div id="tab-spare" class="tab-pane">
+      <div id="spare-capacity-content"></div>
+    </div>
+
     <!-- ── TAB: WEEKLY SCHEDULE (demand) ── -->
     <div id="tab-demand-schedule" class="tab-pane">
       <div id="demand-schedule-content"></div>
@@ -524,7 +529,7 @@ const CREDS = {
 
 const TABS = {
   demand:    [{id:'tab-demand-schedule', label:'My Schedule'}, {id:'tab-new', label:'New Request'}, {id:'tab-active', label:'Active (2)'}, {id:'tab-history', label:'History'}],
-  supply:    [{id:'tab-schedule', label:'My Schedule'}, {id:'tab-incoming', label:'Incoming (2)'}, {id:'tab-requests', label:'Requests'}, {id:'tab-active', label:'Active Jobs'}],
+  supply:    [{id:'tab-schedule', label:'My Schedule'}, {id:'tab-spare', label:'Spare Capacity'}, {id:'tab-incoming', label:'Incoming (2)'}, {id:'tab-requests', label:'Requests'}, {id:'tab-active', label:'Active Jobs'}],
   regulator: [],
 };
 
@@ -629,6 +634,7 @@ function setupPortal(role) {
   // Role-specific init
   if (role === 'supply') {
     renderSupplyHome();
+    renderSpareCapacityTab();
     renderIncoming();
     renderRequests();
     updateRequestsBadge();
@@ -655,6 +661,7 @@ function switchTab(tabId) {
   });
   if (tabId === 'tab-schedule') renderScheduleTab();
   if (tabId === 'tab-demand-schedule') renderDemandScheduleTab();
+  if (tabId === 'tab-spare') renderSpareCapacityTab();
 }
 
 function doLogout() {
@@ -838,119 +845,88 @@ function renderDemandScheduleTab() {
   const todayDayIdx = (today.getDay() + 6) % 7;
   const todayDayName = DAYS_OF_WEEK[todayDayIdx];
 
-  // Day selector
   const dayPills = DAYS_OF_WEEK.map(d => {
+    const count = demandScheduleRoutes.filter(r => r.day === d).length;
+    const isSel = d === selectedDemandDay;
     const isToday = d === todayDayName;
-    const isSel   = d === selectedDemandDay;
-    const dayData = myDemandWeek[d];
-    const totalTrucks = SLOT_KEYS.reduce((sum, k) => sum + ((dayData[k]||{}).needed ? (dayData[k].trucks||0) : 0), 0);
-    return `<div onclick="selectedDemandDay='${d}';editingDemandSlot=null;renderDemandScheduleTab()" style="min-width:44px;text-align:center;padding:8px 4px;border-radius:10px;cursor:pointer;border:2px solid ${isSel?'#1d4ed8':'transparent'};background:${isSel?'#eff6ff':'transparent'};transition:all .12s">
-      <p style="font-size:10px;font-weight:700;color:${isSel?'#1d4ed8':'#64748b'};margin:0 0 3px">${d}</p>
-      <p style="font-size:13px;font-weight:800;color:${totalTrucks>0?'#1d4ed8':'#cbd5e1'};margin:0">${totalTrucks||'—'}</p>
+    return `<div onclick="selectedDemandDay='${d}';addingDemandRoute=false;renderDemandScheduleTab()" style="min-width:44px;text-align:center;padding:8px 4px;border-radius:10px;cursor:pointer;border:2px solid ${isSel?'#1d4ed8':'transparent'};background:${isSel?'#eff6ff':'transparent'}">
+      <p style="font-size:10px;font-weight:700;color:${isSel?'#1d4ed8':'#64748b'};margin:0 0 2px">${d}${isToday?'*':''}</p>
+      <p style="font-size:13px;font-weight:800;color:${count>0?'#1e293b':'#cbd5e1'};margin:0">${count||'—'}</p>
     </div>`;
   }).join('');
 
-  const dayData = myDemandWeek[selectedDemandDay];
-  const SLOT_LABELS_LOCAL = {'morning':'Morning (8am–12pm)','afternoon':'Afternoon (12pm–4pm)','evening':'Evening (4pm–8pm)'};
+  const dayRoutes = demandScheduleRoutes.filter(r => r.day === selectedDemandDay);
 
-  const slotCards = SLOT_KEYS.map(key => {
-    const s = dayData[key] || {};
-    const isEditing = editingDemandSlot === (selectedDemandDay + '_' + key);
-    const allZones = [...new Set([...pickupZones, ...dropoffZones])];
+  const slotSections = SLOT_KEYS.map(key => {
+    const routes = dayRoutes.filter(r => r.slot === key);
+    if (routes.length === 0 && addingDemandRoute !== (selectedDemandDay+'_'+key)) return `
+      <div style="margin-bottom:10px">
+        <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 5px">${SLOT_LABELS[key]}</p>
+        <button onclick="addingDemandRoute='${selectedDemandDay}_${key}';renderDemandScheduleTab()" style="font-size:10px;color:#1d4ed8;background:#f0f9ff;border:1px dashed #93c5fd;padding:5px 12px;border-radius:8px;cursor:pointer;width:100%">+ Add route</button>
+      </div>`;
 
-    if (isEditing) {
-      return `
-        <div style="background:#fff;border-radius:14px;border:1.5px solid #bfdbfe;padding:14px 16px;margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${SLOT_LABELS_LOCAL[key]}</p>
-            <button onclick="editingDemandSlot=null;renderDemandScheduleTab()" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
+    const routeCards = routes.map(r => `
+      <div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:10px 12px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0 0 2px">${r.truck}</p>
+            <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${r.from} → ${r.to}</p>
+            <p style="font-size:10px;color:#64748b;margin:2px 0 0">${r.tons}t capacity</p>
           </div>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="dw-needed-${key}" ${s.needed?'checked':''} onchange="document.getElementById('dw-fields-${key}').style.display=this.checked?'flex':'none'" style="cursor:pointer">
-              <span style="font-size:12px;font-weight:600;color:#374151">Trucks needed this slot</span>
-            </label>
-            <div id="dw-fields-${key}" style="display:${s.needed?'flex':'none'};flex-direction:column;gap:8px">
-              <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">No. of trucks</label>
-                <input type="number" id="dw-trucks-${key}" min="0" max="50" value="${s.trucks||0}" style="width:80px;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 10px"/></div>
-              <div>
-                <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Pickup zone</label>
-                <div id="dw-pickup-pills-${key}" style="display:flex;flex-wrap:wrap;gap:5px">
-                  ${allZones.map(z => `<span class="zone-pill${s.pickupZone===z?' selected':''}" onclick="dwSelectZone(this,'${key}','pickup')">${z}</span>`).join('')}
-                </div>
-                <input type="text" id="dw-pickup-addr-${key}" value="${s.pickupAddr||''}" placeholder="Exact pickup address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;margin-top:6px;background:#fafaf8"/>
-              </div>
-              <div>
-                <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Dropoff zone</label>
-                <div id="dw-dropoff-pills-${key}" style="display:flex;flex-wrap:wrap;gap:5px">
-                  ${allZones.map(z => `<span class="zone-pill${s.dropoffZone===z?' selected':''}" onclick="dwSelectZone(this,'${key}','dropoff')">${z}</span>`).join('')}
-                </div>
-                <input type="text" id="dw-dropoff-addr-${key}" value="${s.dropoffAddr||''}" placeholder="Exact dropoff address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;margin-top:6px;background:#fafaf8"/>
-              </div>
-            </div>
-            <button onclick="saveDemandSlot('${selectedDemandDay}','${key}')" style="width:100%;padding:10px;border-radius:9px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Save</button>
-          </div>
-        </div>`;
-    }
-    // Display card
-    return `
-      <div style="background:${s.needed?'#eff6ff':'#f8f7f4'};border-radius:12px;border:1px solid ${s.needed?'#bfdbfe':'#e5e0d8'};padding:12px 14px;margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:10px;height:10px;border-radius:50%;background:${s.needed?'#1d4ed8':'#e2e8f0'};flex-shrink:0"></div>
-            <div>
-              <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0">${SLOT_LABELS_LOCAL[key]}</p>
-              ${s.needed
-                ? `<p style="font-size:10px;color:#1d4ed8;margin:2px 0 0">${s.trucks} truck${s.trucks!==1?'s':''} needed · ${s.pickupZone||''} → ${s.dropoffZone||''}</p>
-                   <p style="font-size:9px;color:#64748b;margin:2px 0 0">${s.pickupAddr ? s.pickupAddr.split(',')[0] : ''}</p>`
-                : `<p style="font-size:10px;color:#94a3b8;margin:2px 0 0">No request</p>`
-              }
-            </div>
-          </div>
-          <button onclick="editingDemandSlot='${selectedDemandDay}_${key}';renderDemandScheduleTab()" style="font-size:10px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;cursor:pointer">Edit</button>
+          <button onclick="removeDemandRoute('${r.id}')" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕</button>
         </div>
+      </div>`).join('');
+
+    return `
+      <div style="margin-bottom:12px">
+        <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 7px">${SLOT_LABELS[key]}</p>
+        ${routeCards}
+        ${addingDemandRoute === (selectedDemandDay+'_'+key) ? buildAddRouteForm(selectedDemandDay, key, 'demand') : ''}
+        <button onclick="addingDemandRoute='${selectedDemandDay}_${key}';renderDemandScheduleTab()" style="font-size:10px;color:#1d4ed8;background:#f0f9ff;border:1px dashed #93c5fd;padding:5px 12px;border-radius:8px;cursor:pointer;width:100%">+ Add route</button>
       </div>`;
   }).join('');
 
+  const totalTrucks = [...new Set(demandScheduleRoutes.map(r => r.truck))].length;
+  const totalTons   = demandScheduleRoutes.reduce((a, r) => a + r.tons, 0);
+
   c.innerHTML = `
-    <div style="margin-bottom:12px">
-      <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">My weekly schedule</p>
-      <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:4px">${dayPills}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">My schedule</p>
+      <p style="font-size:10px;color:#64748b;margin:0">${totalTrucks} trucks · ${totalTons}t total</p>
     </div>
-    <div style="margin-bottom:12px">
-      <p style="font-size:10px;font-weight:600;color:#64748b;margin:0 0 8px">${selectedDemandDay}${selectedDemandDay===todayDayName?' (today)':''}</p>
-      ${slotCards}
-    </div>
-    <button onclick="switchTab('tab-new')" style="width:100%;padding:11px;border-radius:10px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">+ New request for a different date →</button>`;
+    <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px">${dayPills}</div>
+    <div>${slotSections}</div>
+    <div style="margin-top:8px;background:#fffbeb;border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+      <p style="font-size:11px;color:#92400e;margin:0">Need capacity beyond your own trucks?</p>
+      <button onclick="switchTab('tab-new')" style="font-size:10px;font-weight:600;color:#92400e;background:#fef3c7;border:1px solid #fde68a;padding:4px 10px;border-radius:8px;cursor:pointer">New request →</button>
+    </div>`;
 }
 
-function dwSelectZone(el, key, side) {
-  const groupId = `dw-${side}-pills-${key}`;
-  document.getElementById(groupId).querySelectorAll('.zone-pill').forEach(p => p.classList.remove('selected'));
-  el.classList.add('selected');
-  const zone = el.textContent.trim();
-  const addrId = `dw-${side}-addr-${key}`;
-  const inp = document.getElementById(addrId);
-  if (inp && !inp.value) inp.value = ZONE_ADDRESSES[zone] || '';
+function saveNewDemandRoute(day, slot) {
+  const prefix = 'dnr';
+  const truckEl  = document.getElementById(`${prefix}-truck-${slot}`);
+  const fromSel  = document.querySelector(`#${prefix}-from-pills-${slot} .zone-pill.selected`);
+  const fromAddr = document.getElementById(`${prefix}-from-addr-${slot}`);
+  const toSel    = document.querySelector(`#${prefix}-to-pills-${slot} .zone-pill.selected`);
+  const toAddr   = document.getElementById(`${prefix}-to-addr-${slot}`);
+  const tonsEl   = document.getElementById(`${prefix}-tons-${slot}`);
+  if (!fromSel || !toSel) { alert('Please select From and To zones'); return; }
+  demandScheduleRoutes.push({
+    id: 'd' + Date.now(),
+    day, slot,
+    truck:    truckEl?.value.trim() || 'FD-NEW',
+    from:     fromSel.textContent.trim(),
+    fromAddr: fromAddr?.value.trim() || '',
+    to:       toSel.textContent.trim(),
+    toAddr:   toAddr?.value.trim() || '',
+    tons:     parseInt(tonsEl?.value) || 10,
+  });
+  addingDemandRoute = false;
+  renderDemandScheduleTab();
 }
 
-function saveDemandSlot(day, key) {
-  const needed = document.getElementById(`dw-needed-${key}`)?.checked || false;
-  const trucks = parseInt(document.getElementById(`dw-trucks-${key}`)?.value) || 0;
-  const pickupSel   = document.querySelector(`#dw-pickup-pills-${key} .zone-pill.selected`);
-  const dropoffSel  = document.querySelector(`#dw-dropoff-pills-${key} .zone-pill.selected`);
-  const pickupAddr  = document.getElementById(`dw-pickup-addr-${key}`)?.value.trim() || '';
-  const dropoffAddr = document.getElementById(`dw-dropoff-addr-${key}`)?.value.trim() || '';
-  myDemandWeek[day][key] = {
-    needed,
-    trucks,
-    pickupZone:  pickupSel  ? pickupSel.textContent.trim()  : '',
-    dropoffZone: dropoffSel ? dropoffSel.textContent.trim() : '',
-    pickupAddr,
-    dropoffAddr,
-    tonnage: trucks * (demandProfile?.capacity || 10),
-  };
-  editingDemandSlot = null;
+function removeDemandRoute(id) {
+  demandScheduleRoutes = demandScheduleRoutes.filter(r => r.id !== id);
   renderDemandScheduleTab();
 }
 
@@ -1155,156 +1131,232 @@ function renderScheduleTab() {
   if (!c) return;
 
   const today = new Date();
-  const todayDayIdx = (today.getDay() + 6) % 7; // Mon=0
+  const todayDayIdx = (today.getDay() + 6) % 7;
   const todayDayName = DAYS_OF_WEEK[todayDayIdx];
 
-  // Day selector
-  const dayPills = DAYS_OF_WEEK.map((d, i) => {
+  // Day pills — show count of routes per day
+  const dayPills = DAYS_OF_WEEK.map(d => {
+    const count = supplyScheduleRoutes.filter(r => r.day === d).length;
+    const isSel = d === selectedWeekDay;
     const isToday = d === todayDayName;
-    const isSel   = d === selectedWeekDay;
-    const dayData = mySupplyWeek[d];
-    const totalTrucks = SLOT_KEYS.reduce((sum, k) => sum + (dayData[k].available ? dayData[k].trucks : 0), 0);
-    return `<div onclick="selectedWeekDay='${d}';editingSupplySlot=null;renderScheduleTab()" style="min-width:44px;text-align:center;padding:8px 4px;border-radius:10px;cursor:pointer;border:2px solid ${isSel?'#1d4ed8':'transparent'};background:${isSel?'#eff6ff':'transparent'};transition:all .12s">
-      <p style="font-size:10px;font-weight:700;color:${isSel?'#1d4ed8':'#64748b'};margin:0 0 3px">${d}${isToday?' ·':''}${isToday?'<br><span style="font-size:8px;color:#94a3b8">today</span>':''}</p>
-      <p style="font-size:13px;font-weight:800;color:${totalTrucks>0?'#16a34a':'#cbd5e1'};margin:0">${totalTrucks||'—'}</p>
+    return `<div onclick="selectedWeekDay='${d}';addingSupplyRoute=false;renderScheduleTab()" style="min-width:44px;text-align:center;padding:8px 4px;border-radius:10px;cursor:pointer;border:2px solid ${isSel?'#1d4ed8':'transparent'};background:${isSel?'#eff6ff':'transparent'}">
+      <p style="font-size:10px;font-weight:700;color:${isSel?'#1d4ed8':'#64748b'};margin:0 0 2px">${d}${isToday?'*':''}</p>
+      <p style="font-size:13px;font-weight:800;color:${count>0?'#1e293b':'#cbd5e1'};margin:0">${count||'—'}</p>
     </div>`;
   }).join('');
 
-  // Slot cards for selected day
-  const dayData = mySupplyWeek[selectedWeekDay];
-  const slotCards = SLOT_KEYS.map(key => {
-    const s = dayData[key];
-    const isEditing = editingSupplySlot === (selectedWeekDay + '_' + key);
-    if (isEditing) {
-      const zPills = ALL_SUPPLY_ZONES.map(z =>
-        `<span class="zone-pill${s.zones.includes(z)?' selected':''}" onclick="this.classList.toggle('selected')" data-zone="${z}">${z}</span>`
-      ).join('');
+  // Routes for selected day grouped by slot
+  const dayRoutes = supplyScheduleRoutes.filter(r => r.day === selectedWeekDay);
+  const spareIds = supplySpareCapacity.map(s => s.routeId);
+
+  const slotSections = SLOT_KEYS.map(key => {
+    const routes = dayRoutes.filter(r => r.slot === key);
+    if (routes.length === 0 && !addingSupplyRoute) return '';
+    const routeCards = routes.map(r => {
+      const spare = supplySpareCapacity.find(s => s.routeId === r.id);
       return `
-        <div style="background:#fff;border-radius:14px;border:1.5px solid #bfdbfe;padding:14px 16px;margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${SLOT_LABELS[key]}</p>
-            <button onclick="editingSupplySlot=null;renderScheduleTab()" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="sw-avail-${key}" ${s.available?'checked':''} onchange="document.getElementById('sw-fields-${key}').style.display=this.checked?'flex':'none'" style="cursor:pointer">
-              <span style="font-size:12px;font-weight:600;color:#374151">Available this slot</span>
-            </label>
-            <div id="sw-fields-${key}" style="display:${s.available?'flex':'none'};flex-direction:column;gap:8px">
-              <div>
-                <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Trucks available</label>
-                <input type="number" id="sw-trucks-${key}" min="0" max="50" value="${s.trucks}" style="width:80px;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 10px"/>
-              </div>
-              <div>
-                <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Start address</label>
-                <input type="text" id="sw-start-${key}" value="${s.startAddr}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;color:#374151;background:#fafaf8"/>
-              </div>
-              <div>
-                <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">End address</label>
-                <input type="text" id="sw-end-${key}" value="${s.endAddr}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;color:#374151;background:#fafaf8"/>
-              </div>
-              <div>
-                <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Zones covered</label>
-                <div id="sw-zones-${key}" style="display:flex;flex-wrap:wrap;gap:5px">${zPills}</div>
-              </div>
+        <div style="background:#fff;border-radius:10px;border:1px solid ${spare?'#bbf7d0':'#e5e0d8'};padding:10px 12px;margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0 0 2px">${r.truck}</p>
+              <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${r.from} → ${r.to}</p>
+              <p style="font-size:10px;color:#64748b;margin:2px 0 0">${r.tons}t capacity${spare ? ` · <span style="color:#16a34a;font-weight:600">${spare.spareTons}t spare offered</span>` : ''}</p>
             </div>
-            <button onclick="saveSupplySlot('${selectedWeekDay}','${key}')" style="width:100%;padding:10px;border-radius:9px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Save</button>
+            <button onclick="removeSupplyRoute('${r.id}')" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0;line-height:1">✕</button>
           </div>
         </div>`;
-    }
-    // display card
-    const dotColor = s.available ? '#16a34a' : '#e2e8f0';
-    const bgColor  = s.available ? '#f0fdf4' : '#f8f7f4';
+    }).join('');
     return `
-      <div style="background:${bgColor};border-radius:12px;border:1px solid ${s.available?'#bbf7d0':'#e5e0d8'};padding:12px 14px;margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:10px;height:10px;border-radius:50%;background:${dotColor};flex-shrink:0"></div>
-            <div>
-              <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0">${SLOT_LABELS[key]}</p>
-              ${s.available
-                ? `<p style="font-size:10px;color:#16a34a;margin:2px 0 0">${s.trucks} trucks · ${(s.zones||[]).slice(0,3).join(', ')}</p>
-                   <p style="font-size:9px;color:#64748b;margin:2px 0 0">${s.startAddr ? s.startAddr.split(',')[0] : ''}</p>`
-                : `<p style="font-size:10px;color:#94a3b8;margin:2px 0 0">Unavailable</p>`
-              }
-            </div>
+      <div style="margin-bottom:12px">
+        <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 7px">${SLOT_LABELS[key]}</p>
+        ${routeCards}
+        ${addingSupplyRoute === (selectedWeekDay+'_'+key) ? buildAddRouteForm(selectedWeekDay, key, 'supply') : ''}
+        <button onclick="addingSupplyRoute='${selectedWeekDay}_${key}';renderScheduleTab()" style="font-size:10px;color:#1d4ed8;background:#f0f9ff;border:1px dashed #93c5fd;padding:5px 12px;border-radius:8px;cursor:pointer;width:100%">+ Add route</button>
+      </div>`;
+  }).join('');
+
+  const totalTrucks = [...new Set(supplyScheduleRoutes.map(r => r.truck))].length;
+  const totalTons = supplyScheduleRoutes.reduce((a,r) => a + r.tons, 0);
+
+  c.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">My schedule</p>
+      <p style="font-size:10px;color:#64748b;margin:0">${totalTrucks} trucks · ${totalTons}t total capacity</p>
+    </div>
+    <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px">${dayPills}</div>
+    <div>
+      ${dayRoutes.length === 0 && !addingSupplyRoute
+        ? `<p style="font-size:12px;color:#94a3b8;text-align:center;padding:20px 0">No routes on ${selectedWeekDay}</p>`
+        : slotSections}
+    </div>
+    ${dayRoutes.length === 0 && !addingSupplyRoute ? `
+      ${SLOT_KEYS.map(key => `<button onclick="addingSupplyRoute='${selectedWeekDay}_${key}';renderScheduleTab()" style="font-size:10px;color:#1d4ed8;background:#f0f9ff;border:1px dashed #93c5fd;padding:5px 12px;border-radius:8px;cursor:pointer;width:100%;margin-bottom:6px">+ Add ${SLOT_LABELS[key]} route</button>`).join('')}
+    ` : ''}
+    <div style="margin-top:8px;background:#f8f7f4;border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+      <p style="font-size:11px;color:#64748b;margin:0">Have spare capacity on some routes?</p>
+      <button onclick="switchTab('tab-spare')" style="font-size:10px;font-weight:600;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:4px 10px;border-radius:8px;cursor:pointer">Set spare capacity →</button>
+    </div>`;
+}
+
+function buildAddRouteForm(day, slot, side) {
+  const allZones = [...new Set([...pickupZones, ...dropoffZones, ...ALL_SUPPLY_ZONES])];
+  const prefix = side === 'supply' ? 'snr' : 'dnr';
+  const zFrom = allZones.map(z => `<span class="zone-pill" onclick="nrSelectZone(this,'${prefix}-from-pills-${slot}','${prefix}-from-addr-${slot}')">${z}</span>`).join('');
+  const zTo   = allZones.map(z => `<span class="zone-pill" onclick="nrSelectZone(this,'${prefix}-to-pills-${slot}','${prefix}-to-addr-${slot}')">${z}</span>`).join('');
+  const cancelFn = side === 'supply' ? `addingSupplyRoute=false;renderScheduleTab()` : `addingDemandRoute=false;renderDemandScheduleTab()`;
+  const saveFn   = side === 'supply' ? `saveNewRoute('${day}','${slot}')` : `saveNewDemandRoute('${day}','${slot}')`;
+  const truckPlaceholder = side === 'supply' ? 'e.g. SG-104' : 'e.g. FD-204';
+  return `
+    <div style="background:#f0f9ff;border-radius:10px;border:1.5px solid #bfdbfe;padding:12px 14px;margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0">Add route · ${SLOT_LABELS[slot]}</p>
+        <button onclick="${cancelFn}" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">Truck ID</label>
+          <input id="${prefix}-truck-${slot}" type="text" placeholder="${truckPlaceholder}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px"/></div>
+        <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">From zone</label>
+          <div id="${prefix}-from-pills-${slot}" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">${zFrom}</div>
+          <input id="${prefix}-from-addr-${slot}" type="text" placeholder="From address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;background:#fafaf8"/></div>
+        <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">To zone</label>
+          <div id="${prefix}-to-pills-${slot}" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">${zTo}</div>
+          <input id="${prefix}-to-addr-${slot}" type="text" placeholder="To address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;background:#fafaf8"/></div>
+        <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">Capacity (tons)</label>
+          <input id="${prefix}-tons-${slot}" type="number" min="1" max="30" value="10" style="width:80px;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px"/></div>
+        <button onclick="${saveFn}" style="width:100%;padding:9px;border-radius:9px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Add to schedule</button>
+      </div>
+    </div>`;
+}
+
+function nrSelectZone(el, groupId, addrId) {
+  document.getElementById(groupId).querySelectorAll('.zone-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  const inp = document.getElementById(addrId);
+  if (inp && !inp.value) inp.value = ZONE_ADDRESSES[el.textContent.trim()] || '';
+}
+
+function saveNewRoute(day, slot) {
+  const prefix = 'snr';
+  const truckEl  = document.getElementById(`${prefix}-truck-${slot}`);
+  const fromSel  = document.querySelector(`#${prefix}-from-pills-${slot} .zone-pill.selected`);
+  const fromAddr = document.getElementById(`${prefix}-from-addr-${slot}`);
+  const toSel    = document.querySelector(`#${prefix}-to-pills-${slot} .zone-pill.selected`);
+  const toAddr   = document.getElementById(`${prefix}-to-addr-${slot}`);
+  const tonsEl   = document.getElementById(`${prefix}-tons-${slot}`);
+  if (!fromSel || !toSel) { alert('Please select From and To zones'); return; }
+  supplyScheduleRoutes.push({
+    id: 'r' + Date.now(),
+    day, slot,
+    truck:    truckEl?.value.trim() || 'SG-NEW',
+    from:     fromSel.textContent.trim(),
+    fromAddr: fromAddr?.value.trim() || '',
+    to:       toSel.textContent.trim(),
+    toAddr:   toAddr?.value.trim() || '',
+    tons:     parseInt(tonsEl?.value) || 10,
+  });
+  addingSupplyRoute = false;
+  renderScheduleTab();
+}
+
+function removeSupplyRoute(id) {
+  supplyScheduleRoutes = supplyScheduleRoutes.filter(r => r.id !== id);
+  supplySpareCapacity  = supplySpareCapacity.filter(s => s.routeId !== id);
+  renderScheduleTab();
+}
+
+function renderSpareCapacityTab() {
+  const c = document.getElementById('spare-capacity-content');
+  if (!c) return;
+
+  const totalOffered = supplySpareCapacity.reduce((a,s) => {
+    const route = supplyScheduleRoutes.find(r => r.id === s.routeId);
+    return a + (route ? s.spareTons : 0);
+  }, 0);
+
+  const spareCards = supplySpareCapacity.map(s => {
+    const route = supplyScheduleRoutes.find(r => r.id === s.routeId);
+    if (!route) return '';
+    return `
+      <div style="background:#fff;border-radius:12px;border:1px solid #bbf7d0;padding:12px 14px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0 0 2px">${route.truck} · ${route.day} ${SLOT_LABELS[route.slot].split(' ')[0]}</p>
+            <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${route.from} → ${route.to}</p>
+            <p style="font-size:10px;color:#64748b;margin:2px 0 0">Full load: ${route.tons}t · ${s.note||''}</p>
           </div>
-          <button onclick="editingSupplySlot='${selectedWeekDay}_${key}';renderScheduleTab()" style="font-size:10px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;cursor:pointer">Edit</button>
+          <div style="text-align:right;flex-shrink:0;margin-left:12px">
+            <p style="font-size:18px;font-weight:800;color:#16a34a;margin:0">${s.spareTons}t</p>
+            <p style="font-size:9px;color:#94a3b8;margin:0">spare offered</p>
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;justify-content:flex-end">
+          <button onclick="removeSpare('${s.routeId}')" style="font-size:10px;color:#dc2626;background:none;border:none;cursor:pointer">Remove</button>
         </div>
       </div>`;
   }).join('');
 
-  // Fleet profile card (collapsed summary at bottom)
-  const p = supplyProfile;
-  const zoneList = (p.zones||[]).slice(0,4).join(', ') + ((p.zones||[]).length > 4 ? ` +${p.zones.length-4}` : '');
-
-  let profileCard;
-  if (scheduleProfileEdit) {
-    const zPills = ALL_SUPPLY_ZONES.map(z =>
-      `<span class="zone-pill${(p.zones||[]).includes(z)?' selected':''}" onclick="this.classList.toggle('selected')">${z}</span>`
-    ).join('');
-    profileCard = `
-      <div style="background:#fff;border-radius:14px;border:1.5px solid #bfdbfe;padding:14px 16px;margin-top:4px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">Fleet profile</p>
-          <button onclick="scheduleProfileEdit=false;renderScheduleTab()" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Home base / depot</label>
-            <input id="sp-home" type="text" value="${p.homeBase||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;background:#fafaf8"/></div>
-          <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Operating zones</label>
-            <div id="sp-zone-pills" style="display:flex;flex-wrap:wrap;gap:5px">${zPills}</div></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Total trucks</label>
-              <input type="number" id="sp-fleet" min="1" max="500" value="${p.fleetSize||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px"/></div>
-            <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Capacity / truck (t)</label>
-              <input type="number" id="sp-cap" min="1" max="30" value="${p.capacity||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px"/></div>
-          </div>
-          <button onclick="saveSupplyProfile()" style="width:100%;padding:10px;border-radius:9px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Save profile</button>
-        </div>
-      </div>`;
-  } else {
-    profileCard = `
-      <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:12px 14px;margin-top:4px;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 3px">Fleet profile</p>
-          <p style="font-size:12px;font-weight:600;color:#1e293b;margin:0">${p.fleetTotal||p.fleetSize||'—'} trucks · ${p.homeBase ? p.homeBase.split(',')[0] : '—'}</p>
-          <p style="font-size:10px;color:#64748b;margin:2px 0 0">${zoneList||'No zones set'}</p>
-        </div>
-        <button onclick="scheduleProfileEdit=true;renderScheduleTab()" style="font-size:10px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;cursor:pointer;flex-shrink:0">Edit</button>
-      </div>`;
-  }
+  // Add spare form
+  const availableRoutes = supplyScheduleRoutes.filter(r => !supplySpareCapacity.find(s => s.routeId === r.id));
+  const routeOptions = availableRoutes.map(r =>
+    `<option value="${r.id}">${r.truck} · ${r.from}→${r.to} · ${r.day} ${SLOT_LABELS[r.slot].split(' ')[0]} · ${r.tons}t</option>`
+  ).join('');
 
   c.innerHTML = `
-    <div style="margin-bottom:12px">
-      <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">My weekly schedule</p>
-      <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:4px">${dayPills}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">Spare capacity</p>
+      <p style="font-size:10px;color:#16a34a;font-weight:600;margin:0">${totalOffered}t available for matching</p>
     </div>
-    <div style="margin-bottom:4px">
-      <p style="font-size:10px;font-weight:600;color:#64748b;margin:0 0 8px">${selectedWeekDay}${selectedWeekDay === todayDayName ? ' (today)' : ''}</p>
-      ${slotCards}
-    </div>
-    ${profileCard}`;
+
+    ${supplySpareCapacity.length === 0
+      ? `<div style="background:#f0fdf4;border:1.5px dashed #bbf7d0;border-radius:12px;padding:20px;text-align:center;margin-bottom:12px">
+           <p style="font-size:13px;font-weight:700;color:#166534;margin:0 0 4px">No spare capacity listed yet</p>
+           <p style="font-size:11px;color:#16a34a;margin:0">Add routes from your schedule that have unused capacity</p>
+         </div>`
+      : spareCards}
+
+    ${availableRoutes.length > 0 ? `
+    <div style="background:#fff;border-radius:12px;border:1px solid #e5e0d8;padding:14px 16px">
+      <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 10px">Add spare capacity from your schedule</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div>
+          <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Select route</label>
+          <select id="spare-route-sel" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151">
+            <option value="">— Pick a route —</option>
+            ${routeOptions}
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Spare tons</label>
+            <input type="number" id="spare-tons" min="1" max="30" value="3" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px"/>
+          </div>
+          <div>
+            <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Note (optional)</label>
+            <input type="text" id="spare-note" placeholder="e.g. Return leg" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;background:#fafaf8"/>
+          </div>
+        </div>
+        <button onclick="addSpare()" style="width:100%;padding:10px;border-radius:9px;background:#16a34a;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Add spare capacity</button>
+      </div>
+    </div>` : `<p style="font-size:11px;color:#94a3b8;text-align:center;padding:8px 0">All routes have spare capacity listed.</p>`}
+
+    <div style="margin-top:12px;background:#f8f7f4;border-radius:10px;padding:10px 12px">
+      <p style="font-size:10px;color:#64748b;margin:0">These routes are submitted for matching. Demand partners see only that a match exists — not your routes, schedules, or customers.</p>
+    </div>`;
 }
 
-function saveSupplySlot(day, key) {
-  const avail  = document.getElementById(`sw-avail-${key}`)?.checked || false;
-  const trucks = parseInt(document.getElementById(`sw-trucks-${key}`)?.value) || 0;
-  const start  = document.getElementById(`sw-start-${key}`)?.value.trim() || '';
-  const end    = document.getElementById(`sw-end-${key}`)?.value.trim() || '';
-  const zonePills = document.querySelectorAll(`#sw-zones-${key} .zone-pill.selected`);
-  mySupplyWeek[day][key] = {
-    available: avail,
-    trucks,
-    startAddr: start,
-    endAddr:   end,
-    zones: Array.from(zonePills).map(p => p.textContent.trim()),
-  };
-  // Also update supplySchedule for the matching slot
-  if (day === selectedWeekDay) {
-    supplySchedule[key] = { available: avail, trucks, startAddress: start, endAddress: end, zones: mySupplyWeek[day][key].zones };
-  }
-  editingSupplySlot = null;
+function addSpare() {
+  const routeId = document.getElementById('spare-route-sel')?.value;
+  const spareTons = parseInt(document.getElementById('spare-tons')?.value) || 0;
+  const note = document.getElementById('spare-note')?.value.trim() || '';
+  if (!routeId) { alert('Please select a route'); return; }
+  supplySpareCapacity.push({ routeId, spareTons, note });
+  renderSpareCapacityTab();
+  renderScheduleTab();
+}
+
+function removeSpare(routeId) {
+  supplySpareCapacity = supplySpareCapacity.filter(s => s.routeId !== routeId);
+  renderSpareCapacityTab();
   renderScheduleTab();
 }
 
@@ -1694,97 +1746,57 @@ let supplySchedule = {
 };
 
 const DAYS_OF_WEEK = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-let selectedWeekDay = 'Mon'; // for supply
-let selectedDemandDay = 'Mon'; // for demand
-let editingSupplySlot = null;
-let editingDemandSlot = null;
+let selectedWeekDay = 'Mon';
+let selectedDemandDay = 'Mon';
 
-// Supply side weekly schedule (pre-filled, editable)
-let mySupplyWeek = {
-  Mon: {
-    morning:   { available:true,  trucks:4, zones:['Jurong','Tuas'],             startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
-    afternoon: { available:true,  trucks:3, zones:['Woodlands','Pasir Panjang'], startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Woodlands Close, Singapore 737854' },
-    evening:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
-  },
-  Tue: {
-    morning:   { available:true,  trucks:4, zones:['Jurong','Tuas'],             startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
-    afternoon: { available:true,  trucks:3, zones:['Woodlands'],                 startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
-    evening:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
-  },
-  Wed: {
-    morning:   { available:true,  trucks:3, zones:['Jurong'],                    startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
-    afternoon: { available:true,  trucks:4, zones:['Tuas','Pasir Panjang'],      startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'12 Pasir Panjang Road, Singapore 117438' },
-    evening:   { available:true,  trucks:2, zones:['Jurong'],                    startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
-  },
-  Thu: {
-    morning:   { available:true,  trucks:4, zones:['Jurong','Tuas'],             startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
-    afternoon: { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
-    evening:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
-  },
-  Fri: {
-    morning:   { available:true,  trucks:2, zones:['Tuas'],                      startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
-    afternoon: { available:true,  trucks:3, zones:['Jurong','Woodlands'],        startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Woodlands Close, Singapore 737854' },
-    evening:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
-  },
-  Sat: {
-    morning:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
-    afternoon: { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
-    evening:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
-  },
-  Sun: {
-    morning:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
-    afternoon: { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
-    evening:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
-  },
-};
-
-// Demand side weekly schedule (pre-filled, editable)
-let myDemandWeek = {
-  Mon: {
-    morning:   { needed:true,  trucks:2, pickupZone:'Jurong',       dropoffZone:'Woodlands',   pickupAddr:'31 Jurong Port Road, Singapore 619115',   dropoffAddr:'21 Woodlands Close, Singapore 737854',   tonnage:20 },
-    afternoon: { needed:true,  trucks:1, pickupZone:'Tuas',         dropoffZone:'Changi',      pickupAddr:'30 Tuas Ave 1, Singapore 639494',          dropoffAddr:'30 Airport Boulevard, Singapore 819642', tonnage:10 },
-    evening:   { needed:false, trucks:0 },
-  },
-  Tue: {
-    morning:   { needed:true,  trucks:3, pickupZone:'Pasir Panjang',dropoffZone:'Tampines',    pickupAddr:'12 Pasir Panjang Road, Singapore 117438',  dropoffAddr:'10 Tampines Ave 11, Singapore 529433',   tonnage:30 },
-    afternoon: { needed:false, trucks:0 },
-    evening:   { needed:false, trucks:0 },
-  },
-  Wed: {
-    morning:   { needed:false, trucks:0 },
-    afternoon: { needed:true,  trucks:2, pickupZone:'Woodlands',    dropoffZone:'Changi',      pickupAddr:'21 Woodlands Close, Singapore 737854',     dropoffAddr:'30 Airport Boulevard, Singapore 819642', tonnage:20 },
-    evening:   { needed:false, trucks:0 },
-  },
-  Thu: {
-    morning:   { needed:true,  trucks:2, pickupZone:'Jurong',       dropoffZone:'Tampines',    pickupAddr:'31 Jurong Port Road, Singapore 619115',    dropoffAddr:'10 Tampines Ave 11, Singapore 529433',   tonnage:20 },
-    afternoon: { needed:true,  trucks:1, pickupZone:'Changi',       dropoffZone:'Jurong',      pickupAddr:'30 Airport Boulevard, Singapore 819642',   dropoffAddr:'31 Jurong Port Road, Singapore 619115',  tonnage:10 },
-    evening:   { needed:false, trucks:0 },
-  },
-  Fri: {
-    morning:   { needed:true,  trucks:1, pickupZone:'Tuas',         dropoffZone:'Woodlands',   pickupAddr:'30 Tuas Ave 1, Singapore 639494',          dropoffAddr:'21 Woodlands Close, Singapore 737854',   tonnage:10 },
-    afternoon: { needed:false, trucks:0 },
-    evening:   { needed:false, trucks:0 },
-  },
-  Sat: { morning:{needed:false,trucks:0}, afternoon:{needed:false,trucks:0}, evening:{needed:false,trucks:0} },
-  Sun: { morning:{needed:false,trucks:0}, afternoon:{needed:false,trucks:0}, evening:{needed:false,trucks:0} },
-};
-
-// All registered hauliers' schedules (for regulator breakdown)
-const ALL_HAULIER_SCHEDULES = [
-  { company:'Apex Logistics SG',     fleetTotal:12, morning:{trucks:4,available:true},  afternoon:{trucks:3,available:true},  evening:{trucks:0,available:false} },
-  { company:'Swift Haulage Pte Ltd', fleetTotal:18, morning:{trucks:8,available:true},  afternoon:{trucks:6,available:true},  evening:{trucks:3,available:true}  },
-  { company:'Pinnacle Transport',    fleetTotal:10, morning:{trucks:5,available:true},  afternoon:{trucks:4,available:true},  evening:{trucks:0,available:false} },
-  { company:'GlobeTrans SG',         fleetTotal:15, morning:{trucks:6,available:true},  afternoon:{trucks:5,available:true},  evening:{trucks:2,available:true}  },
-  { company:'CargoPrime SG',         fleetTotal:8,  morning:{trucks:3,available:true},  afternoon:{trucks:3,available:true},  evening:{trucks:1,available:true}  },
-  { company:'Fairview Cargo',        fleetTotal:12, morning:{trucks:4,available:true},  afternoon:{trucks:4,available:true},  evening:{trucks:0,available:false} },
+// Supply entity (Apex Logistics) — their FULL running schedule, route by route
+let supplyScheduleRoutes = [
+  {id:'r1', day:'Mon', slot:'morning',   truck:'SG-101', from:'Jurong',       fromAddr:'31 Jurong Port Road, Singapore 619115',     to:'Woodlands',    toAddr:'21 Woodlands Close, Singapore 737854',    tons:10},
+  {id:'r2', day:'Mon', slot:'afternoon', truck:'SG-102', from:'Tuas',          fromAddr:'30 Tuas Ave 1, Singapore 639494',            to:'Changi',       toAddr:'30 Airport Boulevard, Singapore 819642',  tons:10},
+  {id:'r3', day:'Mon', slot:'afternoon', truck:'SG-103', from:'Pasir Panjang', fromAddr:'12 Pasir Panjang Road, Singapore 117438',   to:'Tampines',     toAddr:'10 Tampines Ave 11, Singapore 529433',    tons:8},
+  {id:'r4', day:'Tue', slot:'morning',   truck:'SG-101', from:'Jurong',        fromAddr:'31 Jurong Port Road, Singapore 619115',     to:'Tampines',     toAddr:'10 Tampines Ave 11, Singapore 529433',    tons:10},
+  {id:'r5', day:'Tue', slot:'afternoon', truck:'SG-103', from:'Pasir Panjang', fromAddr:'12 Pasir Panjang Road, Singapore 117438',   to:'Woodlands',    toAddr:'21 Woodlands Close, Singapore 737854',    tons:8},
+  {id:'r6', day:'Wed', slot:'morning',   truck:'SG-102', from:'Tuas',           fromAddr:'30 Tuas Ave 1, Singapore 639494',           to:'Yishun',       toAddr:'18 Yishun Ave 11, Singapore 769131',      tons:10},
+  {id:'r7', day:'Wed', slot:'afternoon', truck:'SG-101', from:'Woodlands',      fromAddr:'21 Woodlands Close, Singapore 737854',     to:'Jurong',       toAddr:'31 Jurong Port Road, Singapore 619115',   tons:10},
+  {id:'r8', day:'Thu', slot:'morning',   truck:'SG-102', from:'Changi',          fromAddr:'30 Airport Boulevard, Singapore 819642',   to:'Jurong',       toAddr:'31 Jurong Port Road, Singapore 619115',   tons:10},
+  {id:'r9', day:'Thu', slot:'morning',   truck:'SG-103', from:'Jurong',          fromAddr:'31 Jurong Port Road, Singapore 619115',    to:'Woodlands',    toAddr:'21 Woodlands Close, Singapore 737854',    tons:8},
+  {id:'r10',day:'Fri', slot:'morning',   truck:'SG-101', from:'Tuas',            fromAddr:'30 Tuas Ave 1, Singapore 639494',          to:'Changi',       toAddr:'30 Airport Boulevard, Singapore 819642',  tons:10},
 ];
 
-// All registered shippers' demand schedules (for regulator breakdown)
-const ALL_SHIPPER_SCHEDULES = [
-  { company:'Fresh Direct SG',    morning:{trucks:2,needed:true},  afternoon:{trucks:1,needed:true},  evening:{trucks:0,needed:false} },
-  { company:'Pacific Trade Co.',  morning:{trucks:3,needed:true},  afternoon:{trucks:0,needed:false}, evening:{trucks:2,needed:true}  },
-  { company:'Raffles Freight',    morning:{trucks:0,needed:false}, afternoon:{trucks:2,needed:true},  evening:{trucks:1,needed:true}  },
-  { company:'Harbor Logistics',   morning:{trucks:4,needed:true},  afternoon:{trucks:3,needed:true},  evening:{trucks:0,needed:false} },
+// Spare capacity: subset of above routes where Apex is offering unused tonnage
+let supplySpareCapacity = [
+  {routeId:'r1', spareTons:4, note:'Return leg has space'},
+  {routeId:'r4', spareTons:3, note:'Partial load'},
+  {routeId:'r8', spareTons:5, note:'Half truck available'},
+];
+
+// Demand entity (Fresh Direct SG) — their FULL running schedule
+let demandScheduleRoutes = [
+  {id:'d1', day:'Mon', slot:'morning',   truck:'FD-201', from:'Jurong',        fromAddr:'31 Jurong Port Road, Singapore 619115',    to:'Woodlands',    toAddr:'21 Woodlands Close, Singapore 737854',    tons:8},
+  {id:'d2', day:'Mon', slot:'afternoon', truck:'FD-202', from:'Changi',         fromAddr:'30 Airport Boulevard, Singapore 819642',   to:'Pasir Panjang',toAddr:'12 Pasir Panjang Road, Singapore 117438', tons:10},
+  {id:'d3', day:'Tue', slot:'morning',   truck:'FD-201', from:'Woodlands',      fromAddr:'21 Woodlands Close, Singapore 737854',    to:'Changi',       toAddr:'30 Airport Boulevard, Singapore 819642',  tons:8},
+  {id:'d4', day:'Wed', slot:'morning',   truck:'FD-203', from:'Tampines',       fromAddr:'10 Tampines Ave 11, Singapore 529433',     to:'Jurong',       toAddr:'31 Jurong Port Road, Singapore 619115',   tons:10},
+  {id:'d5', day:'Thu', slot:'afternoon', truck:'FD-202', from:'Pasir Panjang',  fromAddr:'12 Pasir Panjang Road, Singapore 117438', to:'Tampines',     toAddr:'10 Tampines Ave 11, Singapore 529433',    tons:10},
+  {id:'d6', day:'Fri', slot:'morning',   truck:'FD-201', from:'Jurong',         fromAddr:'31 Jurong Port Road, Singapore 619115',   to:'Changi',       toAddr:'30 Airport Boulevard, Singapore 819642',  tons:8},
+];
+
+// State for adding new route
+let addingSupplyRoute = false;
+let addingDemandRoute = false;
+let addingSpare = false;
+
+// All registered entities — aggregated schedule data for regulator view
+const ALL_ENTITY_SCHEDULES = [
+  {company:'Apex Logistics SG',     trucks:12, totalTons:4620, matchedTons:3240, role:'supply'},
+  {company:'Swift Haulage Pte Ltd', trucks:18, totalTons:6930, matchedTons:5540, role:'supply'},
+  {company:'Pinnacle Transport',    trucks:10, totalTons:3850, matchedTons:2695, role:'supply'},
+  {company:'GlobeTrans SG',         trucks:15, totalTons:5775, matchedTons:4620, role:'supply'},
+  {company:'CargoPrime SG',         trucks:8,  totalTons:3080, matchedTons:2310, role:'supply'},
+  {company:'Fairview Cargo',        trucks:12, totalTons:4620, matchedTons:3465, role:'supply'},
+  {company:'Fresh Direct SG',       trucks:6,  totalTons:2310, matchedTons:1540, role:'demand'},
+  {company:'Pacific Trade Co.',     trucks:8,  totalTons:3080, matchedTons:2079, role:'demand'},
+  {company:'Raffles Freight',       trucks:5,  totalTons:1925, matchedTons:1155, role:'demand'},
+  {company:'Harbor Logistics',      trucks:9,  totalTons:3465, matchedTons:2772, role:'demand'},
 ];
 
 let selectedHaulier = null;
@@ -2086,50 +2098,55 @@ function closeKmPanel() {
 
 function showTrucksPanel() {
   const slotLabel = {'morning':'Morning · 8am–12pm','afternoon':'Afternoon · 12pm–4pm','evening':'Evening · 4pm–8pm'}[currentSlot];
-  document.getElementById('trucks-panel-title').textContent = `Trucks running · ${slotLabel}`;
+  document.getElementById('trucks-panel-title').textContent = `Schedule breakdown · ${slotLabel}`;
 
-  const supplyTotal = ALL_HAULIER_SCHEDULES.reduce((a,h) => a + (h[currentSlot].available ? h[currentSlot].trucks : 0), 0);
-  const demandTotal = ALL_SHIPPER_SCHEDULES.reduce((a,s) => a + (s[currentSlot].needed ? s[currentSlot].trucks : 0), 0);
+  const totalTrucks = ALL_ENTITY_SCHEDULES.reduce((a,e) => a + e.trucks, 0);
+  const totalTons   = ALL_ENTITY_SCHEDULES.reduce((a,e) => a + e.totalTons, 0);
+  const matchedTons = ALL_ENTITY_SCHEDULES.reduce((a,e) => a + e.matchedTons, 0);
+  const utilPct     = Math.round(matchedTons / totalTons * 100);
 
-  const supplyRows = ALL_HAULIER_SCHEDULES.map(h => {
-    const slot = h[currentSlot];
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f5f3f0">
-      <div>
-        <p style="font-size:11px;font-weight:600;color:#1e293b;margin:0">${h.company}</p>
-        <p style="font-size:9px;color:#94a3b8;margin:0">Fleet: ${h.fleetTotal} total</p>
+  const supplyEntities = ALL_ENTITY_SCHEDULES.filter(e => e.role === 'supply');
+  const demandEntities = ALL_ENTITY_SCHEDULES.filter(e => e.role === 'demand');
+
+  function entityRow(e) {
+    const util = Math.round(e.matchedTons / e.totalTons * 100);
+    const utilColor = util >= 70 ? '#16a34a' : util >= 50 ? '#ca8a04' : '#dc2626';
+    return `<div style="padding:9px 0;border-bottom:1px solid #f5f3f0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <p style="font-size:11px;font-weight:600;color:#1e293b;margin:0">${e.company}</p>
+        <p style="font-size:13px;font-weight:800;color:${utilColor};margin:0">${util}%</p>
       </div>
-      <div style="text-align:right">
-        ${slot.available
-          ? `<span style="font-size:13px;font-weight:800;color:#16a34a">${slot.trucks}</span><p style="font-size:8px;color:#94a3b8;margin:0">running</p>`
-          : `<span style="font-size:11px;font-weight:600;color:#cbd5e1">Unavailable</span>`}
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:#94a3b8;margin-bottom:4px">
+        <span>${e.trucks} trucks · ${(e.totalTons/1000).toFixed(1)}kt capacity</span>
+        <span>${(e.matchedTons/1000).toFixed(1)}kt matched</span>
       </div>
-    </div>`;
-  }).join('');
-
-  const demandRows = ALL_SHIPPER_SCHEDULES.map(s => {
-    const slot = s[currentSlot];
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f5f3f0">
-      <p style="font-size:11px;font-weight:600;color:#1e293b;margin:0">${s.company}</p>
-      <div style="text-align:right">
-        ${slot.needed
-          ? `<span style="font-size:13px;font-weight:800;color:#1d4ed8">${slot.trucks}</span><p style="font-size:8px;color:#94a3b8;margin:0">needed</p>`
-          : `<span style="font-size:11px;font-weight:600;color:#cbd5e1">No demand</span>`}
+      <div style="height:4px;background:#e5e0d8;border-radius:2px;overflow:hidden">
+        <div style="height:100%;background:${utilColor};border-radius:2px;width:${util}%"></div>
       </div>
     </div>`;
-  }).join('');
+  }
 
   document.getElementById('trucks-panel-body').innerHTML = `
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 12px;margin-bottom:14px;display:flex;gap:12px">
-      <div style="flex:1;text-align:center"><p style="font-size:9px;color:#94a3b8;margin:0 0 2px;text-transform:uppercase;letter-spacing:.06em">Supply running</p><p style="font-size:22px;font-weight:800;color:#16a34a;margin:0">${supplyTotal}</p><p style="font-size:9px;color:#94a3b8;margin:0">trucks</p></div>
-      <div style="width:1px;background:#e2e8f0"></div>
-      <div style="flex:1;text-align:center"><p style="font-size:9px;color:#94a3b8;margin:0 0 2px;text-transform:uppercase;letter-spacing:.06em">Demand</p><p style="font-size:22px;font-weight:800;color:#1d4ed8;margin:0">${demandTotal}</p><p style="font-size:9px;color:#94a3b8;margin:0">trucks needed</p></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+      <div style="background:#f8fafc;border-radius:8px;padding:8px 10px;text-align:center">
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 2px">Total trucks</p>
+        <p style="font-size:20px;font-weight:800;color:#1e293b;margin:0">${totalTrucks}</p>
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:8px 10px;text-align:center">
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 2px">Capacity</p>
+        <p style="font-size:20px;font-weight:800;color:#1e293b;margin:0">${(totalTons/1000).toFixed(0)}kt</p>
+      </div>
+      <div style="background:${utilPct>=70?'#f0fdf4':utilPct>=50?'#fffbeb':'#fef2f2'};border-radius:8px;padding:8px 10px;text-align:center">
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 2px">Utilised</p>
+        <p style="font-size:20px;font-weight:800;color:${utilColor(utilPct)};margin:0">${utilPct}%</p>
+      </div>
     </div>
 
-    <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 6px">Supply schedules</p>
-    ${supplyRows}
+    <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 6px">Supply entities (${supplyEntities.length})</p>
+    ${supplyEntities.map(entityRow).join('')}
 
-    <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:14px 0 6px">Demand schedules</p>
-    ${demandRows}`;
+    <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:14px 0 6px">Demand entities (${demandEntities.length})</p>
+    ${demandEntities.map(entityRow).join('')}`;
 
   document.getElementById('trucks-panel').classList.add('open');
   sgMap && sgMap.invalidateSize();
@@ -2227,7 +2244,7 @@ function renderSidebar(){
   const tTonnage=zones.reduce((a,z)=>a+z.supply,0);
   const tMatched=zones.reduce((a,z)=>a+z.matched,0);
   document.getElementById('summary-stats').innerHTML=`
-    <div onclick="showTrucksPanel()" style="background:#eff6ff;border-radius:7px;padding:7px 9px;cursor:pointer;border:1px solid #bfdbfe;transition:background .12s" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Total Trucks <span style="color:#93c5fd;font-size:8px">↗ from schedules</span></p><p style="font-size:17px;font-weight:800;color:#1d4ed8;margin:0">${ALL_HAULIER_SCHEDULES.reduce((a,h)=>a+(h[currentSlot].available?h[currentSlot].trucks:0),0)}</p></div>
+    <div onclick="showTrucksPanel()" style="background:#eff6ff;border-radius:7px;padding:7px 9px;cursor:pointer;border:1px solid #bfdbfe;transition:background .12s" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Total Trucks <span style="color:#93c5fd;font-size:8px">↗ from schedules</span></p><p style="font-size:17px;font-weight:800;color:#1d4ed8;margin:0">${ALL_ENTITY_SCHEDULES.reduce((a,e)=>a+e.trucks,0)}</p></div>
     <div style="background:#f8fafc;border-radius:7px;padding:7px 9px"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Total Tonnage</p><p style="font-size:17px;font-weight:800;color:#1e293b;margin:0">${(tTonnage/1000).toFixed(1)}kt</p></div>
     <div style="background:${util>=70?'#f0fdf4':util>=50?'#fffbeb':'#fef2f2'};border-radius:7px;padding:7px 9px"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Utilisation</p><p style="font-size:17px;font-weight:800;color:${utilColor(util)};margin:0">${util}%</p><p style="font-size:8px;color:#94a3b8;margin:0">matched/supply</p></div>
     <div style="background:${tUmet>0?'#fef2f2':'#f0fdf4'};border-radius:7px;padding:7px 9px"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Unfulfilled Demand</p><p style="font-size:17px;font-weight:800;color:${tUmet>0?'#dc2626':'#166534'};margin:0">${tUmet.toLocaleString()}t</p></div>
