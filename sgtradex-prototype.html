@@ -40,6 +40,7 @@
     /* km breakdown panel */
     #km-panel{position:absolute;top:0;right:0;width:360px;height:100%;background:#fff;border-left:1px solid #e5e0d8;z-index:30;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow:hidden;display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(0,0,0,.08);}
     #km-panel.open{transform:translateX(0);}
+    #trucks-panel.open{transform:translateX(0);}
     .trip-card{background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;padding:12px 14px;margin-bottom:8px;}
     .trip-row{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;margin-bottom:3px;}
     .km-link{cursor:pointer;border-bottom:1px dashed #3b82f6;color:#1d4ed8;transition:opacity .1s;}
@@ -196,6 +197,11 @@
 
   <!-- Tab content -->
   <div style="width:100%;max-width:480px;padding:20px 16px;flex:1">
+
+    <!-- ── TAB: WEEKLY SCHEDULE (demand) ── -->
+    <div id="tab-demand-schedule" class="tab-pane">
+      <div id="demand-schedule-content"></div>
+    </div>
 
     <!-- ── TAB: HOME / OVERVIEW (demand) ── -->
     <div id="tab-demand-home" class="tab-pane">
@@ -494,6 +500,15 @@
     </div>
     <div id="km-panel-body" style="flex:1;overflow-y:auto;padding:14px 16px"></div>
   </div>
+
+  <!-- Trucks breakdown panel -->
+  <div id="trucks-panel" style="position:absolute;top:0;right:0;width:340px;height:100%;background:#fff;border-left:1px solid #e5e0d8;z-index:31;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow:hidden;display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(0,0,0,.08);">
+    <div style="padding:16px 18px 12px;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <div><p style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 2px">Schedule breakdown</p><p style="font-size:14px;font-weight:700;color:#1e293b;margin:0" id="trucks-panel-title">Trucks running today</p></div>
+      <button onclick="closeTrucksPanel()" style="width:28px;height:28px;border-radius:50%;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:14px;color:#64748b;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="trucks-panel-body" style="flex:1;overflow-y:auto;padding:14px 16px"></div>
+  </div>
 </div>
 
 
@@ -508,8 +523,8 @@ const CREDS = {
 };
 
 const TABS = {
-  demand:    [{id:'tab-demand-home', label:'Overview'}, {id:'tab-new', label:'New Request'}, {id:'tab-active', label:'Active (2)'}, {id:'tab-history', label:'History'}],
-  supply:    [{id:'tab-home', label:'Overview'},{id:'tab-incoming', label:'Incoming (2)'},{id:'tab-schedule', label:'Schedule'},{id:'tab-requests', label:'Requests'},{id:'tab-active', label:'Active Jobs'}],
+  demand:    [{id:'tab-demand-schedule', label:'My Schedule'}, {id:'tab-new', label:'New Request'}, {id:'tab-active', label:'Active (2)'}, {id:'tab-history', label:'History'}],
+  supply:    [{id:'tab-schedule', label:'My Schedule'}, {id:'tab-incoming', label:'Incoming (2)'}, {id:'tab-requests', label:'Requests'}, {id:'tab-active', label:'Active Jobs'}],
   regulator: [],
 };
 
@@ -620,6 +635,7 @@ function setupPortal(role) {
   }
   if (role === 'demand') {
     renderDemandHome();
+    renderDemandScheduleTab();
   }
 }
 
@@ -638,6 +654,7 @@ function switchTab(tabId) {
     if (btns[i]) btns[i].classList.toggle('active', t.id === tabId);
   });
   if (tabId === 'tab-schedule') renderScheduleTab();
+  if (tabId === 'tab-demand-schedule') renderDemandScheduleTab();
 }
 
 function doLogout() {
@@ -811,6 +828,130 @@ function saveDemandProfile() {
     const tons = demandProfile.trucks * demandProfile.capacity;
     btn.textContent = `↩ Use saved preferences — ${demandProfile.pickupZone} → ${demandProfile.dropoffZone} · ${demandProfile.slot.split(' ')[0]} · ${demandProfile.trucks} trucks`;
   }
+}
+
+function renderDemandScheduleTab() {
+  const c = document.getElementById('demand-schedule-content');
+  if (!c) return;
+
+  const today = new Date();
+  const todayDayIdx = (today.getDay() + 6) % 7;
+  const todayDayName = DAYS_OF_WEEK[todayDayIdx];
+
+  // Day selector
+  const dayPills = DAYS_OF_WEEK.map(d => {
+    const isToday = d === todayDayName;
+    const isSel   = d === selectedDemandDay;
+    const dayData = myDemandWeek[d];
+    const totalTrucks = SLOT_KEYS.reduce((sum, k) => sum + ((dayData[k]||{}).needed ? (dayData[k].trucks||0) : 0), 0);
+    return `<div onclick="selectedDemandDay='${d}';editingDemandSlot=null;renderDemandScheduleTab()" style="min-width:44px;text-align:center;padding:8px 4px;border-radius:10px;cursor:pointer;border:2px solid ${isSel?'#1d4ed8':'transparent'};background:${isSel?'#eff6ff':'transparent'};transition:all .12s">
+      <p style="font-size:10px;font-weight:700;color:${isSel?'#1d4ed8':'#64748b'};margin:0 0 3px">${d}</p>
+      <p style="font-size:13px;font-weight:800;color:${totalTrucks>0?'#1d4ed8':'#cbd5e1'};margin:0">${totalTrucks||'—'}</p>
+    </div>`;
+  }).join('');
+
+  const dayData = myDemandWeek[selectedDemandDay];
+  const SLOT_LABELS_LOCAL = {'morning':'Morning (8am–12pm)','afternoon':'Afternoon (12pm–4pm)','evening':'Evening (4pm–8pm)'};
+
+  const slotCards = SLOT_KEYS.map(key => {
+    const s = dayData[key] || {};
+    const isEditing = editingDemandSlot === (selectedDemandDay + '_' + key);
+    const allZones = [...new Set([...pickupZones, ...dropoffZones])];
+
+    if (isEditing) {
+      return `
+        <div style="background:#fff;border-radius:14px;border:1.5px solid #bfdbfe;padding:14px 16px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${SLOT_LABELS_LOCAL[key]}</p>
+            <button onclick="editingDemandSlot=null;renderDemandScheduleTab()" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="dw-needed-${key}" ${s.needed?'checked':''} onchange="document.getElementById('dw-fields-${key}').style.display=this.checked?'flex':'none'" style="cursor:pointer">
+              <span style="font-size:12px;font-weight:600;color:#374151">Trucks needed this slot</span>
+            </label>
+            <div id="dw-fields-${key}" style="display:${s.needed?'flex':'none'};flex-direction:column;gap:8px">
+              <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">No. of trucks</label>
+                <input type="number" id="dw-trucks-${key}" min="0" max="50" value="${s.trucks||0}" style="width:80px;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 10px"/></div>
+              <div>
+                <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Pickup zone</label>
+                <div id="dw-pickup-pills-${key}" style="display:flex;flex-wrap:wrap;gap:5px">
+                  ${allZones.map(z => `<span class="zone-pill${s.pickupZone===z?' selected':''}" onclick="dwSelectZone(this,'${key}','pickup')">${z}</span>`).join('')}
+                </div>
+                <input type="text" id="dw-pickup-addr-${key}" value="${s.pickupAddr||''}" placeholder="Exact pickup address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;margin-top:6px;background:#fafaf8"/>
+              </div>
+              <div>
+                <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Dropoff zone</label>
+                <div id="dw-dropoff-pills-${key}" style="display:flex;flex-wrap:wrap;gap:5px">
+                  ${allZones.map(z => `<span class="zone-pill${s.dropoffZone===z?' selected':''}" onclick="dwSelectZone(this,'${key}','dropoff')">${z}</span>`).join('')}
+                </div>
+                <input type="text" id="dw-dropoff-addr-${key}" value="${s.dropoffAddr||''}" placeholder="Exact dropoff address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;margin-top:6px;background:#fafaf8"/>
+              </div>
+            </div>
+            <button onclick="saveDemandSlot('${selectedDemandDay}','${key}')" style="width:100%;padding:10px;border-radius:9px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Save</button>
+          </div>
+        </div>`;
+    }
+    // Display card
+    return `
+      <div style="background:${s.needed?'#eff6ff':'#f8f7f4'};border-radius:12px;border:1px solid ${s.needed?'#bfdbfe':'#e5e0d8'};padding:12px 14px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:10px;height:10px;border-radius:50%;background:${s.needed?'#1d4ed8':'#e2e8f0'};flex-shrink:0"></div>
+            <div>
+              <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0">${SLOT_LABELS_LOCAL[key]}</p>
+              ${s.needed
+                ? `<p style="font-size:10px;color:#1d4ed8;margin:2px 0 0">${s.trucks} truck${s.trucks!==1?'s':''} needed · ${s.pickupZone||''} → ${s.dropoffZone||''}</p>
+                   <p style="font-size:9px;color:#64748b;margin:2px 0 0">${s.pickupAddr ? s.pickupAddr.split(',')[0] : ''}</p>`
+                : `<p style="font-size:10px;color:#94a3b8;margin:2px 0 0">No request</p>`
+              }
+            </div>
+          </div>
+          <button onclick="editingDemandSlot='${selectedDemandDay}_${key}';renderDemandScheduleTab()" style="font-size:10px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;cursor:pointer">Edit</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  c.innerHTML = `
+    <div style="margin-bottom:12px">
+      <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">My weekly schedule</p>
+      <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:4px">${dayPills}</div>
+    </div>
+    <div style="margin-bottom:12px">
+      <p style="font-size:10px;font-weight:600;color:#64748b;margin:0 0 8px">${selectedDemandDay}${selectedDemandDay===todayDayName?' (today)':''}</p>
+      ${slotCards}
+    </div>
+    <button onclick="switchTab('tab-new')" style="width:100%;padding:11px;border-radius:10px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">+ New request for a different date →</button>`;
+}
+
+function dwSelectZone(el, key, side) {
+  const groupId = `dw-${side}-pills-${key}`;
+  document.getElementById(groupId).querySelectorAll('.zone-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  const zone = el.textContent.trim();
+  const addrId = `dw-${side}-addr-${key}`;
+  const inp = document.getElementById(addrId);
+  if (inp && !inp.value) inp.value = ZONE_ADDRESSES[zone] || '';
+}
+
+function saveDemandSlot(day, key) {
+  const needed = document.getElementById(`dw-needed-${key}`)?.checked || false;
+  const trucks = parseInt(document.getElementById(`dw-trucks-${key}`)?.value) || 0;
+  const pickupSel   = document.querySelector(`#dw-pickup-pills-${key} .zone-pill.selected`);
+  const dropoffSel  = document.querySelector(`#dw-dropoff-pills-${key} .zone-pill.selected`);
+  const pickupAddr  = document.getElementById(`dw-pickup-addr-${key}`)?.value.trim() || '';
+  const dropoffAddr = document.getElementById(`dw-dropoff-addr-${key}`)?.value.trim() || '';
+  myDemandWeek[day][key] = {
+    needed,
+    trucks,
+    pickupZone:  pickupSel  ? pickupSel.textContent.trim()  : '',
+    dropoffZone: dropoffSel ? dropoffSel.textContent.trim() : '',
+    pickupAddr,
+    dropoffAddr,
+    tonnage: trucks * (demandProfile?.capacity || 10),
+  };
+  editingDemandSlot = null;
+  renderDemandScheduleTab();
 }
 
 function renderDemandHome() {
@@ -1013,11 +1154,89 @@ function renderScheduleTab() {
   const c = document.getElementById('schedule-tab-content');
   if (!c) return;
 
-  const today = todayIso();
+  const today = new Date();
+  const todayDayIdx = (today.getDay() + 6) % 7; // Mon=0
+  const todayDayName = DAYS_OF_WEEK[todayDayIdx];
 
-  // ── FLEET PROFILE CARD ──────────────────────────────────────────────────
+  // Day selector
+  const dayPills = DAYS_OF_WEEK.map((d, i) => {
+    const isToday = d === todayDayName;
+    const isSel   = d === selectedWeekDay;
+    const dayData = mySupplyWeek[d];
+    const totalTrucks = SLOT_KEYS.reduce((sum, k) => sum + (dayData[k].available ? dayData[k].trucks : 0), 0);
+    return `<div onclick="selectedWeekDay='${d}';editingSupplySlot=null;renderScheduleTab()" style="min-width:44px;text-align:center;padding:8px 4px;border-radius:10px;cursor:pointer;border:2px solid ${isSel?'#1d4ed8':'transparent'};background:${isSel?'#eff6ff':'transparent'};transition:all .12s">
+      <p style="font-size:10px;font-weight:700;color:${isSel?'#1d4ed8':'#64748b'};margin:0 0 3px">${d}${isToday?' ·':''}${isToday?'<br><span style="font-size:8px;color:#94a3b8">today</span>':''}</p>
+      <p style="font-size:13px;font-weight:800;color:${totalTrucks>0?'#16a34a':'#cbd5e1'};margin:0">${totalTrucks||'—'}</p>
+    </div>`;
+  }).join('');
+
+  // Slot cards for selected day
+  const dayData = mySupplyWeek[selectedWeekDay];
+  const slotCards = SLOT_KEYS.map(key => {
+    const s = dayData[key];
+    const isEditing = editingSupplySlot === (selectedWeekDay + '_' + key);
+    if (isEditing) {
+      const zPills = ALL_SUPPLY_ZONES.map(z =>
+        `<span class="zone-pill${s.zones.includes(z)?' selected':''}" onclick="this.classList.toggle('selected')" data-zone="${z}">${z}</span>`
+      ).join('');
+      return `
+        <div style="background:#fff;border-radius:14px;border:1.5px solid #bfdbfe;padding:14px 16px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${SLOT_LABELS[key]}</p>
+            <button onclick="editingSupplySlot=null;renderScheduleTab()" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="sw-avail-${key}" ${s.available?'checked':''} onchange="document.getElementById('sw-fields-${key}').style.display=this.checked?'flex':'none'" style="cursor:pointer">
+              <span style="font-size:12px;font-weight:600;color:#374151">Available this slot</span>
+            </label>
+            <div id="sw-fields-${key}" style="display:${s.available?'flex':'none'};flex-direction:column;gap:8px">
+              <div>
+                <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Trucks available</label>
+                <input type="number" id="sw-trucks-${key}" min="0" max="50" value="${s.trucks}" style="width:80px;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 10px"/>
+              </div>
+              <div>
+                <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Start address</label>
+                <input type="text" id="sw-start-${key}" value="${s.startAddr}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;color:#374151;background:#fafaf8"/>
+              </div>
+              <div>
+                <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">End address</label>
+                <input type="text" id="sw-end-${key}" value="${s.endAddr}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;color:#374151;background:#fafaf8"/>
+              </div>
+              <div>
+                <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Zones covered</label>
+                <div id="sw-zones-${key}" style="display:flex;flex-wrap:wrap;gap:5px">${zPills}</div>
+              </div>
+            </div>
+            <button onclick="saveSupplySlot('${selectedWeekDay}','${key}')" style="width:100%;padding:10px;border-radius:9px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Save</button>
+          </div>
+        </div>`;
+    }
+    // display card
+    const dotColor = s.available ? '#16a34a' : '#e2e8f0';
+    const bgColor  = s.available ? '#f0fdf4' : '#f8f7f4';
+    return `
+      <div style="background:${bgColor};border-radius:12px;border:1px solid ${s.available?'#bbf7d0':'#e5e0d8'};padding:12px 14px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:10px;height:10px;border-radius:50%;background:${dotColor};flex-shrink:0"></div>
+            <div>
+              <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0">${SLOT_LABELS[key]}</p>
+              ${s.available
+                ? `<p style="font-size:10px;color:#16a34a;margin:2px 0 0">${s.trucks} trucks · ${(s.zones||[]).slice(0,3).join(', ')}</p>
+                   <p style="font-size:9px;color:#64748b;margin:2px 0 0">${s.startAddr ? s.startAddr.split(',')[0] : ''}</p>`
+                : `<p style="font-size:10px;color:#94a3b8;margin:2px 0 0">Unavailable</p>`
+              }
+            </div>
+          </div>
+          <button onclick="editingSupplySlot='${selectedWeekDay}_${key}';renderScheduleTab()" style="font-size:10px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;cursor:pointer">Edit</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Fleet profile card (collapsed summary at bottom)
   const p = supplyProfile;
-  const zoneList = (p.zones||[]).slice(0,4).join(', ') + ((p.zones||[]).length > 4 ? ` +${p.zones.length-4} more` : '');
+  const zoneList = (p.zones||[]).slice(0,4).join(', ') + ((p.zones||[]).length > 4 ? ` +${p.zones.length-4}` : '');
 
   let profileCard;
   if (scheduleProfileEdit) {
@@ -1025,169 +1244,68 @@ function renderScheduleTab() {
       `<span class="zone-pill${(p.zones||[]).includes(z)?' selected':''}" onclick="this.classList.toggle('selected')">${z}</span>`
     ).join('');
     profileCard = `
-      <div style="background:#fff;border-radius:16px;border:1.5px solid #bfdbfe;padding:16px 18px;margin-bottom:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="background:#fff;border-radius:14px;border:1.5px solid #bfdbfe;padding:14px 16px;margin-top:4px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">Fleet profile</p>
           <button onclick="scheduleProfileEdit=false;renderScheduleTab()" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
         </div>
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <div>
-            <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Home base / depot address</label>
-            <input id="sp-home" type="text" value="${p.homeBase||''}" placeholder="Your depot or yard address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fafaf8"/>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Home base / depot</label>
+            <input id="sp-home" type="text" value="${p.homeBase||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;background:#fafaf8"/></div>
+          <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Operating zones</label>
+            <div id="sp-zone-pills" style="display:flex;flex-wrap:wrap;gap:5px">${zPills}</div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Total trucks</label>
+              <input type="number" id="sp-fleet" min="1" max="500" value="${p.fleetSize||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px"/></div>
+            <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Capacity / truck (t)</label>
+              <input type="number" id="sp-cap" min="1" max="30" value="${p.capacity||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px"/></div>
           </div>
-          <div>
-            <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Zones you operate in</label>
-            <div id="sp-zone-pills" style="display:flex;flex-wrap:wrap;gap:5px">${zPills}</div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div>
-              <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Total trucks</label>
-              <input type="number" id="sp-fleet" min="1" max="500" value="${p.fleetSize||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/>
-            </div>
-            <div>
-              <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Capacity / truck (t)</label>
-              <input type="number" id="sp-cap" min="1" max="30" value="${p.capacity||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/>
-            </div>
-          </div>
-          <button onclick="saveSupplyProfile()" style="width:100%;padding:11px;border-radius:10px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Save fleet profile</button>
+          <button onclick="saveSupplyProfile()" style="width:100%;padding:10px;border-radius:9px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Save profile</button>
         </div>
       </div>`;
   } else {
     profileCard = `
-      <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:14px">
-        <div style="padding:11px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
-          <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">Fleet profile</p>
-          <button onclick="scheduleProfileEdit=true;renderScheduleTab()" style="font-size:10px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;cursor:pointer">Edit</button>
+      <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:12px 14px;margin-top:4px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 3px">Fleet profile</p>
+          <p style="font-size:12px;font-weight:600;color:#1e293b;margin:0">${p.fleetTotal||p.fleetSize||'—'} trucks · ${p.homeBase ? p.homeBase.split(',')[0] : '—'}</p>
+          <p style="font-size:10px;color:#64748b;margin:2px 0 0">${zoneList||'No zones set'}</p>
         </div>
-        <div style="padding:12px 16px;display:flex;flex-direction:column;gap:7px">
-          <div>
-            <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 2px">Home base</p>
-            <p style="font-size:12px;color:#374151;margin:0">${p.homeBase || '—'}</p>
-          </div>
-          <div style="height:1px;background:#f0ede8"></div>
-          <div style="display:flex;gap:16px;align-items:flex-start">
-            <div style="flex:1">
-              <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 2px">Operating zones</p>
-              <p style="font-size:11px;color:#374151;margin:0">${zoneList || '—'}</p>
-            </div>
-            <div>
-              <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 2px">Fleet</p>
-              <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0">${p.fleetSize || '—'} trucks · ${p.capacity || '—'}t each</p>
-            </div>
-          </div>
-        </div>
+        <button onclick="scheduleProfileEdit=true;renderScheduleTab()" style="font-size:10px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;cursor:pointer;flex-shrink:0">Edit</button>
       </div>`;
   }
 
-  // ── MODE TOGGLE ──────────────────────────────────────────────────────────
-  const modeToggle = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;background:#f1f5f9;border-radius:10px;padding:3px;margin-bottom:14px">
-      <button onclick="scheduleMode='today';renderScheduleTab()" style="padding:7px;border-radius:8px;font-size:11px;font-weight:600;border:none;cursor:pointer;transition:all .12s;${scheduleMode==='today'?'background:#fff;color:#1e293b;box-shadow:0 1px 3px #0002':'background:transparent;color:#64748b'}">Update for today</button>
-      <button onclick="scheduleMode='range';renderScheduleTab()" style="padding:7px;border-radius:8px;font-size:11px;font-weight:600;border:none;cursor:pointer;transition:all .12s;${scheduleMode==='range'?'background:#fff;color:#1e293b;box-shadow:0 1px 3px #0002':'background:transparent;color:#64748b'}">Set for a date range</button>
-    </div>`;
-
-  // ── SLOT FORM (shared by both modes) ────────────────────────────────────
-  // For today mode, use supplySchedule; for range mode, use supplySchedule as default
-  const baseSchedule = scheduleMode === 'today' ? supplySchedule : supplySchedule;
-
-  const slotForm = SLOT_KEYS.map(key => {
-    const s = baseSchedule[key];
-    const zPills = ALL_SUPPLY_ZONES.map(z =>
-      `<span class="zone-pill${s.zones.includes(z)?' selected':''}" onclick="this.classList.toggle('selected')" data-slot="${key}" data-zone="${z}">${z}</span>`
-    ).join('');
-    return `
-      <div id="sch-slot-${key}" style="border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${SLOT_LABELS[key]}</p>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-            <span style="font-size:10px;color:#64748b">Available</span>
-            <input type="checkbox" id="sch-avail-${key}" ${s.available?'checked':''} onchange="spToggleAvail('${key}')" style="cursor:pointer">
-          </label>
-        </div>
-        <div id="sch-fields-${key}" style="${s.available?'':'display:none'}">
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <div>
-              <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Start address</label>
-              <input id="sch-start-${key}" type="text" value="${s.startAddress}" placeholder="Where this slot's trucks start" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;color:#374151;background:#fafaf8"/>
-            </div>
-            <div>
-              <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">End address</label>
-              <input id="sch-end-${key}" type="text" value="${s.endAddress}" placeholder="Where trucks end up" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;color:#374151;background:#fafaf8"/>
-            </div>
-            <div>
-              <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Trucks available</label>
-              <input id="sch-trucks-${key}" type="number" min="0" max="50" value="${s.trucks}" style="width:80px;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;color:#374151"/>
-            </div>
-            <div>
-              <label style="font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Zones covered</label>
-              <div style="display:flex;flex-wrap:wrap;gap:5px">${zPills}</div>
-            </div>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-
-  // ── DATE RANGE PICKER (range mode only) ─────────────────────────────────
-  const maxDate = addDays(today, 30);
-  const datePicker = scheduleMode === 'range' ? `
-    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:center">
-      <div style="flex:1">
-        <label style="font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">From</label>
-        <input type="date" id="range-from" value="${today}" min="${today}" max="${maxDate}" style="width:100%;font-size:11px;border:1px solid #fde68a;border-radius:7px;padding:6px 8px;color:#374151"/>
-      </div>
-      <div style="flex:1">
-        <label style="font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">To</label>
-        <input type="date" id="range-to" value="${maxDate}" min="${today}" max="${maxDate}" style="width:100%;font-size:11px;border:1px solid #fde68a;border-radius:7px;padding:6px 8px;color:#374151"/>
-      </div>
-    </div>
-    <p style="font-size:10px;color:#92400e;margin:0 0 12px;background:#fffbeb;padding:7px 12px;border-radius:8px">Set availability for every day in this range. This becomes your default schedule — you can override individual days later.</p>` : '';
-
-  const saveLabel = scheduleMode === 'today' ? 'Save today\'s schedule' : 'Apply to selected date range';
-  const saveAction = scheduleMode === 'today' ? 'saveSupplyScheduleToday()' : 'saveSupplyScheduleRange()';
-
-  // ── 7-DAY UPCOMING PREVIEW ───────────────────────────────────────────────
-  const upcomingDays = Array.from({length:7}, (_,i) => addDays(today, i));
-  const dayCards = upcomingDays.map(iso => {
-    const sch = scheduleForDate(iso);
-    const dots = SLOT_KEYS.map(k => {
-      const color = sch[k].available ? '#16a34a' : '#cbd5e1';
-      return `<span title="${SLOT_LABELS[k]}" style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></span>`;
-    }).join('');
-    const label = iso === today ? 'Today' : iso === addDays(today,1) ? 'Tomorrow' : shortDate(iso);
-    const hasOverride = !!scheduledOverrides[iso];
-    return `
-      <div style="background:#fff;border-radius:10px;border:1px solid ${hasOverride?'#bfdbfe':'#e5e0d8'};padding:10px 10px;text-align:center;min-width:0">
-        <p style="font-size:9px;font-weight:700;color:${iso===today?'#1d4ed8':'#64748b'};text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</p>
-        <div style="display:flex;justify-content:center;gap:4px">${dots}</div>
-        ${hasOverride?`<p style="font-size:8px;color:#1d4ed8;margin:4px 0 0;font-weight:600">Custom</p>`:''}
-      </div>`;
-  }).join('');
-
-  // ── ASSEMBLE ─────────────────────────────────────────────────────────────
   c.innerHTML = `
-    ${profileCard}
-
-    <!-- Schedule section -->
-    <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:14px">
-      <div style="padding:12px 16px 12px;background:#f8f7f4;border-bottom:1px solid #f0ede8">
-        <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">Update schedule & capacity</p>
-        ${modeToggle}
-        ${datePicker}
-        ${slotForm}
-        <button onclick="${saveAction}" style="width:100%;padding:11px;border-radius:10px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">${saveLabel}</button>
-      </div>
+    <div style="margin-bottom:12px">
+      <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">My weekly schedule</p>
+      <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:4px">${dayPills}</div>
     </div>
+    <div style="margin-bottom:4px">
+      <p style="font-size:10px;font-weight:600;color:#64748b;margin:0 0 8px">${selectedWeekDay}${selectedWeekDay === todayDayName ? ' (today)' : ''}</p>
+      ${slotCards}
+    </div>
+    ${profileCard}`;
+}
 
-    <!-- 7-day upcoming preview -->
-    <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden">
-      <div style="padding:11px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8">
-        <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">Next 7 days</p>
-        <p style="font-size:10px;color:#94a3b8;margin:3px 0 0">Green dot = available that slot · Custom = day-specific override</p>
-      </div>
-      <div style="padding:10px 12px">
-        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">${dayCards}</div>
-      </div>
-    </div>`;
+function saveSupplySlot(day, key) {
+  const avail  = document.getElementById(`sw-avail-${key}`)?.checked || false;
+  const trucks = parseInt(document.getElementById(`sw-trucks-${key}`)?.value) || 0;
+  const start  = document.getElementById(`sw-start-${key}`)?.value.trim() || '';
+  const end    = document.getElementById(`sw-end-${key}`)?.value.trim() || '';
+  const zonePills = document.querySelectorAll(`#sw-zones-${key} .zone-pill.selected`);
+  mySupplyWeek[day][key] = {
+    available: avail,
+    trucks,
+    startAddr: start,
+    endAddr:   end,
+    zones: Array.from(zonePills).map(p => p.textContent.trim()),
+  };
+  // Also update supplySchedule for the matching slot
+  if (day === selectedWeekDay) {
+    supplySchedule[key] = { available: avail, trucks, startAddress: start, endAddress: end, zones: mySupplyWeek[day][key].zones };
+  }
+  editingSupplySlot = null;
+  renderScheduleTab();
 }
 
 function spToggleAvail(key) {
@@ -1574,6 +1692,101 @@ let supplySchedule = {
     zones:        [],
   },
 };
+
+const DAYS_OF_WEEK = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+let selectedWeekDay = 'Mon'; // for supply
+let selectedDemandDay = 'Mon'; // for demand
+let editingSupplySlot = null;
+let editingDemandSlot = null;
+
+// Supply side weekly schedule (pre-filled, editable)
+let mySupplyWeek = {
+  Mon: {
+    morning:   { available:true,  trucks:4, zones:['Jurong','Tuas'],             startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
+    afternoon: { available:true,  trucks:3, zones:['Woodlands','Pasir Panjang'], startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Woodlands Close, Singapore 737854' },
+    evening:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
+  },
+  Tue: {
+    morning:   { available:true,  trucks:4, zones:['Jurong','Tuas'],             startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
+    afternoon: { available:true,  trucks:3, zones:['Woodlands'],                 startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
+    evening:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
+  },
+  Wed: {
+    morning:   { available:true,  trucks:3, zones:['Jurong'],                    startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
+    afternoon: { available:true,  trucks:4, zones:['Tuas','Pasir Panjang'],      startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'12 Pasir Panjang Road, Singapore 117438' },
+    evening:   { available:true,  trucks:2, zones:['Jurong'],                    startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
+  },
+  Thu: {
+    morning:   { available:true,  trucks:4, zones:['Jurong','Tuas'],             startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
+    afternoon: { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
+    evening:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
+  },
+  Fri: {
+    morning:   { available:true,  trucks:2, zones:['Tuas'],                      startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Tuas Ave 1, Singapore 639504' },
+    afternoon: { available:true,  trucks:3, zones:['Jurong','Woodlands'],        startAddr:'21 Tuas Ave 1, Singapore 639504',             endAddr:'21 Woodlands Close, Singapore 737854' },
+    evening:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
+  },
+  Sat: {
+    morning:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
+    afternoon: { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
+    evening:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
+  },
+  Sun: {
+    morning:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
+    afternoon: { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
+    evening:   { available:false, trucks:0, zones:[], startAddr:'', endAddr:'' },
+  },
+};
+
+// Demand side weekly schedule (pre-filled, editable)
+let myDemandWeek = {
+  Mon: {
+    morning:   { needed:true,  trucks:2, pickupZone:'Jurong',       dropoffZone:'Woodlands',   pickupAddr:'31 Jurong Port Road, Singapore 619115',   dropoffAddr:'21 Woodlands Close, Singapore 737854',   tonnage:20 },
+    afternoon: { needed:true,  trucks:1, pickupZone:'Tuas',         dropoffZone:'Changi',      pickupAddr:'30 Tuas Ave 1, Singapore 639494',          dropoffAddr:'30 Airport Boulevard, Singapore 819642', tonnage:10 },
+    evening:   { needed:false, trucks:0 },
+  },
+  Tue: {
+    morning:   { needed:true,  trucks:3, pickupZone:'Pasir Panjang',dropoffZone:'Tampines',    pickupAddr:'12 Pasir Panjang Road, Singapore 117438',  dropoffAddr:'10 Tampines Ave 11, Singapore 529433',   tonnage:30 },
+    afternoon: { needed:false, trucks:0 },
+    evening:   { needed:false, trucks:0 },
+  },
+  Wed: {
+    morning:   { needed:false, trucks:0 },
+    afternoon: { needed:true,  trucks:2, pickupZone:'Woodlands',    dropoffZone:'Changi',      pickupAddr:'21 Woodlands Close, Singapore 737854',     dropoffAddr:'30 Airport Boulevard, Singapore 819642', tonnage:20 },
+    evening:   { needed:false, trucks:0 },
+  },
+  Thu: {
+    morning:   { needed:true,  trucks:2, pickupZone:'Jurong',       dropoffZone:'Tampines',    pickupAddr:'31 Jurong Port Road, Singapore 619115',    dropoffAddr:'10 Tampines Ave 11, Singapore 529433',   tonnage:20 },
+    afternoon: { needed:true,  trucks:1, pickupZone:'Changi',       dropoffZone:'Jurong',      pickupAddr:'30 Airport Boulevard, Singapore 819642',   dropoffAddr:'31 Jurong Port Road, Singapore 619115',  tonnage:10 },
+    evening:   { needed:false, trucks:0 },
+  },
+  Fri: {
+    morning:   { needed:true,  trucks:1, pickupZone:'Tuas',         dropoffZone:'Woodlands',   pickupAddr:'30 Tuas Ave 1, Singapore 639494',          dropoffAddr:'21 Woodlands Close, Singapore 737854',   tonnage:10 },
+    afternoon: { needed:false, trucks:0 },
+    evening:   { needed:false, trucks:0 },
+  },
+  Sat: { morning:{needed:false,trucks:0}, afternoon:{needed:false,trucks:0}, evening:{needed:false,trucks:0} },
+  Sun: { morning:{needed:false,trucks:0}, afternoon:{needed:false,trucks:0}, evening:{needed:false,trucks:0} },
+};
+
+// All registered hauliers' schedules (for regulator breakdown)
+const ALL_HAULIER_SCHEDULES = [
+  { company:'Apex Logistics SG',     fleetTotal:12, morning:{trucks:4,available:true},  afternoon:{trucks:3,available:true},  evening:{trucks:0,available:false} },
+  { company:'Swift Haulage Pte Ltd', fleetTotal:18, morning:{trucks:8,available:true},  afternoon:{trucks:6,available:true},  evening:{trucks:3,available:true}  },
+  { company:'Pinnacle Transport',    fleetTotal:10, morning:{trucks:5,available:true},  afternoon:{trucks:4,available:true},  evening:{trucks:0,available:false} },
+  { company:'GlobeTrans SG',         fleetTotal:15, morning:{trucks:6,available:true},  afternoon:{trucks:5,available:true},  evening:{trucks:2,available:true}  },
+  { company:'CargoPrime SG',         fleetTotal:8,  morning:{trucks:3,available:true},  afternoon:{trucks:3,available:true},  evening:{trucks:1,available:true}  },
+  { company:'Fairview Cargo',        fleetTotal:12, morning:{trucks:4,available:true},  afternoon:{trucks:4,available:true},  evening:{trucks:0,available:false} },
+];
+
+// All registered shippers' demand schedules (for regulator breakdown)
+const ALL_SHIPPER_SCHEDULES = [
+  { company:'Fresh Direct SG',    morning:{trucks:2,needed:true},  afternoon:{trucks:1,needed:true},  evening:{trucks:0,needed:false} },
+  { company:'Pacific Trade Co.',  morning:{trucks:3,needed:true},  afternoon:{trucks:0,needed:false}, evening:{trucks:2,needed:true}  },
+  { company:'Raffles Freight',    morning:{trucks:0,needed:false}, afternoon:{trucks:2,needed:true},  evening:{trucks:1,needed:true}  },
+  { company:'Harbor Logistics',   morning:{trucks:4,needed:true},  afternoon:{trucks:3,needed:true},  evening:{trucks:0,needed:false} },
+];
+
 let selectedHaulier = null;
 
 function buildPills(id, zones) {
@@ -1871,6 +2084,62 @@ function closeKmPanel() {
   sgMap && setTimeout(() => sgMap.invalidateSize(), 300);
 }
 
+function showTrucksPanel() {
+  const slotLabel = {'morning':'Morning · 8am–12pm','afternoon':'Afternoon · 12pm–4pm','evening':'Evening · 4pm–8pm'}[currentSlot];
+  document.getElementById('trucks-panel-title').textContent = `Trucks running · ${slotLabel}`;
+
+  const supplyTotal = ALL_HAULIER_SCHEDULES.reduce((a,h) => a + (h[currentSlot].available ? h[currentSlot].trucks : 0), 0);
+  const demandTotal = ALL_SHIPPER_SCHEDULES.reduce((a,s) => a + (s[currentSlot].needed ? s[currentSlot].trucks : 0), 0);
+
+  const supplyRows = ALL_HAULIER_SCHEDULES.map(h => {
+    const slot = h[currentSlot];
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f5f3f0">
+      <div>
+        <p style="font-size:11px;font-weight:600;color:#1e293b;margin:0">${h.company}</p>
+        <p style="font-size:9px;color:#94a3b8;margin:0">Fleet: ${h.fleetTotal} total</p>
+      </div>
+      <div style="text-align:right">
+        ${slot.available
+          ? `<span style="font-size:13px;font-weight:800;color:#16a34a">${slot.trucks}</span><p style="font-size:8px;color:#94a3b8;margin:0">running</p>`
+          : `<span style="font-size:11px;font-weight:600;color:#cbd5e1">Unavailable</span>`}
+      </div>
+    </div>`;
+  }).join('');
+
+  const demandRows = ALL_SHIPPER_SCHEDULES.map(s => {
+    const slot = s[currentSlot];
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f5f3f0">
+      <p style="font-size:11px;font-weight:600;color:#1e293b;margin:0">${s.company}</p>
+      <div style="text-align:right">
+        ${slot.needed
+          ? `<span style="font-size:13px;font-weight:800;color:#1d4ed8">${slot.trucks}</span><p style="font-size:8px;color:#94a3b8;margin:0">needed</p>`
+          : `<span style="font-size:11px;font-weight:600;color:#cbd5e1">No demand</span>`}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('trucks-panel-body').innerHTML = `
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 12px;margin-bottom:14px;display:flex;gap:12px">
+      <div style="flex:1;text-align:center"><p style="font-size:9px;color:#94a3b8;margin:0 0 2px;text-transform:uppercase;letter-spacing:.06em">Supply running</p><p style="font-size:22px;font-weight:800;color:#16a34a;margin:0">${supplyTotal}</p><p style="font-size:9px;color:#94a3b8;margin:0">trucks</p></div>
+      <div style="width:1px;background:#e2e8f0"></div>
+      <div style="flex:1;text-align:center"><p style="font-size:9px;color:#94a3b8;margin:0 0 2px;text-transform:uppercase;letter-spacing:.06em">Demand</p><p style="font-size:22px;font-weight:800;color:#1d4ed8;margin:0">${demandTotal}</p><p style="font-size:9px;color:#94a3b8;margin:0">trucks needed</p></div>
+    </div>
+
+    <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 6px">Supply schedules</p>
+    ${supplyRows}
+
+    <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:14px 0 6px">Demand schedules</p>
+    ${demandRows}`;
+
+  document.getElementById('trucks-panel').classList.add('open');
+  sgMap && sgMap.invalidateSize();
+}
+
+function closeTrucksPanel() {
+  document.getElementById('trucks-panel').classList.remove('open');
+  sgMap && setTimeout(() => sgMap.invalidateSize(), 300);
+}
+
 function derive(z){
   const util=Math.round(z.matched/z.supply*100);
   const demandSat=z.demand>0?Math.round(z.matched/z.demand*100):100;
@@ -1958,7 +2227,7 @@ function renderSidebar(){
   const tTonnage=zones.reduce((a,z)=>a+z.supply,0);
   const tMatched=zones.reduce((a,z)=>a+z.matched,0);
   document.getElementById('summary-stats').innerHTML=`
-    <div style="background:#f8fafc;border-radius:7px;padding:7px 9px"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Total Trucks</p><p style="font-size:17px;font-weight:800;color:#1e293b;margin:0">${zones.reduce((a,z)=>a+z.trucks,0)}</p></div>
+    <div onclick="showTrucksPanel()" style="background:#eff6ff;border-radius:7px;padding:7px 9px;cursor:pointer;border:1px solid #bfdbfe;transition:background .12s" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Total Trucks <span style="color:#93c5fd;font-size:8px">↗ from schedules</span></p><p style="font-size:17px;font-weight:800;color:#1d4ed8;margin:0">${ALL_HAULIER_SCHEDULES.reduce((a,h)=>a+(h[currentSlot].available?h[currentSlot].trucks:0),0)}</p></div>
     <div style="background:#f8fafc;border-radius:7px;padding:7px 9px"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Total Tonnage</p><p style="font-size:17px;font-weight:800;color:#1e293b;margin:0">${(tTonnage/1000).toFixed(1)}kt</p></div>
     <div style="background:${util>=70?'#f0fdf4':util>=50?'#fffbeb':'#fef2f2'};border-radius:7px;padding:7px 9px"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Utilisation</p><p style="font-size:17px;font-weight:800;color:${utilColor(util)};margin:0">${util}%</p><p style="font-size:8px;color:#94a3b8;margin:0">matched/supply</p></div>
     <div style="background:${tUmet>0?'#fef2f2':'#f0fdf4'};border-radius:7px;padding:7px 9px"><p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 1px">Unfulfilled Demand</p><p style="font-size:17px;font-weight:800;color:${tUmet>0?'#dc2626':'#166534'};margin:0">${tUmet.toLocaleString()}t</p></div>
