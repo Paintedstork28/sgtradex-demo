@@ -218,7 +218,7 @@
       <!-- S1 -->
       <div id="s1" style="background:#fff;border-radius:20px;border:1px solid #e5e0d8;overflow:hidden">
         <div style="padding:20px 20px 14px;border-bottom:1px solid #f1f0ec">
-          <p style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.12em;text-transform:uppercase;margin:0 0 3px">New Request</p>
+          <p style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.12em;text-transform:uppercase;margin:0 0 3px">New Capacity</p>
           <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin:0 0 3px">Find available trucks</h2>
           <p style="font-size:11px;color:#94a3b8;margin:0">Your details are encrypted. Hauliers see only that a match exists.</p>
         </div>
@@ -528,7 +528,7 @@ const CREDS = {
 };
 
 const TABS = {
-  demand:    [{id:'tab-demand-schedule', label:'My Schedule'}, {id:'tab-new', label:'New Request'}, {id:'tab-active', label:'Active (2)'}, {id:'tab-history', label:'History'}],
+  demand:    [{id:'tab-demand-schedule', label:'Current Schedule'}, {id:'tab-new', label:'New Capacity'}, {id:'tab-active', label:'Active (2)'}, {id:'tab-history', label:'History'}],
   supply:    [{id:'tab-schedule', label:'My Schedule'}, {id:'tab-spare', label:'Spare Capacity'}, {id:'tab-incoming', label:'Incoming (2)'}, {id:'tab-requests', label:'Requests'}, {id:'tab-active', label:'Active Jobs'}],
   regulator: [],
 };
@@ -675,12 +675,12 @@ function doLogout() {
 //  SUPPLY — REQUEST MANAGEMENT
 // ══════════════════════════════════════════════
 const DECLINE_REASONS = [
-  'No available trucks for this slot',
-  'Route not serviceable by our fleet',
-  'Capacity already committed',
   'Commercial terms not suitable',
-  'Insufficient lead time',
-  'Weight exceeds vehicle limit',
+  'Insufficient lead time to prepare',
+  'Driver availability issue',
+  'Equipment / special handling required',
+  'Internal priority conflict',
+  'Unable to accommodate at this time',
 ];
 
 let supplyRequests = [
@@ -898,7 +898,7 @@ function renderDemandScheduleTab() {
     <div>${slotSections}</div>
     <div style="margin-top:8px;background:#fffbeb;border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
       <p style="font-size:11px;color:#92400e;margin:0">Need capacity beyond your own trucks?</p>
-      <button onclick="switchTab('tab-new')" style="font-size:10px;font-weight:600;color:#92400e;background:#fef3c7;border:1px solid #fde68a;padding:4px 10px;border-radius:8px;cursor:pointer">New request →</button>
+      <button onclick="switchTab('tab-new')" style="font-size:10px;font-weight:600;color:#92400e;background:#fef3c7;border:1px solid #fde68a;padding:4px 10px;border-radius:8px;cursor:pointer">Request new capacity →</button>
     </div>`;
 }
 
