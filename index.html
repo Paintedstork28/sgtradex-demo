@@ -72,6 +72,14 @@
     .imp-btn{padding:5px 11px;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;background:#f8f7f4;color:#475569;display:inline-flex;align-items:center;gap:4px;transition:all .12s;font-family:'Inter',sans-serif;}
     .imp-btn:hover{border-color:#93c5fd;background:#f5f8ff;color:#1d4ed8;}
     .imp-btn.active{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;}
+    /* Desktop content layout */
+    .page-content{max-width:900px;}
+    .page-header{margin-bottom:24px;}
+    .page-header h1{font-size:22px;font-weight:800;color:#1e293b;margin:0 0 4px;}
+    .page-header p{font-size:13px;color:#64748b;margin:0;}
+    .cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .card{background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden;}
+    @media(max-width:860px){.cards-grid{grid-template-columns:1fr;}}
   </style>
 </head>
 <body>
@@ -187,8 +195,10 @@
 
     <!-- ── TAB: NEW REQUEST (demand) ── -->
     <div id="tab-new" class="tab-pane active">
+    <div class="page-content">
+    <div class="page-header"><h1>Capacity Needed</h1><p>Enter your capacity ask — matching runs on encrypted data</p></div>
       <!-- S1 -->
-      <div id="s1" style="background:#fff;border-radius:20px;border:1px solid #e5e0d8;overflow:hidden">
+      <div id="s1" style="background:#fff;border-radius:20px;border:1px solid #e5e0d8;overflow:hidden;max-width:640px">
 
         <!-- Encryption banner — top of card -->
         <div style="background:#f0fdf4;border-bottom:1px solid #bbf7d0;padding:10px 16px;display:flex;align-items:flex-start;gap:8px">
@@ -332,6 +342,7 @@
         <button onclick="goNewRequest()" style="width:100%;padding:11px;border-radius:12px;background:#fff;color:#475569;font-size:13px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer">New Request</button>
         <button onclick="switchTab('tab-active')" style="width:100%;padding:11px;border-radius:12px;background:#eff6ff;color:#1d4ed8;font-size:13px;font-weight:600;border:1px solid #bfdbfe;cursor:pointer;margin-top:8px">View Request Status →</button>
       </div>
+    </div></div><!-- /page-content -->
     </div>
 
     <!-- ── TAB: HOME / OVERVIEW (supply only) ── -->
@@ -1304,7 +1315,7 @@ function renderScheduleTab() {
             <div style="flex:1">
               <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0 0 2px">${r.truck}</p>
               <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${r.from} → ${r.to}</p>
-              <p style="font-size:10px;color:#64748b;margin:2px 0 4px">${r.tons}t capacity${spare ? ` · <span style="color:#16a34a;font-weight:600">${spare.spareTons}t spare offered</span>` : ''}</p>
+              <p style="font-size:10px;color:#64748b;margin:2px 0 4px">${r.numTrucks ? `${r.numTrucks} trucks × ${r.capTruck}t = ` : ''}${r.tons}t capacity${spare ? ` · <span style="color:#16a34a;font-weight:600">${spare.spareTons}t spare offered</span>` : ''}</p>
               ${!spare ? `<button onclick="quickAddSpare('${r.id}')" style="font-size:9px;font-weight:600;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif">+ List spare capacity</button>` : `<span style="font-size:9px;color:#16a34a;font-weight:600">✓ Spare listed</span>`}
             </div>
             <button onclick="removeSupplyRoute('${r.id}')" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0;line-height:1;margin-left:8px">✕</button>
@@ -1323,25 +1334,23 @@ function renderScheduleTab() {
   const totalTrucks = [...new Set(supplyScheduleRoutes.map(r => r.truck))].length;
   const totalTons = supplyScheduleRoutes.reduce((a,r) => a + r.tons, 0);
 
-  c.innerHTML = `
-    ${buildImportSection('supply')}
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">My schedule</p>
-      <p style="font-size:10px;color:#64748b;margin:0">${totalTrucks} trucks · ${totalTons}t total capacity</p>
+  c.innerHTML = `<div class="page-content">
+    <div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between">
+      <div><h1>My Schedule</h1><p>${totalTrucks} trucks · ${totalTons}t total capacity across all days</p></div>
+      <button onclick="switchTab('tab-spare')" style="font-size:11px;font-weight:600;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:7px 14px;border-radius:9px;cursor:pointer;white-space:nowrap">List spare capacity →</button>
     </div>
-    <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px">${dayPills}</div>
-    <div>
+    ${buildImportSection('supply')}
+    <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;margin-bottom:18px;background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:12px 14px">${dayPills}</div>
+    <div class="${dayRoutes.length > 1 ? 'cards-grid' : ''}">
       ${dayRoutes.length === 0 && !addingSupplyRoute
-        ? `<p style="font-size:12px;color:#94a3b8;text-align:center;padding:20px 0">No routes on ${selectedWeekDay}</p>`
+        ? `<div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:40px;text-align:center;grid-column:1/-1"><p style="font-size:14px;color:#94a3b8;margin:0 0 16px">No routes scheduled for ${selectedWeekDay}</p>${SLOT_KEYS.map(key => `<button onclick="addingSupplyRoute='${selectedWeekDay}_${key}';renderScheduleTab()" style="font-size:11px;color:#1d4ed8;background:#f0f9ff;border:1px dashed #93c5fd;padding:7px 16px;border-radius:8px;cursor:pointer;margin:4px">+ Add ${SLOT_LABELS[key].split(' ')[0]} route</button>`).join('')}</div>`
         : slotSections}
     </div>
-    ${dayRoutes.length === 0 && !addingSupplyRoute ? `
-      ${SLOT_KEYS.map(key => `<button onclick="addingSupplyRoute='${selectedWeekDay}_${key}';renderScheduleTab()" style="font-size:10px;color:#1d4ed8;background:#f0f9ff;border:1px dashed #93c5fd;padding:5px 12px;border-radius:8px;cursor:pointer;width:100%;margin-bottom:6px">+ Add ${SLOT_LABELS[key]} route</button>`).join('')}
-    ` : ''}
-    <div style="margin-top:8px;background:#f8f7f4;border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
-      <p style="font-size:11px;color:#64748b;margin:0">Have spare capacity on some routes?</p>
-      <button onclick="switchTab('tab-spare')" style="font-size:10px;font-weight:600;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:4px 10px;border-radius:8px;cursor:pointer">Set spare capacity →</button>
-    </div>`;
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px 16px;display:flex;align-items:flex-start;gap:8px;margin-top:16px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <p style="font-size:11px;color:#166534;margin:0;line-height:1.5"><strong>Your fleet schedule and capacity data are encrypted end-to-end.</strong> Demand partners see only a match confirmation — never your routes, customers, or availability.</p>
+    </div>
+  </div>`;
 }
 
 // Sample addresses for one-click autofill in the Add Route form
@@ -1531,7 +1540,7 @@ function renderSpareCapacityTab() {
           <div style="flex:1">
             <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0 0 2px">${r.truck} · ${r.day} · ${SLOT_LABELS[r.slot].split(' ')[0]}</p>
             <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${r.from} → ${r.to}</p>
-            <p style="font-size:10px;color:#64748b;margin:2px 0 0">Full capacity: ${r.tons}t</p>
+            <p style="font-size:10px;color:#64748b;margin:2px 0 0">${r.numTrucks ? `${r.numTrucks} trucks × ${r.capTruck}t/truck = ` : ''}<strong style="color:#1e293b">${r.tons}t</strong> total capacity</p>
           </div>
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;margin-left:12px">
             <div onclick="toggleSpare('${r.id}',${spareTons})" style="width:36px;height:20px;border-radius:20px;background:${isOn ? '#16a34a' : '#e2e8f0'};position:relative;cursor:pointer;transition:background .2s;flex-shrink:0">
@@ -1550,24 +1559,24 @@ function renderSpareCapacityTab() {
       </div>`;
   }).join('');
 
-  c.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">Spare capacity</p>
-      <p style="font-size:10px;color:#16a34a;font-weight:600;margin:0">${totalOffered}t offered for matching</p>
+  c.innerHTML = `<div class="page-content">
+    <div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between">
+      <div><h1>Spare Capacity</h1><p>Toggle routes on to offer unused tonnage for encrypted matching</p></div>
+      ${totalOffered > 0 ? `<span style="font-size:13px;font-weight:700;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:6px 14px;border-radius:9px">${totalOffered}t offered</span>` : ''}
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px 16px;display:flex;align-items:flex-start;gap:8px;margin-bottom:20px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <p style="font-size:11px;color:#166534;margin:0;line-height:1.5"><strong>Spare capacity data is encrypted.</strong> Matching runs on encrypted values — other parties see only that a match exists, never your routes, schedule, or customer information.</p>
     </div>
 
     ${supplyScheduleRoutes.length === 0
-      ? `<div style="background:#f0fdf4;border:1.5px dashed #bbf7d0;border-radius:12px;padding:20px;text-align:center">
-           <p style="font-size:13px;font-weight:700;color:#166534;margin:0 0 4px">No routes in your schedule yet</p>
-           <p style="font-size:11px;color:#16a34a;margin:0 0 12px">Add routes first, then toggle spare capacity on for any route</p>
-           <button onclick="switchTab('tab-schedule')" style="font-size:11px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:7px 14px;border-radius:8px;cursor:pointer">Go to My Schedule →</button>
+      ? `<div style="background:#f0fdf4;border:1.5px dashed #bbf7d0;border-radius:12px;padding:40px;text-align:center">
+           <p style="font-size:15px;font-weight:700;color:#166534;margin:0 0 6px">No routes in your schedule yet</p>
+           <p style="font-size:13px;color:#16a34a;margin:0 0 14px">Add routes first, then toggle spare capacity on for any route</p>
+           <button onclick="switchTab('tab-schedule')" style="font-size:12px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:8px 18px;border-radius:9px;cursor:pointer">Go to My Schedule →</button>
          </div>`
-      : routeCards}
-
-    <div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 12px;display:flex;align-items:flex-start;gap:7px">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <p style="font-size:10px;color:#166534;margin:0;line-height:1.5"><strong>Spare capacity data is encrypted.</strong> Matching runs on encrypted values — other parties see only that a match exists, never your routes, schedule, or customer information.</p>
-    </div>`;
+      : `<div class="cards-grid">${routeCards}</div>`}
+  </div>`;
 }
 
 function addSpare() {
@@ -1700,7 +1709,14 @@ function renderIncomingRequests() {
     ? `<div style="margin-top:4px">${sectionHeader('Completed / Declined', completed.length + declined.length, false)}${[...completed,...declined].map(_incomingCard).join('')}</div>`
     : '';
 
-  cl.innerHTML = stats + needsActionHtml + inProgressHtml + othersHtml;
+  cl.innerHTML = `<div class="page-content">
+    <div class="page-header"><h1>Incoming Requests</h1><p>Other parties requesting your spare capacity</p></div>
+    ${stats}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+      <div>${needsActionHtml}</div>
+      <div>${inProgressHtml}${othersHtml}</div>
+    </div>
+  </div>`;
 
   supplyRequests.filter(r => ['accepted','active','completed'].includes(r.status)).forEach(r => {
     renderPipeline('rpipe-' + r.id, r.step || 0);
@@ -1725,21 +1741,37 @@ function renderOutgoingRequests() {
       </div>
     </div>`;
 
-  cl.innerHTML = outgoingRequests.map(r => `
-    <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:8px">
-      <div style="padding:12px 14px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
+  const inProgressCount = outgoingRequests.filter(r => r.step < 3).length;
+  cs.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:20px">
+    <div style="background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;padding:9px 10px;text-align:center">
+      <p style="font-size:18px;font-weight:800;color:#1d4ed8;margin:0">${inProgressCount}</p>
+      <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">In progress</p>
+    </div>
+    <div style="background:#dcfce7;border-radius:10px;border:1px solid #bbf7d0;padding:9px 10px;text-align:center">
+      <p style="font-size:18px;font-weight:800;color:#166534;margin:0">${outgoingRequests.length - inProgressCount}</p>
+      <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Completed</p>
+    </div>
+  </div>`;
+
+  cl.innerHTML = `<div class="page-content">
+    <div class="page-header"><h1>Outgoing Requests</h1><p>Capacity you have requested from other hauliers</p></div>
+    <div class="cards-grid">${outgoingRequests.map(r => `
+    <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden">
+      <div style="padding:14px 16px 12px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
         <div>
-          <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
-          <p style="font-size:10px;color:#94a3b8;margin:0">${r.detail}</p>
+          <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0 0 2px">#${r.id} · ${r.route}</p>
+          <p style="font-size:11px;color:#94a3b8;margin:0">${r.detail}</p>
         </div>
-        <span style="font-size:10px;font-weight:700;background:${r.statusBg};color:${r.statusText};border:1px solid ${r.statusBorder};padding:3px 8px;border-radius:20px">${r.statusLabel}</span>
+        <span style="font-size:10px;font-weight:700;background:${r.statusBg};color:${r.statusText};border:1px solid ${r.statusBorder};padding:3px 9px;border-radius:20px">${r.statusLabel}</span>
       </div>
-      <div style="padding:10px 14px">
-        <p style="font-size:11px;color:#64748b;margin:0 0 8px">Provider: <strong style="color:#1e293b">${r.provider}</strong></p>
-        <div id="out-pipe-${r.id}" style="margin-bottom:6px"></div>
-        <p style="font-size:10px;color:#94a3b8;margin:0">${r.note}</p>
+      <div style="padding:12px 16px">
+        <p style="font-size:12px;color:#64748b;margin:0 0 10px">Provider: <strong style="color:#1e293b">${r.provider}</strong></p>
+        <div id="out-pipe-${r.id}" style="margin-bottom:8px"></div>
+        <p style="font-size:11px;color:#94a3b8;margin:0">${r.note}</p>
       </div>
-    </div>`).join('');
+    </div>`).join('')}
+    </div>
+  </div>`;
 
   outgoingRequests.forEach(r => renderPipeline('out-pipe-' + r.id, r.step || 0));
 }
