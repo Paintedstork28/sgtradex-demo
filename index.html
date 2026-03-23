@@ -66,6 +66,9 @@
     .reason-pill.sel{background:#fef2f2;border-color:#fca5a5;color:#dc2626;font-weight:600;}
     .req-status-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
     @keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}} .slide-in{animation:slideIn .2s ease forwards;}
+    .imp-btn{padding:5px 11px;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;background:#f8f7f4;color:#475569;display:inline-flex;align-items:center;gap:4px;transition:all .12s;font-family:'Inter',sans-serif;}
+    .imp-btn:hover{border-color:#93c5fd;background:#f5f8ff;color:#1d4ed8;}
+    .imp-btn.active{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;}
   </style>
 </head>
 <body>
@@ -231,12 +234,12 @@
           <div>
             <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px">Pickup Zone</label>
             <div id="pickup-pills" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
-            <input id="pickup-address" type="text" placeholder="Exact pickup address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fafaf8"/>
+            <input id="pickup-address" type="text" placeholder="Paste address — zone & pincode autofill" oninput="addressToZone(this,'pickup-pills')" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fafaf8"/>
           </div>
           <div>
             <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px">Dropoff Zone</label>
             <div id="dropoff-pills" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
-            <input id="dropoff-address" type="text" placeholder="Exact dropoff address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fafaf8"/>
+            <input id="dropoff-address" type="text" placeholder="Paste address — zone & pincode autofill" oninput="addressToZone(this,'dropoff-pills')" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fafaf8"/>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Date</label><input type="date" id="delivery-date" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/></div>
@@ -528,7 +531,7 @@ const CREDS = {
 };
 
 const TABS = {
-  demand:    [{id:'tab-demand-schedule', label:'Current Schedule'}, {id:'tab-new', label:'New Capacity'}, {id:'tab-active', label:'Active (2)'}, {id:'tab-history', label:'History'}],
+  demand:    [{id:'tab-demand-schedule', label:'My Schedule'}, {id:'tab-new', label:'New Capacity'}, {id:'tab-active', label:'Active (2)'}, {id:'tab-history', label:'History'}],
   supply:    [{id:'tab-schedule', label:'My Schedule'}, {id:'tab-spare', label:'Spare Capacity'}, {id:'tab-incoming', label:'Incoming (2)'}, {id:'tab-requests', label:'Requests'}, {id:'tab-active', label:'Active Jobs'}],
   regulator: [],
 };
@@ -890,6 +893,7 @@ function renderDemandScheduleTab() {
   const totalTons   = demandScheduleRoutes.reduce((a, r) => a + r.tons, 0);
 
   c.innerHTML = `
+    ${buildImportSection('demand')}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">My schedule</p>
       <p style="font-size:10px;color:#64748b;margin:0">${totalTrucks} trucks · ${totalTons}t total</p>
@@ -898,7 +902,7 @@ function renderDemandScheduleTab() {
     <div>${slotSections}</div>
     <div style="margin-top:8px;background:#fffbeb;border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
       <p style="font-size:11px;color:#92400e;margin:0">Need capacity beyond your own trucks?</p>
-      <button onclick="switchTab('tab-new')" style="font-size:10px;font-weight:600;color:#92400e;background:#fef3c7;border:1px solid #fde68a;padding:4px 10px;border-radius:8px;cursor:pointer">Request new capacity →</button>
+      <button onclick="switchTab('tab-new')" style="font-size:10px;font-weight:600;color:#92400e;background:#fef3c7;border:1px solid #fde68a;padding:4px 10px;border-radius:8px;cursor:pointer">Request new →</button>
     </div>`;
 }
 
@@ -1095,6 +1099,107 @@ function renderSupplyHome() {
   }
 }
 
+// ── SCHEDULE IMPORT STATE ─────────────────────────────────────────────────────
+let supplyImportMode  = null; // null | 'upload' | 'erp'
+let demandImportMode  = null;
+
+function setSupplyImport(mode) { supplyImportMode = supplyImportMode === mode ? null : mode; renderScheduleTab(); }
+function setDemandImport(mode) { demandImportMode = demandImportMode === mode ? null : mode; renderDemandScheduleTab(); }
+
+function simulateImport(side) {
+  const btn = event.currentTarget || event.target;
+  const orig = btn.textContent;
+  btn.textContent = '…'; btn.disabled = true; btn.style.opacity = '.6';
+  setTimeout(() => {
+    btn.textContent = '✓ Done'; btn.style.background = '#16a34a'; btn.style.color = '#fff'; btn.style.borderColor = '#16a34a';
+    setTimeout(() => {
+      if (side === 'supply') { supplyImportMode = null; renderScheduleTab(); }
+      else { demandImportMode = null; renderDemandScheduleTab(); }
+    }, 1400);
+  }, 1800);
+}
+
+function buildImportSection(side) {
+  const mode = side === 'supply' ? supplyImportMode : demandImportMode;
+  const setFn = side === 'supply' ? "setSupplyImport" : "setDemandImport";
+  let panel = '';
+  if (mode === 'upload') {
+    panel = `<div style="padding:12px 16px 14px;border-top:1px solid #f1f0ec;background:#fafaf8">
+      <p style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px">Upload schedule file</p>
+      <div style="border:1.5px dashed #cbd5e1;border-radius:10px;padding:16px;text-align:center;background:#fff;cursor:pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" style="margin-bottom:5px;display:block;margin-left:auto;margin-right:auto"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <p style="font-size:10px;font-weight:600;color:#64748b;margin:0 0 2px">Drop CSV or Excel here</p>
+        <p style="font-size:9px;color:#94a3b8;margin:0">Columns: date · slot · from · to · truck ID · tons</p>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:9px">
+        <button onclick="simulateImport('${side}')" style="flex:1;padding:8px;border-radius:8px;background:#1d4ed8;color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:'Inter',sans-serif">Import schedule</button>
+        <button onclick="${setFn}('upload')" style="padding:8px 12px;border-radius:8px;background:#f8f7f4;color:#475569;font-size:11px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer;font-family:'Inter',sans-serif">Cancel</button>
+      </div>
+    </div>`;
+  } else if (mode === 'erp') {
+    panel = `<div style="padding:12px 16px 14px;border-top:1px solid #f1f0ec;background:#fafaf8">
+      <p style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px">Connect ERP system</p>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div>
+          <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">ERP system</label>
+          <select style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 10px;color:#374151;background:#fff;font-family:'Inter',sans-serif">
+            <option>SAP S/4HANA</option><option>Oracle TMS</option><option>Microsoft Dynamics 365</option><option>JDA / Blue Yonder</option><option>Custom API endpoint</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">API endpoint</label>
+          <input type="text" value="https://erp.company.com/api/v1/schedule" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 10px;background:#fff;color:#374151;font-family:'Inter',sans-serif"/>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:2px">
+          <button onclick="simulateImport('${side}')" style="flex:1;padding:8px;border-radius:8px;background:#1d4ed8;color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:'Inter',sans-serif">Connect &amp; Sync</button>
+          <button onclick="${setFn}('erp')" style="padding:8px 12px;border-radius:8px;background:#f8f7f4;color:#475569;font-size:11px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer;font-family:'Inter',sans-serif">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  return `<div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:14px">
+    <div style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+      <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">Sync schedule</p>
+      <div style="display:flex;gap:5px">
+        <button class="imp-btn${mode==='upload'?' active':''}" onclick="${setFn}('upload')">↑ Upload file</button>
+        <button class="imp-btn${mode==='erp'?' active':''}" onclick="${setFn}('erp')">⚡ Connect ERP</button>
+      </div>
+    </div>
+    ${panel}
+  </div>`;
+}
+
+// ── ADDRESS → ZONE AUTOFILL ───────────────────────────────────────────────────
+function addressToZone(inputEl, pillsContainerId) {
+  const addr = inputEl.value.trim();
+  if (addr.length < 4) return;
+  const addr_lc = addr.toLowerCase();
+  const container = document.getElementById(pillsContainerId);
+  if (!container) return;
+  const allZones = [...new Set([...Object.keys(ZONE_ADDRESSES), ...ALL_SUPPLY_ZONES])];
+  for (const zone of allZones) {
+    if (addr_lc.includes(zone.toLowerCase())) {
+      container.querySelectorAll('.zone-pill').forEach(p => {
+        p.classList.toggle('selected', p.textContent.trim() === zone);
+      });
+      inputEl.style.borderColor = '#bbf7d0';
+      // Extract and surface pincode if present
+      const pinMatch = addr.match(/\b(\d{6})\b/);
+      if (pinMatch) inputEl.title = 'Zone: ' + zone + ' · Pincode: ' + pinMatch[1];
+      return;
+    }
+  }
+}
+
+// ── QUICK SPARE CAPACITY ─────────────────────────────────────────────────────
+function quickAddSpare(routeId) {
+  switchTab('tab-spare');
+  setTimeout(() => {
+    const sel = document.getElementById('spare-route-sel');
+    if (sel) { sel.value = routeId; }
+  }, 60);
+}
+
 // ── SUPPLY SCHEDULE & CAPACITY TAB ───────────────────────────────────────────
 const SLOT_KEYS = ['morning','afternoon','evening'];
 const SLOT_LABELS = {'morning':'Morning (8am–12pm)','afternoon':'Afternoon (12pm–4pm)','evening':'Evening (4pm–8pm)'};
@@ -1157,12 +1262,13 @@ function renderScheduleTab() {
       return `
         <div style="background:#fff;border-radius:10px;border:1px solid ${spare?'#bbf7d0':'#e5e0d8'};padding:10px 12px;margin-bottom:6px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <div>
+            <div style="flex:1">
               <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0 0 2px">${r.truck}</p>
               <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${r.from} → ${r.to}</p>
-              <p style="font-size:10px;color:#64748b;margin:2px 0 0">${r.tons}t capacity${spare ? ` · <span style="color:#16a34a;font-weight:600">${spare.spareTons}t spare offered</span>` : ''}</p>
+              <p style="font-size:10px;color:#64748b;margin:2px 0 4px">${r.tons}t capacity${spare ? ` · <span style="color:#16a34a;font-weight:600">${spare.spareTons}t spare offered</span>` : ''}</p>
+              ${!spare ? `<button onclick="quickAddSpare('${r.id}')" style="font-size:9px;font-weight:600;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif">+ List spare capacity</button>` : `<span style="font-size:9px;color:#16a34a;font-weight:600">✓ Spare listed</span>`}
             </div>
-            <button onclick="removeSupplyRoute('${r.id}')" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0;line-height:1">✕</button>
+            <button onclick="removeSupplyRoute('${r.id}')" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0;line-height:1;margin-left:8px">✕</button>
           </div>
         </div>`;
     }).join('');
@@ -1179,6 +1285,7 @@ function renderScheduleTab() {
   const totalTons = supplyScheduleRoutes.reduce((a,r) => a + r.tons, 0);
 
   c.innerHTML = `
+    ${buildImportSection('supply')}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">My schedule</p>
       <p style="font-size:10px;color:#64748b;margin:0">${totalTrucks} trucks · ${totalTons}t total capacity</p>
@@ -1217,10 +1324,10 @@ function buildAddRouteForm(day, slot, side) {
           <input id="${prefix}-truck-${slot}" type="text" placeholder="${truckPlaceholder}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px"/></div>
         <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">From zone</label>
           <div id="${prefix}-from-pills-${slot}" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">${zFrom}</div>
-          <input id="${prefix}-from-addr-${slot}" type="text" placeholder="From address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;background:#fafaf8"/></div>
+          <input id="${prefix}-from-addr-${slot}" type="text" placeholder="Paste address — zone autofills" oninput="addressToZone(this,'${prefix}-from-pills-${slot}')" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;background:#fafaf8"/></div>
         <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">To zone</label>
           <div id="${prefix}-to-pills-${slot}" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">${zTo}</div>
-          <input id="${prefix}-to-addr-${slot}" type="text" placeholder="To address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;background:#fafaf8"/></div>
+          <input id="${prefix}-to-addr-${slot}" type="text" placeholder="Paste address — zone autofills" oninput="addressToZone(this,'${prefix}-to-pills-${slot}')" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;background:#fafaf8"/></div>
         <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">Capacity (tons)</label>
           <input id="${prefix}-tons-${slot}" type="number" min="1" max="30" value="10" style="width:80px;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px"/></div>
         <button onclick="${saveFn}" style="width:100%;padding:9px;border-radius:9px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Add to schedule</button>
