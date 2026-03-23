@@ -182,43 +182,95 @@
     <div id="tab-new" class="tab-pane active">
       <!-- S1 -->
       <div id="s1" style="background:#fff;border-radius:20px;border:1px solid #e5e0d8;overflow:hidden">
-        <div style="padding:20px 20px 14px;border-bottom:1px solid #f1f0ec">
-          <p style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.12em;text-transform:uppercase;margin:0 0 3px">New Capacity</p>
-          <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin:0 0 3px">Find available trucks</h2>
-          <p style="font-size:11px;color:#94a3b8;margin:0">Your details are encrypted. Hauliers see only that a match exists.</p>
+
+        <!-- Encryption banner — top of card -->
+        <div style="background:#f0fdf4;border-bottom:1px solid #bbf7d0;padding:10px 16px;display:flex;align-items:flex-start;gap:8px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <p style="font-size:10px;color:#166534;margin:0;line-height:1.5"><strong>Your data is encrypted end-to-end.</strong> Capacity asks are matched on encrypted values only — hauliers never see your addresses, volumes, or schedule until you confirm a match.</p>
         </div>
-        <div style="padding:12px 20px 0">
-          <button onclick="applyDemandProfile()" style="width:100%;padding:9px 12px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;font-size:11px;font-weight:600;cursor:pointer;text-align:left">
-            ↩ Use saved preferences — Jurong → Woodlands · Morning · 3 trucks
-          </button>
-        </div>
-        <div style="padding:14px 20px 0;display:flex;flex-direction:column;gap:14px">
+
+        <div style="padding:16px 16px 0;display:flex;flex-direction:column;gap:14px">
+
+          <!-- DAY + SLOT PICKER -->
           <div>
-            <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px">Pickup Zone</label>
-            <div id="pickup-pills" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
-            <input id="pickup-address" type="text" placeholder="Paste address — zone & pincode autofill" oninput="addressToZone(this,'pickup-pills')" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fafaf8"/>
+            <p style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin:0 0 7px">Select day</p>
+            <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:4px" id="cn-day-row">
+              <!-- populated by JS -->
+            </div>
+            <p style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin:10px 0 6px">Select time slot</p>
+            <div style="display:flex;gap:6px">
+              <button id="cn-slot-morning"   onclick="cnSelectSlot('morning')"   style="flex:1;padding:8px 4px;border-radius:9px;font-size:10px;font-weight:700;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;cursor:pointer;font-family:'Inter',sans-serif">Morning<br><span style="font-size:9px;font-weight:400">8am–12pm</span></button>
+              <button id="cn-slot-afternoon" onclick="cnSelectSlot('afternoon')" style="flex:1;padding:8px 4px;border-radius:9px;font-size:10px;font-weight:700;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;cursor:pointer;font-family:'Inter',sans-serif">Afternoon<br><span style="font-size:9px;font-weight:400">12pm–4pm</span></button>
+              <button id="cn-slot-evening"   onclick="cnSelectSlot('evening')"   style="flex:1;padding:8px 4px;border-radius:9px;font-size:10px;font-weight:700;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;cursor:pointer;font-family:'Inter',sans-serif">Evening<br><span style="font-size:9px;font-weight:400">4pm–8pm</span></button>
+            </div>
           </div>
+
+          <!-- PICKUP ADDRESS -->
           <div>
-            <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px">Dropoff Zone</label>
-            <div id="dropoff-pills" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
-            <input id="dropoff-address" type="text" placeholder="Paste address — zone & pincode autofill" oninput="addressToZone(this,'dropoff-pills')" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fafaf8"/>
+            <p style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin:0 0 6px">Pickup — paste address or pick a sample</p>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">
+              <button type="button" onclick="cnFillSample(this,'pickup-address','pickup-pills','pickup-pincode')" data-addr="31 Jurong Port Road, Singapore 619115"    style="font-size:9px;padding:3px 8px;border-radius:6px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;cursor:pointer;font-family:'Inter',sans-serif">Jurong Port Rd</button>
+              <button type="button" onclick="cnFillSample(this,'pickup-address','pickup-pills','pickup-pincode')" data-addr="30 Tuas Ave 1, Singapore 639494"           style="font-size:9px;padding:3px 8px;border-radius:6px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;cursor:pointer;font-family:'Inter',sans-serif">Tuas Ave 1</button>
+              <button type="button" onclick="cnFillSample(this,'pickup-address','pickup-pills','pickup-pincode')" data-addr="12 Pasir Panjang Road, Singapore 117438"  style="font-size:9px;padding:3px 8px;border-radius:6px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;cursor:pointer;font-family:'Inter',sans-serif">Pasir Panjang</button>
+            </div>
+            <input id="pickup-address" type="text" placeholder="Paste full address here…" oninput="addressToZone(this,'pickup-pills');cnExtractPin(this,'pickup-pincode')" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fff;box-sizing:border-box"/>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+              <div style="flex:1">
+                <p style="font-size:9px;color:#94a3b8;margin:0 0 4px">Zone (autofilled)</p>
+                <div id="pickup-pills" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+              </div>
+              <div>
+                <p style="font-size:9px;color:#94a3b8;margin:0 0 4px">Pincode</p>
+                <input id="pickup-pincode" type="text" placeholder="——" readonly style="width:64px;font-size:11px;font-weight:700;border:1px solid #e2e8f0;border-radius:7px;padding:5px 8px;background:#f8f7f4;color:#1e293b"/>
+              </div>
+            </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Date</label><input type="date" id="delivery-date" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/></div>
-            <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Time Slot</label>
-              <select id="time-slot" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151">
-                <option value="">Select</option><option>Morning (8am–12pm)</option><option>Afternoon (12pm–4pm)</option><option>Evening (4pm–8pm)</option>
-              </select></div>
+
+          <!-- DROPOFF ADDRESS -->
+          <div>
+            <p style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin:0 0 6px">Drop-off — paste address or pick a sample</p>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">
+              <button type="button" onclick="cnFillSample(this,'dropoff-address','dropoff-pills','dropoff-pincode')" data-addr="21 Woodlands Close, Singapore 737854"                style="font-size:9px;padding:3px 8px;border-radius:6px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;cursor:pointer;font-family:'Inter',sans-serif">Woodlands</button>
+              <button type="button" onclick="cnFillSample(this,'dropoff-address','dropoff-pills','dropoff-pincode')" data-addr="30 Airport Boulevard, Changi, Singapore 819642"      style="font-size:9px;padding:3px 8px;border-radius:6px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;cursor:pointer;font-family:'Inter',sans-serif">Changi Airport</button>
+              <button type="button" onclick="cnFillSample(this,'dropoff-address','dropoff-pills','dropoff-pincode')" data-addr="3 Tampines Industrial Avenue 2, Singapore 528763"   style="font-size:9px;padding:3px 8px;border-radius:6px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;cursor:pointer;font-family:'Inter',sans-serif">Tampines</button>
+            </div>
+            <input id="dropoff-address" type="text" placeholder="Paste full address here…" oninput="addressToZone(this,'dropoff-pills');cnExtractPin(this,'dropoff-pincode')" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fff;box-sizing:border-box"/>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+              <div style="flex:1">
+                <p style="font-size:9px;color:#94a3b8;margin:0 0 4px">Zone (autofilled)</p>
+                <div id="dropoff-pills" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+              </div>
+              <div>
+                <p style="font-size:9px;color:#94a3b8;margin:0 0 4px">Pincode</p>
+                <input id="dropoff-pincode" type="text" placeholder="——" readonly style="width:64px;font-size:11px;font-weight:700;border:1px solid #e2e8f0;border-radius:7px;padding:5px 8px;background:#f8f7f4;color:#1e293b"/>
+              </div>
+            </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">No. of Trucks</label><input type="number" id="num-trucks" min="1" max="50" placeholder="e.g. 3" oninput="calcTonnage()" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/></div>
-            <div><label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Tons / Truck</label><input type="number" id="capacity" min="1" max="30" placeholder="e.g. 10" oninput="calcTonnage()" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/></div>
+
+          <!-- FLEET -->
+          <div>
+            <p style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin:0 0 7px">Fleet needed</p>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:5px">
+                <label style="font-size:10px;color:#64748b">Trucks</label>
+                <input type="number" id="num-trucks" min="1" max="50" value="3" oninput="calcTonnage()" style="width:50px;font-size:12px;font-weight:700;border:1px solid #e2e8f0;border-radius:7px;padding:5px 7px;text-align:center;color:#374151"/>
+              </div>
+              <span style="font-size:12px;color:#cbd5e1">×</span>
+              <div style="display:flex;align-items:center;gap:5px">
+                <label style="font-size:10px;color:#64748b">Tons/truck</label>
+                <input type="number" id="capacity" min="1" max="30" value="10" oninput="calcTonnage()" style="width:50px;font-size:12px;font-weight:700;border:1px solid #e2e8f0;border-radius:7px;padding:5px 7px;text-align:center;color:#374151"/>
+              </div>
+              <span style="font-size:12px;color:#cbd5e1">=</span>
+              <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:5px 12px;display:flex;align-items:baseline;gap:3px">
+                <span id="tonnage-val" style="font-size:16px;font-weight:800;color:#16a34a">30</span>
+                <span style="font-size:10px;color:#16a34a;font-weight:600">t total</span>
+              </div>
+            </div>
           </div>
-          <div id="tonnage-display" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:9px 12px;font-size:12px;font-weight:600;color:#1d4ed8">Total tonnage: <span id="tonnage-val"></span> tons</div>
+
         </div>
-        <div style="padding:0 20px 20px">
+        <div style="padding:16px">
           <button onclick="runMatch()" style="width:100%;padding:12px;border-radius:12px;background:#1d4ed8;color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer">Find Matching Hauliers →</button>
-          <p style="text-align:center;font-size:10px;color:#94a3b8;margin:7px 0 0">Encrypted matching · Your data is never shared</p>
         </div>
       </div>
       <!-- S2: matching -->
@@ -496,7 +548,7 @@ const TABS = {
     {id:'tab-schedule',  label:'My Schedule'},
     {id:'tab-spare',     label:'Spare Capacity'},
     {id:'tab-new',       label:'Capacity Needed'},
-    {id:'tab-incoming',  label:'Incoming'},
+    {id:'tab-incoming',  label:'Incoming Requests'},
     {id:'tab-outgoing',  label:'Outgoing'},
   ],
   regulator: [],
@@ -1568,54 +1620,81 @@ const _reqStatusCfg = {
   declined:  {label:'Declined',  bg:'#fef2f2', text:'#dc2626', border:'#fecaca'},
 };
 
+function _incomingCard(r) {
+  const sc = _reqStatusCfg[r.status];
+  const needsPipeline = ['accepted','active','completed'].includes(r.status);
+  return `<div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:8px">
+    <div style="padding:12px 14px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
+        <p style="font-size:10px;color:#94a3b8;margin:0">${r.date} · ${r.slot} · ${r.tonnage}</p>
+      </div>
+      <span style="font-size:10px;font-weight:700;background:${sc.bg};color:${sc.text};border:1px solid ${sc.border};padding:3px 8px;border-radius:20px">${sc.label}</span>
+    </div>
+    <div style="padding:10px 14px">
+      ${r.requester && r.requester !== '—' ? `<p style="font-size:11px;color:#64748b;margin:0 0 ${needsPipeline?'10px':'4px'}">Requester: <strong style="color:#1e293b">${r.requester}</strong></p>` : ''}
+      ${r.declineReason ? `<p style="font-size:11px;color:#dc2626;margin:0">Reason: ${r.declineReason}</p>` : ''}
+      ${needsPipeline ? `<div id="rpipe-${r.id}" style="margin-top:4px"></div>` : ''}
+      ${r.status==='pending' ? `<div style="display:flex;gap:7px;margin-top:8px">
+        <button onclick="acceptRequest('${r.id}')" style="flex:1;padding:7px;border-radius:8px;background:#1d4ed8;color:#fff;font-size:11px;font-weight:600;border:none;cursor:pointer">Accept</button>
+        <button onclick="startDecline('${r.id}')" style="flex:1;padding:7px;border-radius:8px;background:#fff;color:#64748b;font-size:11px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer">Decline</button>
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+
 function renderIncomingRequests() {
   const cl = document.getElementById('incoming-list');
   if (!cl) return;
 
-  const pending  = supplyRequests.filter(r => r.status === 'pending').length;
-  const accepted = supplyRequests.filter(r => ['accepted','active','completed'].includes(r.status)).length;
-  const declined = supplyRequests.filter(r => r.status === 'declined').length;
+  const needsAction = supplyRequests.filter(r => r.status === 'pending');
+  const inProgress  = supplyRequests.filter(r => ['accepted','active'].includes(r.status));
+  const completed   = supplyRequests.filter(r => r.status === 'completed');
+  const declined    = supplyRequests.filter(r => r.status === 'declined');
 
+  // Summary row
   const stats = `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">
-      <div style="background:#fffbeb;border-radius:10px;border:1px solid #fde68a;padding:9px 10px;text-align:center">
-        <p style="font-size:18px;font-weight:800;color:#92400e;margin:0">${pending}</p>
-        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Pending</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;margin-bottom:14px">
+      <div style="background:#fffbeb;border-radius:10px;border:1px solid #fde68a;padding:8px 6px;text-align:center">
+        <p style="font-size:16px;font-weight:800;color:#92400e;margin:0">${needsAction.length}</p>
+        <p style="font-size:8px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0;line-height:1.3">Needs<br>Action</p>
       </div>
-      <div style="background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;padding:9px 10px;text-align:center">
-        <p style="font-size:18px;font-weight:800;color:#1d4ed8;margin:0">${accepted}</p>
-        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Accepted</p>
+      <div style="background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;padding:8px 6px;text-align:center">
+        <p style="font-size:16px;font-weight:800;color:#1d4ed8;margin:0">${inProgress.length}</p>
+        <p style="font-size:8px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0;line-height:1.3">In<br>Progress</p>
       </div>
-      <div style="background:#fef2f2;border-radius:10px;border:1px solid #fecaca;padding:9px 10px;text-align:center">
-        <p style="font-size:18px;font-weight:800;color:#dc2626;margin:0">${declined}</p>
-        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Declined</p>
+      <div style="background:#dcfce7;border-radius:10px;border:1px solid #bbf7d0;padding:8px 6px;text-align:center">
+        <p style="font-size:16px;font-weight:800;color:#166534;margin:0">${completed.length}</p>
+        <p style="font-size:8px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0;line-height:1.3">Com-<br>pleted</p>
+      </div>
+      <div style="background:#fef2f2;border-radius:10px;border:1px solid #fecaca;padding:8px 6px;text-align:center">
+        <p style="font-size:16px;font-weight:800;color:#dc2626;margin:0">${declined.length}</p>
+        <p style="font-size:8px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0;line-height:1.3">De-<br>clined</p>
       </div>
     </div>`;
 
-  const cards = supplyRequests.map(r => {
-    const sc = _reqStatusCfg[r.status];
-    const needsPipeline = ['accepted','active','completed'].includes(r.status);
-    return `<div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:8px">
-      <div style="padding:12px 14px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
-          <p style="font-size:10px;color:#94a3b8;margin:0">${r.date} · ${r.slot} · ${r.tonnage}</p>
-        </div>
-        <span style="font-size:10px;font-weight:700;background:${sc.bg};color:${sc.text};border:1px solid ${sc.border};padding:3px 8px;border-radius:20px">${sc.label}</span>
-      </div>
-      <div style="padding:10px 14px">
-        ${r.requester && r.requester !== '—' ? `<p style="font-size:11px;color:#64748b;margin:0 0 ${needsPipeline?'10px':'4px'}">Requester: <strong style="color:#1e293b">${r.requester}</strong></p>` : ''}
-        ${r.declineReason ? `<p style="font-size:11px;color:#dc2626;margin:0">Reason: ${r.declineReason}</p>` : ''}
-        ${needsPipeline ? `<div id="rpipe-${r.id}" style="margin-top:4px"></div>` : ''}
-        ${r.status==='pending' ? `<div style="display:flex;gap:7px;margin-top:8px">
-          <button onclick="acceptRequest('${r.id}')" style="flex:1;padding:7px;border-radius:8px;background:#1d4ed8;color:#fff;font-size:11px;font-weight:600;border:none;cursor:pointer">Accept</button>
-          <button onclick="startDecline('${r.id}')" style="flex:1;padding:7px;border-radius:8px;background:#fff;color:#64748b;font-size:11px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer">Decline</button>
-        </div>` : ''}
-      </div>
+  // Section header helper
+  const sectionHeader = (label, count, urgent) => `
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;margin-top:4px">
+      ${urgent ? `<div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;flex-shrink:0"></div>` : `<div style="width:7px;height:7px;border-radius:50%;background:#93c5fd;flex-shrink:0"></div>`}
+      <p style="font-size:10px;font-weight:700;color:${urgent?'#92400e':'#1d4ed8'};text-transform:uppercase;letter-spacing:.08em;margin:0">${label}</p>
+      <span style="font-size:9px;font-weight:700;background:${urgent?'#fffbeb':'#eff6ff'};color:${urgent?'#92400e':'#1d4ed8'};border:1px solid ${urgent?'#fde68a':'#bfdbfe'};padding:1px 7px;border-radius:20px">${count}</span>
     </div>`;
-  }).join('');
 
-  cl.innerHTML = stats + cards;
+  const needsActionHtml = needsAction.length > 0
+    ? sectionHeader('Needs Action', needsAction.length, true) + needsAction.map(_incomingCard).join('')
+    : sectionHeader('Needs Action', 0, true) + `<p style="font-size:11px;color:#94a3b8;padding:8px 0 4px">No pending requests.</p>`;
+
+  const inProgressHtml = inProgress.length > 0
+    ? sectionHeader('In Progress', inProgress.length, false) + inProgress.map(_incomingCard).join('')
+    : '';
+
+  const othersHtml = [...completed, ...declined].length > 0
+    ? `<div style="margin-top:4px">${sectionHeader('Completed / Declined', completed.length + declined.length, false)}${[...completed,...declined].map(_incomingCard).join('')}</div>`
+    : '';
+
+  cl.innerHTML = stats + needsActionHtml + inProgressHtml + othersHtml;
+
   supplyRequests.filter(r => ['accepted','active','completed'].includes(r.status)).forEach(r => {
     renderPipeline('rpipe-' + r.id, r.step || 0);
   });
@@ -2109,21 +2188,87 @@ function selectPill(el) {
   el.classList.add('selected');
   const zone = el.textContent.trim();
   const addr = ZONE_ADDRESSES[zone] || '';
-  // Autofill the corresponding address input
+  const pinMatch = addr.match(/\b(\d{6})\b/);
   if (group.id === 'pickup-pills') {
     const inp = document.getElementById('pickup-address');
     if (inp) { inp.value = addr; inp.style.borderColor = '#bbf7d0'; }
+    const pin = document.getElementById('pickup-pincode');
+    if (pin) pin.value = pinMatch ? pinMatch[1] : '';
   } else if (group.id === 'dropoff-pills') {
     const inp = document.getElementById('dropoff-address');
     if (inp) { inp.value = addr; inp.style.borderColor = '#bbf7d0'; }
+    const pin = document.getElementById('dropoff-pincode');
+    if (pin) pin.value = pinMatch ? pinMatch[1] : '';
   }
 }
+// Day/slot state for Capacity Needed form
+let cnSelectedDay  = null;
+let cnSelectedSlot = null;
+
+function cnInitDayPicker() {
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const today = new Date();
+  const todayIdx = (today.getDay() + 6) % 7; // Mon=0
+  const row = document.getElementById('cn-day-row');
+  if (!row) return;
+  row.innerHTML = days.map((d,i) => {
+    const isToday = i === todayIdx;
+    return `<button id="cn-day-${d}" onclick="cnSelectDay('${d}')" style="min-width:38px;padding:7px 4px;border-radius:9px;font-size:10px;font-weight:700;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;cursor:pointer;text-align:center;flex-shrink:0;font-family:'Inter',sans-serif">${d}${isToday?'<br><span style="font-size:8px;font-weight:400;color:#94a3b8">today</span>':''}</button>`;
+  }).join('');
+  // Pre-select today
+  cnSelectDay(days[todayIdx]);
+}
+
+function cnSelectDay(day) {
+  cnSelectedDay = day;
+  ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(d => {
+    const btn = document.getElementById('cn-day-' + d);
+    if (!btn) return;
+    const active = d === day;
+    btn.style.borderColor = active ? '#1d4ed8' : '#e2e8f0';
+    btn.style.background  = active ? '#eff6ff' : '#fff';
+    btn.style.color       = active ? '#1d4ed8' : '#64748b';
+  });
+}
+
+function cnSelectSlot(slot) {
+  cnSelectedSlot = slot;
+  ['morning','afternoon','evening'].forEach(s => {
+    const btn = document.getElementById('cn-slot-' + s);
+    if (!btn) return;
+    const active = s === slot;
+    btn.style.borderColor = active ? '#1d4ed8' : '#e2e8f0';
+    btn.style.background  = active ? '#eff6ff' : '#fff';
+    btn.style.color       = active ? '#1d4ed8' : '#64748b';
+  });
+}
+
+// One-click sample address fill for Capacity Needed form
+function cnFillSample(btn, addrId, pillsId, pinId) {
+  const addr = btn.dataset.addr;
+  const inp = document.getElementById(addrId);
+  if (!inp) return;
+  inp.value = addr;
+  inp.style.borderColor = '#bbf7d0';
+  addressToZone(inp, pillsId);
+  const pinMatch = addr.match(/\b(\d{6})\b/);
+  const pinEl = document.getElementById(pinId);
+  if (pinEl) pinEl.value = pinMatch ? pinMatch[1] : '';
+}
+
+// Extract pincode on manual paste into address fields
+function cnExtractPin(addrEl, pinId) {
+  const pinEl = document.getElementById(pinId);
+  if (!pinEl) return;
+  const m = addrEl.value.match(/\b(\d{6})\b/);
+  pinEl.value = m ? m[1] : '';
+}
+
 function calcTonnage() {
-  const t=parseInt(document.getElementById('num-trucks').value)||0;
-  const c=parseInt(document.getElementById('capacity').value)||0;
-  const d=document.getElementById('tonnage-display');
-  if(t>0&&c>0){document.getElementById('tonnage-val').textContent=t*c;d.style.display='block';}
-  else d.style.display='none';
+  const t = parseInt(document.getElementById('num-trucks').value) || 0;
+  const c = parseInt(document.getElementById('capacity').value)   || 0;
+  const el = document.getElementById('tonnage-val');
+  if (el) el.textContent = t * c;
 }
 function showFormStep(id) {
   ['s1','s2','s3','s4'].forEach(s=>document.getElementById(s).style.display='none');
@@ -2588,9 +2733,7 @@ function hideReg(){
 window.addEventListener('DOMContentLoaded',()=>{
   buildPills('pickup-pills', pickupZones);
   buildPills('dropoff-pills', dropoffZones);
-  const d=new Date(); d.setDate(d.getDate()+1);
-  document.getElementById('delivery-date').value=d.toISOString().split('T')[0];
-  selectRole('demand'); // trigger autofill on load
+  cnInitDayPicker();
 });
 </script>
 </body>
