@@ -78,7 +78,7 @@
 ══════════════════════════════════════════ -->
 <div id="login-screen">
   <div class="fade-in" style="width:420px;padding:16px">
-    <div style="text-align:center;margin-bottom:28px">
+    <div style="text-align:center;margin-bottom:24px">
       <div style="width:52px;height:52px;border-radius:14px;background:#1d4ed8;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
       </div>
@@ -86,71 +86,49 @@
       <p style="font-size:12px;color:#94a3b8;margin:0">Privacy-preserving supply-demand matching</p>
     </div>
 
-    <div style="background:#fff;border-radius:20px;border:1px solid #e5e0d8;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.06)">
-      <div style="padding:20px 24px 16px;border-bottom:1px solid #f1f0ec">
-        <h2 style="font-size:15px;font-weight:700;color:#1e293b;margin:0 0 3px">Sign in</h2>
-        <p style="font-size:11px;color:#94a3b8;margin:0">Enter your credentials to access your workspace</p>
+    <!-- Role selector -->
+    <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;text-align:center;margin:0 0 10px">Who are you signing in as?</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div id="lrc-client" onclick="selectLoginRole('client')" style="background:#fff;border:2px solid #e5e0d8;border-radius:16px;padding:16px 14px;cursor:pointer;text-align:center;transition:all .15s">
+        <div style="width:38px;height:38px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        </div>
+        <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0 0 3px">Client</p>
+        <p style="font-size:10px;color:#64748b;margin:0">Shipper · Haulier · Forwarder</p>
       </div>
-      <div style="padding:18px 24px;display:flex;flex-direction:column;gap:12px">
+      <div id="lrc-regulator" onclick="selectLoginRole('regulator')" style="background:#fff;border:2px solid #e5e0d8;border-radius:16px;padding:16px 14px;cursor:pointer;text-align:center;transition:all .15s">
+        <div style="width:38px;height:38px;border-radius:10px;background:#fffbeb;border:1px solid #fde68a;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        </div>
+        <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0 0 3px">Regulator</p>
+        <p style="font-size:10px;color:#64748b;margin:0">LTA / MTI dashboard</p>
+      </div>
+    </div>
 
-        <!-- Email -->
+    <div style="background:#fff;border-radius:20px;border:1px solid #e5e0d8;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.06)">
+      <div style="padding:16px 22px 14px;border-bottom:1px solid #f1f0ec">
+        <h2 style="font-size:15px;font-weight:700;color:#1e293b;margin:0 0 2px">Sign in</h2>
+        <p id="login-role-hint" style="font-size:11px;color:#94a3b8;margin:0">Select a login type above to continue</p>
+      </div>
+      <div style="padding:16px 22px;display:flex;flex-direction:column;gap:10px">
         <div>
           <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Email address</label>
           <input type="email" id="login-email" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;color:#374151;background:#fafaf8"/>
         </div>
-        <!-- Password -->
         <div>
           <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Password</label>
           <input type="password" id="login-pass" onkeydown="if(event.key==='Enter')doLogin()" style="width:100%;font-size:12px;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;color:#374151;background:#fafaf8"/>
         </div>
-
         <div id="login-error" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:11px;color:#dc2626">
-          Invalid credentials. Check your email and password.
+          Invalid credentials. Please try again.
         </div>
-
         <button id="login-btn" onclick="doLogin()" style="width:100%;padding:12px;border-radius:12px;background:#1d4ed8;color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer">
           Sign In →
         </button>
         <p style="text-align:center;font-size:10px;color:#94a3b8;margin:0">Encrypted end-to-end · Powered by Silence Laboratories MPC</p>
       </div>
-      <!-- Demo hint -->
-      <div style="border-top:1px solid #f1f0ec;padding:12px 24px;background:#fafaf8">
-        <p style="font-size:9px;font-weight:700;color:#cbd5e1;text-transform:uppercase;letter-spacing:.1em;margin:0 0 8px">Demo accounts</p>
-        <div style="display:flex;flex-direction:column;gap:5px">
-          <div onclick="fillLogin('demand')" style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;border:1px solid #e5e0d8;cursor:pointer;background:#fff;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
-            <div style="width:24px;height:24px;border-radius:6px;background:#eff6ff;border:1px solid #bfdbfe;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2.2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-            </div>
-            <div style="flex:1">
-              <p style="font-size:10px;font-weight:600;color:#1e293b;margin:0">Swift Freight · Demand Partner</p>
-              <p style="font-size:9px;color:#94a3b8;margin:0">ops@swiftfreight.com.sg</p>
-            </div>
-            <span style="font-size:9px;color:#93c5fd">Use →</span>
-          </div>
-          <div onclick="fillLogin('supply')" style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;border:1px solid #e5e0d8;cursor:pointer;background:#fff;transition:border .12s" onmouseover="this.style.borderColor='#86efac'" onmouseout="this.style.borderColor='#e5e0d8'">
-            <div style="width:24px;height:24px;border-radius:6px;background:#f0fdf4;border:1px solid #bbf7d0;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-            </div>
-            <div style="flex:1">
-              <p style="font-size:10px;font-weight:600;color:#1e293b;margin:0">Apex Logistics · Supply Partner</p>
-              <p style="font-size:9px;color:#94a3b8;margin:0">dispatch@apexlogistics.com.sg</p>
-            </div>
-            <span style="font-size:9px;color:#86efac">Use →</span>
-          </div>
-          <div onclick="fillLogin('regulator')" style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;border:1px solid #e5e0d8;cursor:pointer;background:#fff;transition:border .12s" onmouseover="this.style.borderColor='#fde68a'" onmouseout="this.style.borderColor='#e5e0d8'">
-            <div style="width:24px;height:24px;border-radius:6px;background:#fffbeb;border:1px solid #fde68a;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-            </div>
-            <div style="flex:1">
-              <p style="font-size:10px;font-weight:600;color:#1e293b;margin:0">LTA Analyst · Regulator</p>
-              <p style="font-size:9px;color:#94a3b8;margin:0">analyst@lta.gov.sg</p>
-            </div>
-            <span style="font-size:9px;color:#fde68a">Use →</span>
-          </div>
-        </div>
-      </div>
     </div>
-    <p style="text-align:center;font-size:10px;color:#bbb;margin:16px 0 0">SGTraDEX · Singapore Trade Data Exchange · Prototype v0.1</p>
+    <p style="text-align:center;font-size:10px;color:#bbb;margin:14px 0 0">SGTraDEX · Singapore Trade Data Exchange · Prototype v0.1</p>
   </div>
 </div>
 
@@ -509,14 +487,17 @@
 //  DEMO CREDENTIALS & ROLE CONFIG
 // ══════════════════════════════════════════════
 const CREDS = {
-  demand:    { email:'ops@swiftfreight.com.sg',       pass:'demo123', label:'Demand Partner',  badge:'#eff6ff', badgeText:'#1d4ed8', name:'Swift Freight' },
-  supply:    { email:'dispatch@apexlogistics.com.sg', pass:'demo123', label:'Supply Partner',  badge:'#f0fdf4', badgeText:'#16a34a', name:'Apex Logistics' },
-  regulator: { email:'analyst@lta.gov.sg',            pass:'demo123', label:'Regulator',       badge:'#fffbeb', badgeText:'#92400e', name:'LTA Analyst' },
+  client:    { email:'ops@swiftfreight.com.sg', pass:'demo123', label:'Client', badge:'#eff6ff', badgeText:'#1d4ed8', name:'Swift Freight SG' },
+  regulator: { email:'analyst@lta.gov.sg',      pass:'demo123', label:'Regulator', badge:'#fffbeb', badgeText:'#92400e', name:'LTA Analyst' },
 };
 
 const TABS = {
-  demand:    [{id:'tab-demand-schedule', label:'My Schedule'}, {id:'tab-new', label:'New Capacity'}, {id:'tab-active', label:'Active (2)'}, {id:'tab-history', label:'History'}],
-  supply:    [{id:'tab-schedule', label:'My Schedule'}, {id:'tab-spare', label:'Spare Capacity'}, {id:'tab-incoming', label:'Incoming (2)'}, {id:'tab-requests', label:'Requests'}, {id:'tab-active', label:'Active Jobs'}],
+  client:    [
+    {id:'tab-schedule',  label:'My Schedule'},
+    {id:'tab-spare',     label:'Spare Capacity'},
+    {id:'tab-new',       label:'Capacity Needed'},
+    {id:'tab-requests',  label:'Requests'},
+  ],
   regulator: [],
 };
 
@@ -555,33 +536,30 @@ function renderPipeline(containerId, currentStep) {
 // ══════════════════════════════════════════════
 //  LOGIN
 // ══════════════════════════════════════════════
-let selectedRole = 'demand';
+let selectedRole = 'client';
 
-function selectRole(role) {
+function selectLoginRole(role) {
   selectedRole = role;
-  ['demand','supply','regulator'].forEach(r => {
-    const card  = document.getElementById('role-'+r);
-    const check = document.getElementById('check-'+r);
+  ['client','regulator'].forEach(r => {
+    const card = document.getElementById('lrc-' + r);
+    if (!card) return;
     if (r === role) {
-      card.classList.add('sel');
-      check.style.cssText = 'width:17px;height:17px;border-radius:50%;background:#1d4ed8;border:2px solid #1d4ed8;display:flex;align-items:center;justify-content:center;flex-shrink:0';
-      check.innerHTML = `<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`;
+      card.style.borderColor = r === 'client' ? '#1d4ed8' : '#92400e';
+      card.style.background  = r === 'client' ? '#eff6ff' : '#fffbeb';
     } else {
-      card.classList.remove('sel');
-      check.style.cssText = 'width:17px;height:17px;border-radius:50%;background:#e2e8f0;border:2px solid #e2e8f0;flex-shrink:0';
-      check.innerHTML = '';
+      card.style.borderColor = '#e5e0d8';
+      card.style.background  = '#fff';
     }
   });
-  // Autofill
-  document.getElementById('login-email').value = CREDS[role].email;
-  document.getElementById('login-pass').value  = CREDS[role].pass;
-}
-
-function fillLogin(role) {
   document.getElementById('login-email').value = CREDS[role].email;
   document.getElementById('login-pass').value  = CREDS[role].pass;
   document.getElementById('login-error').style.display = 'none';
+  const hints = { client: 'Signing in as Client — Swift Freight SG', regulator: 'Signing in as Regulator — LTA / MTI' };
+  document.getElementById('login-role-hint').textContent = hints[role];
 }
+
+function fillLogin(role) { selectLoginRole(role); }
+function selectRole(role) { selectLoginRole(role); }
 
 function doLogin() {
   const email = document.getElementById('login-email').value.trim();
@@ -619,26 +597,17 @@ function setupPortal(role) {
     btn.onclick = () => switchTab(t.id);
     bar.appendChild(btn);
   });
-  // Show/hide supply-specific card
-  const supplyCard = document.getElementById('supply-active-card');
-  if (supplyCard) supplyCard.style.display = role==='supply' ? 'block' : 'none';
   // Activate first tab
   switchTab(TABS[role][0].id);
-  // Render pipelines (demand/shared)
+  // Render pipelines
   renderPipeline('pipeline-0891', 1);
   renderPipeline('pipeline-0892', 2);
   renderPipeline('pipeline-0888', 2);
-  // Role-specific init
-  if (role === 'supply') {
-    renderSupplyHome();
+  // Client init
+  if (role === 'client') {
+    renderScheduleTab();
     renderSpareCapacityTab();
-    renderIncoming();
-    renderRequests();
-    updateRequestsBadge();
-  }
-  if (role === 'demand') {
-    renderDemandHome();
-    renderDemandScheduleTab();
+    renderClientRequests();
   }
 }
 
@@ -657,8 +626,8 @@ function switchTab(tabId) {
     if (btns[i]) btns[i].classList.toggle('active', t.id === tabId);
   });
   if (tabId === 'tab-schedule') renderScheduleTab();
-  if (tabId === 'tab-demand-schedule') renderDemandScheduleTab();
   if (tabId === 'tab-spare') renderSpareCapacityTab();
+  if (tabId === 'tab-requests') renderClientRequests();
 }
 
 function doLogout() {
@@ -1369,79 +1338,54 @@ function renderSpareCapacityTab() {
   const c = document.getElementById('spare-capacity-content');
   if (!c) return;
 
-  const totalOffered = supplySpareCapacity.reduce((a,s) => {
-    const route = supplyScheduleRoutes.find(r => r.id === s.routeId);
-    return a + (route ? s.spareTons : 0);
-  }, 0);
+  const totalOffered = supplySpareCapacity.reduce((a, s) => a + s.spareTons, 0);
 
-  const spareCards = supplySpareCapacity.map(s => {
-    const route = supplyScheduleRoutes.find(r => r.id === s.routeId);
-    if (!route) return '';
+  // Show ALL schedule routes with toggle + editable spare tons
+  const routeCards = supplyScheduleRoutes.map(r => {
+    const existing = supplySpareCapacity.find(s => s.routeId === r.id);
+    const isOn = !!existing;
+    const spareTons = existing ? existing.spareTons : Math.max(1, Math.floor(r.tons * 0.3));
     return `
-      <div style="background:#fff;border-radius:12px;border:1px solid #bbf7d0;padding:12px 14px;margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div>
-            <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0 0 2px">${route.truck} · ${route.day} ${SLOT_LABELS[route.slot].split(' ')[0]}</p>
-            <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${route.from} → ${route.to}</p>
-            <p style="font-size:10px;color:#64748b;margin:2px 0 0">Full load: ${route.tons}t · ${s.note||''}</p>
+      <div style="background:#fff;border-radius:12px;border:1.5px solid ${isOn ? '#bbf7d0' : '#e5e0d8'};padding:12px 14px;margin-bottom:8px;transition:border .15s">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${isOn ? '10px' : '0'}">
+          <div style="flex:1">
+            <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0 0 2px">${r.truck} · ${r.day} · ${SLOT_LABELS[r.slot].split(' ')[0]}</p>
+            <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${r.from} → ${r.to}</p>
+            <p style="font-size:10px;color:#64748b;margin:2px 0 0">Full capacity: ${r.tons}t</p>
           </div>
-          <div style="text-align:right;flex-shrink:0;margin-left:12px">
-            <p style="font-size:18px;font-weight:800;color:#16a34a;margin:0">${s.spareTons}t</p>
-            <p style="font-size:9px;color:#94a3b8;margin:0">spare offered</p>
-          </div>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;margin-left:12px">
+            <div onclick="toggleSpare('${r.id}',${spareTons})" style="width:36px;height:20px;border-radius:20px;background:${isOn ? '#16a34a' : '#e2e8f0'};position:relative;cursor:pointer;transition:background .2s;flex-shrink:0">
+              <div style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;${isOn ? 'right:2px' : 'left:2px'};transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
+            </div>
+            <span style="font-size:10px;font-weight:600;color:${isOn ? '#16a34a' : '#94a3b8'}">${isOn ? 'Offering' : 'Off'}</span>
+          </label>
         </div>
-        <div style="margin-top:8px;display:flex;justify-content:flex-end">
-          <button onclick="removeSpare('${s.routeId}')" style="font-size:10px;color:#dc2626;background:none;border:none;cursor:pointer">Remove</button>
-        </div>
+        ${isOn ? `
+        <div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid #f0fdf4">
+          <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Spare tons</label>
+          <input type="number" value="${spareTons}" min="1" max="${r.tons}" onchange="updateSpareTons('${r.id}',this.value)" style="width:55px;font-size:12px;font-weight:700;border:1px solid #bbf7d0;border-radius:7px;padding:4px 7px;color:#16a34a;background:#f0fdf4;font-family:'Inter',sans-serif"/>
+          <span style="font-size:10px;color:#94a3b8">of ${r.tons}t</span>
+          <input type="text" value="${existing?.note || ''}" placeholder="Note (optional)" onchange="updateSpareNote('${r.id}',this.value)" style="flex:1;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:4px 8px;background:#fafaf8;font-family:'Inter',sans-serif"/>
+        </div>` : ''}
       </div>`;
   }).join('');
-
-  // Add spare form
-  const availableRoutes = supplyScheduleRoutes.filter(r => !supplySpareCapacity.find(s => s.routeId === r.id));
-  const routeOptions = availableRoutes.map(r =>
-    `<option value="${r.id}">${r.truck} · ${r.from}→${r.to} · ${r.day} ${SLOT_LABELS[r.slot].split(' ')[0]} · ${r.tons}t</option>`
-  ).join('');
 
   c.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">Spare capacity</p>
-      <p style="font-size:10px;color:#16a34a;font-weight:600;margin:0">${totalOffered}t available for matching</p>
+      <p style="font-size:10px;color:#16a34a;font-weight:600;margin:0">${totalOffered}t offered for matching</p>
     </div>
 
-    ${supplySpareCapacity.length === 0
-      ? `<div style="background:#f0fdf4;border:1.5px dashed #bbf7d0;border-radius:12px;padding:20px;text-align:center;margin-bottom:12px">
-           <p style="font-size:13px;font-weight:700;color:#166534;margin:0 0 4px">No spare capacity listed yet</p>
-           <p style="font-size:11px;color:#16a34a;margin:0">Add routes from your schedule that have unused capacity</p>
+    ${supplyScheduleRoutes.length === 0
+      ? `<div style="background:#f0fdf4;border:1.5px dashed #bbf7d0;border-radius:12px;padding:20px;text-align:center">
+           <p style="font-size:13px;font-weight:700;color:#166534;margin:0 0 4px">No routes in your schedule yet</p>
+           <p style="font-size:11px;color:#16a34a;margin:0 0 12px">Add routes first, then toggle spare capacity on for any route</p>
+           <button onclick="switchTab('tab-schedule')" style="font-size:11px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:7px 14px;border-radius:8px;cursor:pointer">Go to My Schedule →</button>
          </div>`
-      : spareCards}
+      : routeCards}
 
-    ${availableRoutes.length > 0 ? `
-    <div style="background:#fff;border-radius:12px;border:1px solid #e5e0d8;padding:14px 16px">
-      <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 10px">Add spare capacity from your schedule</p>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div>
-          <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Select route</label>
-          <select id="spare-route-sel" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151">
-            <option value="">— Pick a route —</option>
-            ${routeOptions}
-          </select>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div>
-            <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Spare tons</label>
-            <input type="number" id="spare-tons" min="1" max="30" value="3" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px"/>
-          </div>
-          <div>
-            <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Note (optional)</label>
-            <input type="text" id="spare-note" placeholder="e.g. Return leg" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;background:#fafaf8"/>
-          </div>
-        </div>
-        <button onclick="addSpare()" style="width:100%;padding:10px;border-radius:9px;background:#16a34a;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Add spare capacity</button>
-      </div>
-    </div>` : `<p style="font-size:11px;color:#94a3b8;text-align:center;padding:8px 0">All routes have spare capacity listed.</p>`}
-
-    <div style="margin-top:12px;background:#f8f7f4;border-radius:10px;padding:10px 12px">
-      <p style="font-size:10px;color:#64748b;margin:0">These routes are submitted for matching. Demand partners see only that a match exists — not your routes, schedules, or customers.</p>
+    <div style="margin-top:8px;background:#f8f7f4;border-radius:10px;padding:10px 12px">
+      <p style="font-size:10px;color:#64748b;margin:0">Toggle a route on to offer its spare capacity for encrypted matching. Other parties see only that a match exists — not your routes, schedule, or customers.</p>
     </div>`;
 }
 
@@ -1459,6 +1403,121 @@ function removeSpare(routeId) {
   supplySpareCapacity = supplySpareCapacity.filter(s => s.routeId !== routeId);
   renderSpareCapacityTab();
   renderScheduleTab();
+}
+
+function toggleSpare(routeId, defaultTons) {
+  const idx = supplySpareCapacity.findIndex(s => s.routeId === routeId);
+  if (idx >= 0) {
+    supplySpareCapacity.splice(idx, 1);
+  } else {
+    supplySpareCapacity.push({ routeId, spareTons: defaultTons, note: '' });
+  }
+  renderSpareCapacityTab();
+  renderScheduleTab();
+}
+
+function updateSpareTons(routeId, val) {
+  const entry = supplySpareCapacity.find(s => s.routeId === routeId);
+  if (entry) entry.spareTons = Math.max(1, parseInt(val) || 1);
+}
+
+function updateSpareNote(routeId, val) {
+  const entry = supplySpareCapacity.find(s => s.routeId === routeId);
+  if (entry) entry.note = val;
+}
+
+// Outgoing requests data (capacity the client has asked for)
+const outgoingRequests = [
+  {id:'SG-0891', route:'Jurong → Woodlands',  detail:'30t · 19 Mar · Morning',   step:1, provider:'Swift Haulage Pte Ltd',   statusLabel:'Commercials agreed', statusBg:'#eff6ff', statusText:'#1d4ed8', statusBorder:'#bfdbfe', note:'Awaiting pickup confirmation'},
+  {id:'SG-0892', route:'Tuas → Tampines',     detail:'50t · 19 Mar · Afternoon', step:2, provider:'Apex Logistics SG',        statusLabel:'En route',           statusBg:'#fefce8', statusText:'#854d0e', statusBorder:'#fde68a', note:'Cargo picked up · En route to Tampines Industrial Ave'},
+];
+
+function renderClientRequests() {
+  const cs = document.getElementById('requests-summary');
+  const cl = document.getElementById('requests-list');
+  if (!cs || !cl) return;
+
+  // ── INCOMING section (others want your spare capacity) ──
+  const pending   = supplyRequests.filter(r => r.status === 'pending').length;
+  const accepted  = supplyRequests.filter(r => ['accepted','active','completed'].includes(r.status)).length;
+  const declined  = supplyRequests.filter(r => r.status === 'declined').length;
+
+  cs.innerHTML = `
+    <p style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin:0 0 8px">Incoming — Others want your spare capacity</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:4px">
+      <div style="background:#fffbeb;border-radius:10px;border:1px solid #fde68a;padding:9px 10px;text-align:center">
+        <p style="font-size:18px;font-weight:800;color:#92400e;margin:0">${pending}</p>
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Pending</p>
+      </div>
+      <div style="background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;padding:9px 10px;text-align:center">
+        <p style="font-size:18px;font-weight:800;color:#1d4ed8;margin:0">${accepted}</p>
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Accepted</p>
+      </div>
+      <div style="background:#fef2f2;border-radius:10px;border:1px solid #fecaca;padding:9px 10px;text-align:center">
+        <p style="font-size:18px;font-weight:800;color:#dc2626;margin:0">${declined}</p>
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Declined</p>
+      </div>
+    </div>`;
+
+  const statusCfg = {
+    pending:   {label:'Pending',   bg:'#fffbeb', text:'#92400e', border:'#fde68a'},
+    accepted:  {label:'Accepted',  bg:'#eff6ff', text:'#1d4ed8', border:'#bfdbfe'},
+    active:    {label:'Active',    bg:'#fefce8', text:'#854d0e', border:'#fde68a'},
+    completed: {label:'Completed', bg:'#dcfce7', text:'#166534', border:'#bbf7d0'},
+    declined:  {label:'Declined',  bg:'#fef2f2', text:'#dc2626', border:'#fecaca'},
+  };
+
+  const incomingHtml = supplyRequests.map(r => {
+    const sc = statusCfg[r.status];
+    const needsPipeline = ['accepted','active','completed'].includes(r.status);
+    return `<div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden">
+      <div style="padding:12px 14px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
+          <p style="font-size:10px;color:#94a3b8;margin:0">${r.date} · ${r.slot} · ${r.tonnage}</p>
+        </div>
+        <span style="font-size:10px;font-weight:700;background:${sc.bg};color:${sc.text};border:1px solid ${sc.border};padding:3px 8px;border-radius:20px">${sc.label}</span>
+      </div>
+      <div style="padding:10px 14px">
+        ${r.requester && r.requester !== '—' ? `<p style="font-size:11px;color:#64748b;margin:0 0 ${needsPipeline?'10px':'4px'}">Requester: <strong style="color:#1e293b">${r.requester}</strong></p>` : ''}
+        ${r.declineReason ? `<p style="font-size:11px;color:#dc2626;margin:0">Reason: ${r.declineReason}</p>` : ''}
+        ${needsPipeline ? `<div id="rpipe-${r.id}" style="margin-top:4px"></div>` : ''}
+        ${r.status==='pending' ? `<div style="display:flex;gap:7px;margin-top:8px">
+          <button onclick="acceptRequest('${r.id}')" style="flex:1;padding:7px;border-radius:8px;background:#1d4ed8;color:#fff;font-size:11px;font-weight:600;border:none;cursor:pointer">Accept</button>
+          <button onclick="startDecline('${r.id}')" style="flex:1;padding:7px;border-radius:8px;background:#fff;color:#64748b;font-size:11px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer">Decline</button>
+        </div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // ── OUTGOING section (your capacity asks) ──
+  const outgoingHtml = `
+    <div style="margin:16px 0 8px">
+      <p style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin:0 0 8px">Outgoing — Your capacity asks</p>
+      ${outgoingRequests.map(r => `
+      <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:8px">
+        <div style="padding:12px 14px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
+            <p style="font-size:10px;color:#94a3b8;margin:0">${r.detail}</p>
+          </div>
+          <span style="font-size:10px;font-weight:700;background:${r.statusBg};color:${r.statusText};border:1px solid ${r.statusBorder};padding:3px 8px;border-radius:20px">${r.statusLabel}</span>
+        </div>
+        <div style="padding:10px 14px">
+          <p style="font-size:11px;color:#64748b;margin:0 0 8px">Provider: <strong style="color:#1e293b">${r.provider}</strong></p>
+          <div id="out-pipe-${r.id}" style="margin-bottom:6px"></div>
+          <p style="font-size:10px;color:#94a3b8;margin:0">${r.note}</p>
+        </div>
+      </div>`).join('')}
+    </div>`;
+
+  cl.innerHTML = incomingHtml + outgoingHtml;
+
+  // Render pipelines
+  supplyRequests.filter(r => ['accepted','active','completed'].includes(r.status)).forEach(r => {
+    renderPipeline('rpipe-' + r.id, r.step || 0);
+  });
+  outgoingRequests.forEach(r => renderPipeline('out-pipe-' + r.id, r.step || 0));
 }
 
 function spToggleAvail(key) {
