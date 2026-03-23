@@ -16,9 +16,9 @@
     .role-card:hover{border-color:#93c5fd;background:#f5f8ff;}
     .role-card.sel{border-color:#1d4ed8;background:#eff6ff;}
     /* portal */
-    #portal-wrap{display:none;flex-direction:row;min-height:100vh;}
-    #portal-sidebar{width:220px;min-width:220px;background:#0f1629;border-right:1px solid #1e2d47;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;}
-    #portal-main{flex:1;min-width:0;padding:0;background:#f5f4f0;overflow-y:auto;display:block;}
+    #portal-wrap{display:none;min-height:100vh;}
+    #portal-sidebar{width:220px;background:#0f1629;border-right:1px solid #1e2d47;display:flex;flex-direction:column;height:100vh;overflow-y:auto;position:fixed;left:0;top:0;z-index:100;}
+    #portal-main{margin-left:220px;display:block;min-height:100vh;padding:0;background:#f5f4f0;overflow-y:auto;}
     #portal-main>.tab-pane{display:none;width:100%;} #portal-main>.tab-pane.active{display:block;width:100%;}
     /* tab bar */
     .tab-btn{display:block;width:100%;text-align:left;padding:10px 16px 10px 20px;font-size:12px;font-weight:600;border:none;background:transparent;cursor:pointer;border-left:3px solid transparent;color:#8b97b1;transition:all .15s;white-space:nowrap;border-radius:0;}
@@ -148,7 +148,7 @@
 <!-- ══════════════════════════════════════════
      PORTAL (Demand / Supply) — tabbed
 ══════════════════════════════════════════ -->
-<div id="portal-wrap" style="display:none;flex-direction:row;min-height:100vh;">
+<div id="portal-wrap" style="display:none;min-height:100vh;">
 
   <!-- Sidebar -->
   <div id="portal-sidebar">
@@ -649,7 +649,7 @@ function doLogin() {
     document.getElementById('login-screen').style.display = 'none';
     if (selectedRole === 'regulator') { showReg(); return; }
     setupPortal(selectedRole);
-    document.getElementById('portal-wrap').style.display = 'flex';
+    document.getElementById('portal-wrap').style.display = 'block';
   }, 800);
 }
 
