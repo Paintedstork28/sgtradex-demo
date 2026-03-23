@@ -9,20 +9,20 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    *{box-sizing:border-box;} body{font-family:'Inter',sans-serif;background:#f0ede8;margin:0;}
+    *{box-sizing:border-box;} body{font-family:'Inter',sans-serif;background:#f5f4f0;margin:0;}
     /* login */
-    #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0ede8;}
-    .role-card{border:2px solid #e5e0d8;border-radius:14px;padding:14px;cursor:pointer;transition:all .15s;background:#fff;}
+    #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f5f4f0;}
+    .role-card{border:2px solid #e5e0d8;border-radius:10px;padding:14px;cursor:pointer;transition:all .15s;background:#fff;}
     .role-card:hover{border-color:#93c5fd;background:#f5f8ff;}
     .role-card.sel{border-color:#1d4ed8;background:#eff6ff;}
     /* portal */
     #portal-wrap{display:none;flex-direction:row;min-height:100vh;}
-    #portal-sidebar{width:220px;min-width:220px;background:#fff;border-right:1px solid #e5e0d8;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;}
-    #portal-main{flex:1;min-width:0;padding:32px 40px;background:#f0ede8;}
+    #portal-sidebar{width:220px;min-width:220px;background:#0f1629;border-right:1px solid #1e2d47;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;}
+    #portal-main{flex:1;min-width:0;padding:32px 40px;background:#f5f4f0;}
     /* tab bar */
-    .tab-btn{display:block;width:100%;text-align:left;padding:10px 16px 10px 20px;font-size:12px;font-weight:600;border:none;background:transparent;cursor:pointer;border-left:3px solid transparent;color:#64748b;transition:all .15s;white-space:nowrap;border-radius:0;}
-    .tab-btn.active{color:#1d4ed8;border-left-color:#1d4ed8;background:#f0f9ff;}
-    .tab-btn:hover:not(.active){background:#f8f7f4;color:#475569;}
+    .tab-btn{display:block;width:100%;text-align:left;padding:10px 16px 10px 20px;font-size:12px;font-weight:600;border:none;background:transparent;cursor:pointer;border-left:3px solid transparent;color:#8b97b1;transition:all .15s;white-space:nowrap;border-radius:0;}
+    .tab-btn.active{color:#fff;border-left-color:#3b82f6;background:rgba(255,255,255,.07);}
+    .tab-btn:hover:not(.active){background:rgba(255,255,255,.04);color:#c4cdd8;}
     .tab-pane{display:none;} .tab-pane.active{display:block;}
     /* status pipeline */
     .status-step{display:flex;flex-direction:column;align-items:center;flex:1;}
@@ -90,7 +90,7 @@
 <div id="login-screen">
   <div class="fade-in" style="width:420px;padding:16px">
     <div style="text-align:center;margin-bottom:24px">
-      <div style="width:52px;height:52px;border-radius:14px;background:#1d4ed8;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+      <div style="width:52px;height:52px;border-radius:10px;background:#1d4ed8;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
       </div>
       <h1 style="font-size:20px;font-weight:800;color:#1e293b;margin:0 0 4px">SGTraDEX Freight</h1>
@@ -100,14 +100,14 @@
     <!-- Role selector -->
     <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;text-align:center;margin:0 0 10px">Who are you signing in as?</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-      <div id="lrc-client" onclick="selectLoginRole('client')" style="background:#fff;border:2px solid #e5e0d8;border-radius:16px;padding:16px 14px;cursor:pointer;text-align:center;transition:all .15s">
+      <div id="lrc-client" onclick="selectLoginRole('client')" style="background:#fff;border:2px solid #e5e0d8;border-radius:10px;padding:16px 14px;cursor:pointer;text-align:center;transition:all .15s">
         <div style="width:38px;height:38px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
         </div>
         <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0 0 3px">Client</p>
         <p style="font-size:10px;color:#64748b;margin:0">Shipper · Haulier · Forwarder</p>
       </div>
-      <div id="lrc-regulator" onclick="selectLoginRole('regulator')" style="background:#fff;border:2px solid #e5e0d8;border-radius:16px;padding:16px 14px;cursor:pointer;text-align:center;transition:all .15s">
+      <div id="lrc-regulator" onclick="selectLoginRole('regulator')" style="background:#fff;border:2px solid #e5e0d8;border-radius:10px;padding:16px 14px;cursor:pointer;text-align:center;transition:all .15s">
         <div style="width:38px;height:38px;border-radius:10px;background:#fffbeb;border:1px solid #fde68a;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
         </div>
@@ -152,26 +152,26 @@
   <!-- Sidebar -->
   <div id="portal-sidebar">
     <!-- Logo -->
-    <div style="padding:20px 18px 16px;border-bottom:1px solid #f1f0ec">
+    <div style="padding:20px 18px 16px;border-bottom:1px solid #1e2d47">
       <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px">
-        <div style="width:30px;height:30px;border-radius:8px;background:#1d4ed8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <div style="width:30px;height:30px;border-radius:8px;background:#2563eb;display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
         </div>
         <div>
-          <p style="font-size:13px;font-weight:800;color:#1e293b;margin:0;line-height:1.2">SGTraDEX</p>
-          <p style="font-size:9px;color:#94a3b8;margin:0">Freight Matching</p>
+          <p style="font-size:13px;font-weight:800;color:#fff;margin:0;line-height:1.2">SGTraDEX</p>
+          <p style="font-size:9px;color:#6b7fa3;margin:0">Freight Matching</p>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
         <span id="role-badge" style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600"></span>
-        <span id="user-name" style="font-size:11px;color:#64748b"></span>
+        <span id="user-name" style="font-size:11px;color:#8b97b1"></span>
       </div>
     </div>
     <!-- Nav items -->
     <div id="tab-bar" style="flex:1;padding:10px 0"></div>
     <!-- Logout -->
-    <div style="padding:14px 16px;border-top:1px solid #f1f0ec">
-      <button onclick="doLogout()" style="width:100%;padding:8px 12px;border-radius:9px;border:1px solid #e5e0d8;background:#f8f7f4;color:#64748b;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">← Logout</button>
+    <div style="padding:14px 16px;border-top:1px solid #1e2d47">
+      <button onclick="doLogout()" style="width:100%;padding:8px 12px;border-radius:9px;border:1px solid #1e2d47;background:rgba(255,255,255,.05);color:#8b97b1;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">← Logout</button>
     </div>
   </div>
 
@@ -292,7 +292,7 @@
       </div>
       <!-- S2: matching -->
       <div id="s2" style="display:none;background:#fff;border-radius:20px;border:1px solid #e5e0d8;padding:48px 28px;text-align:center;max-width:640px">
-        <div style="width:60px;height:60px;border-radius:16px;background:#eff6ff;display:flex;align-items:center;justify-content:center;margin:0 auto 18px">
+        <div style="width:60px;height:60px;border-radius:10px;background:#eff6ff;display:flex;align-items:center;justify-content:center;margin:0 auto 18px">
           <svg class="spin" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
         <h2 style="font-size:15px;font-weight:700;color:#1e293b;margin:0 0 6px">Running encrypted match</h2>
@@ -371,7 +371,7 @@
       <div style="display:flex;flex-direction:column;gap:12px">
 
         <!-- Active request 1 — Commercials Agreed (step 2) -->
-        <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden">
+        <div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;overflow:hidden">
           <div style="padding:14px 16px 12px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
             <div><p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 1px">#SG-0891 · Jurong → Woodlands</p><p style="font-size:10px;color:#94a3b8;margin:0">Swift Haulage · 30t · 19 Mar · Morning</p></div>
             <span style="font-size:10px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:3px 8px;border-radius:20px">In progress</span>
@@ -385,7 +385,7 @@
         </div>
 
         <!-- Active request 2 — Picked Up (step 3) -->
-        <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden">
+        <div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;overflow:hidden">
           <div style="padding:14px 16px 12px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
             <div><p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 1px">#SG-0892 · Tuas → Tampines</p><p style="font-size:10px;color:#94a3b8;margin:0">Apex Logistics · 50t · 19 Mar · Afternoon</p></div>
             <span style="font-size:10px;font-weight:700;background:#fefce8;color:#854d0e;border:1px solid #fde68a;padding:3px 8px;border-radius:20px">En route</span>
@@ -399,7 +399,7 @@
         </div>
 
         <!-- Active request 3 — supply incoming (for supply role only shown differently) -->
-        <div id="supply-active-card" style="display:none;background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden">
+        <div id="supply-active-card" style="display:none;background:#fff;border-radius:10px;border:1px solid #e5e0d8;overflow:hidden">
           <div style="padding:14px 16px 12px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
             <div><p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 1px">#SG-0888 · Pasir Panjang → Yishun</p><p style="font-size:10px;color:#94a3b8;margin:0">Requester: Fairview Cargo · 25t · 19 Mar · Morning</p></div>
             <span style="font-size:10px;font-weight:700;background:#fefce8;color:#854d0e;border:1px solid #fde68a;padding:3px 8px;border-radius:20px">En route</span>
@@ -425,7 +425,7 @@
         </div>
 
         <!-- Completed -->
-        <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 16px">
+        <div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:14px 16px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
             <div><p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 2px">#SG-0885 · Jurong → Changi</p><p style="font-size:10px;color:#94a3b8;margin:0">Swift Haulage · 40t · 18 Mar</p></div>
             <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px">Completed</span>
@@ -435,7 +435,7 @@
           </div>
         </div>
 
-        <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 16px">
+        <div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:14px 16px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
             <div><p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 2px">#SG-0881 · Tuas → Woodlands</p><p style="font-size:10px;color:#94a3b8;margin:0">Apex Logistics · 60t · 17 Mar</p></div>
             <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px">Completed</span>
@@ -446,7 +446,7 @@
         </div>
 
         <!-- Unfulfilled -->
-        <div style="background:#fff;border-radius:14px;border:1px solid #fecaca;padding:14px 16px">
+        <div style="background:#fff;border-radius:10px;border:1px solid #fecaca;padding:14px 16px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
             <div><p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 2px">#SG-0878 · Pasir Panjang → Yishun</p><p style="font-size:10px;color:#94a3b8;margin:0">25t · 15 Mar · Evening</p></div>
             <span style="font-size:10px;font-weight:700;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:2px 8px;border-radius:20px">Not fulfilled</span>
@@ -454,7 +454,7 @@
           <div style="font-size:11px;color:#dc2626">No available supply matched for this slot. Demand logged to regulator.</div>
         </div>
 
-        <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 16px">
+        <div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:14px 16px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
             <div><p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 2px">#SG-0874 · Jurong → Tampines</p><p style="font-size:10px;color:#94a3b8;margin:0">Pinnacle Transport · 35t · 14 Mar</p></div>
             <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px">Completed</span>
@@ -464,7 +464,7 @@
           </div>
         </div>
 
-        <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 16px">
+        <div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:14px 16px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
             <div><p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 2px">#SG-0868 · Brani → Woodlands</p><p style="font-size:10px;color:#94a3b8;margin:0">Swift Haulage · 20t · 12 Mar</p></div>
             <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px">Completed</span>
@@ -656,7 +656,7 @@ function setupPortal(role) {
   const cfg = CREDS[role];
   // Role badge
   document.getElementById('role-badge').textContent = cfg.label;
-  document.getElementById('role-badge').style.cssText = `font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;background:${cfg.badge};color:${cfg.badgeText};border:1px solid ${cfg.badgeText}33`;
+  document.getElementById('role-badge').style.cssText = `font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3)`;
   document.getElementById('user-name').textContent = cfg.name;
   // Build tab bar
   const bar = document.getElementById('tab-bar');
@@ -743,7 +743,7 @@ function renderProfileSection(editMode) {
     const allZones = [...pickupZones, ...dropoffZones];
     const p = demandProfile || {};
     sec.innerHTML = `
-      <div style="background:#fff;border-radius:16px;border:1.5px solid #bfdbfe;padding:16px 18px">
+      <div style="background:#fff;border-radius:10px;border:1.5px solid #bfdbfe;padding:16px 18px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
           <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">Edit default request settings</p>
           <button onclick="renderProfileSection(false)" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
@@ -800,7 +800,7 @@ function renderProfileSection(editMode) {
     // ── DISPLAY CARD ───────────────────────────────
     if (!demandProfile) {
       sec.innerHTML = `
-        <div style="background:#fffbeb;border:1.5px dashed #fde68a;border-radius:14px;padding:16px 18px;text-align:center">
+        <div style="background:#fffbeb;border:1.5px dashed #fde68a;border-radius:10px;padding:16px 18px;text-align:center">
           <p style="font-size:13px;font-weight:700;color:#92400e;margin:0 0 4px">Set your default request</p>
           <p style="font-size:11px;color:#a16207;margin:0 0 12px">Save your typical pickup/dropoff, load size, and time slot — pre-fills your next request in one tap.</p>
           <button onclick="renderProfileSection(true)" style="font-size:12px;font-weight:600;color:#92400e;background:#fef3c7;border:1px solid #fde68a;padding:8px 16px;border-radius:9px;cursor:pointer">Set up now →</button>
@@ -810,7 +810,7 @@ function renderProfileSection(editMode) {
     const p = demandProfile;
     const tons = (p.trucks || 0) * (p.capacity || 0);
     sec.innerHTML = `
-      <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden">
+      <div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;overflow:hidden">
         <div style="padding:11px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
           <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">Default request settings</p>
           <button onclick="renderProfileSection(true)" style="font-size:10px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;cursor:pointer">Edit</button>
@@ -829,7 +829,7 @@ function renderProfileSection(editMode) {
               <p style="font-size:10px;color:#64748b;margin:0">${p.dropoffAddress}</p>
             </div>
           </div>
-          <div style="height:1px;background:#f0ede8"></div>
+          <div style="height:1px;background:#f5f4f0"></div>
           <div style="display:flex;gap:14px;font-size:11px">
             <span style="color:#64748b">${p.slot.split(' ')[0]}</span>
             <span style="color:#64748b">${p.trucks} trucks</span>
@@ -998,15 +998,15 @@ function renderDemandHome() {
 
     <!-- Stats row -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-      <div onclick="switchTab('tab-active')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+      <div onclick="switchTab('tab-active')" style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
         <p style="font-size:24px;font-weight:800;color:#1d4ed8;margin:0 0 3px">${activeRequests.length}</p>
         <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Active</p>
       </div>
-      <div onclick="switchTab('tab-history')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+      <div onclick="switchTab('tab-history')" style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
         <p style="font-size:24px;font-weight:800;color:#16a34a;margin:0 0 3px">${completedCount}</p>
         <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Completed</p>
       </div>
-      <div onclick="switchTab('tab-history')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+      <div onclick="switchTab('tab-history')" style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
         <p style="font-size:24px;font-weight:800;color:#dc2626;margin:0 0 3px">${unfulfilledCount}</p>
         <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Unfulfilled</p>
       </div>
@@ -1015,7 +1015,7 @@ function renderDemandHome() {
     <!-- Active shipments -->
     <p style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.1em;margin:0 0 8px">Active shipments</p>
     ${activeRequests.map((r, idx) => `
-      <div onclick="switchTab('tab-active')" style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:10px;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+      <div onclick="switchTab('tab-active')" style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:10px;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
         <div style="padding:12px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
           <div>
             <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
@@ -1069,7 +1069,7 @@ function renderSupplyHome() {
 
     <!-- Action alert — only shown if there are pending requests -->
     ${pending > 0 ? `
-    <div onclick="switchTab('tab-incoming')" style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:16px;padding:14px 18px;margin-bottom:14px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:background .12s" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffbeb'">
+    <div onclick="switchTab('tab-incoming')" style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:14px 18px;margin-bottom:14px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:background .12s" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffbeb'">
       <div style="width:38px;height:38px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2.2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       </div>
@@ -1079,7 +1079,7 @@ function renderSupplyHome() {
       </div>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a16207" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
     </div>` : `
-    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:16px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px">
+    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px">
       <div style="width:38px;height:38px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
       </div>
@@ -1091,15 +1091,15 @@ function renderSupplyHome() {
 
     <!-- Stats row -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-      <div onclick="switchTab('tab-active')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+      <div onclick="switchTab('tab-active')" style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
         <p style="font-size:24px;font-weight:800;color:#1d4ed8;margin:0 0 3px">${active + accepted}</p>
         <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Active jobs</p>
       </div>
-      <div onclick="switchTab('tab-requests')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+      <div onclick="switchTab('tab-requests')" style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
         <p style="font-size:24px;font-weight:800;color:#16a34a;margin:0 0 3px">${completed}</p>
         <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Completed</p>
       </div>
-      <div onclick="switchTab('tab-requests')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
+      <div onclick="switchTab('tab-requests')" style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
         <p style="font-size:24px;font-weight:800;color:#dc2626;margin:0 0 3px">${declined}</p>
         <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Declined</p>
       </div>
@@ -1107,7 +1107,7 @@ function renderSupplyHome() {
 
     <!-- Active job in progress -->
     ${activeJob ? `
-    <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:14px">
+    <div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:14px">
       <div style="padding:12px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
         <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0">Current job in progress</p>
         <span style="font-size:10px;font-weight:700;background:#fefce8;color:#854d0e;border:1px solid #fde68a;padding:2px 8px;border-radius:20px">En route</span>
@@ -1194,7 +1194,7 @@ function buildImportSection(side) {
       </div>
     </div>`;
   }
-  return `<div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:14px">
+  return `<div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:14px">
     <div style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
       <div style="display:flex;align-items:center;gap:6px">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -1340,10 +1340,10 @@ function renderScheduleTab() {
       <button onclick="switchTab('tab-spare')" style="font-size:11px;font-weight:600;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:7px 14px;border-radius:9px;cursor:pointer;white-space:nowrap">List spare capacity →</button>
     </div>
     ${buildImportSection('supply')}
-    <div style="display:flex;gap:4px;overflow-x:auto;margin-bottom:18px;background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:12px 14px">${dayPills}</div>
+    <div style="display:flex;gap:4px;overflow-x:auto;margin-bottom:18px;background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:12px 14px">${dayPills}</div>
     <div>
       ${dayRoutes.length === 0 && !addingSupplyRoute
-        ? `<div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:40px;text-align:center;grid-column:1/-1"><p style="font-size:14px;color:#94a3b8;margin:0 0 16px">No routes scheduled for ${selectedWeekDay}</p>${SLOT_KEYS.map(key => `<button onclick="addingSupplyRoute='${selectedWeekDay}_${key}';renderScheduleTab()" style="font-size:11px;color:#1d4ed8;background:#f0f9ff;border:1px dashed #93c5fd;padding:7px 16px;border-radius:8px;cursor:pointer;margin:4px">+ Add ${SLOT_LABELS[key].split(' ')[0]} route</button>`).join('')}</div>`
+        ? `<div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:40px;text-align:center;grid-column:1/-1"><p style="font-size:14px;color:#94a3b8;margin:0 0 16px">No routes scheduled for ${selectedWeekDay}</p>${SLOT_KEYS.map(key => `<button onclick="addingSupplyRoute='${selectedWeekDay}_${key}';renderScheduleTab()" style="font-size:11px;color:#1d4ed8;background:#f0f9ff;border:1px dashed #93c5fd;padding:7px 16px;border-radius:8px;cursor:pointer;margin:4px">+ Add ${SLOT_LABELS[key].split(' ')[0]} route</button>`).join('')}</div>`
         : slotSections}
     </div>
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px 16px;display:flex;align-items:flex-start;gap:8px;margin-top:16px">
@@ -1539,7 +1539,7 @@ function renderSpareCapacityTab() {
     const entry = supplySpareCapacity.find(s => s.routeId === r.id);
     const spareTons = entry ? entry.spareTons : 1;
     return `
-      <div style="background:#fff;border-radius:14px;border:2px solid #bbf7d0;padding:16px 18px">
+      <div style="background:#fff;border-radius:10px;border:2px solid #bbf7d0;padding:16px 18px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
           <div style="flex:1">
             <p style="font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.05em;margin:0 0 3px">${r.truck} · ${r.day} · ${SLOT_LABELS[r.slot].split(' ')[0]}</p>
@@ -1565,7 +1565,7 @@ function renderSpareCapacityTab() {
   const pickerCards = unlistedRoutes.map(r => {
     const defaultSpare = Math.max(1, Math.floor(r.tons * 0.3));
     return `
-      <div onclick="toggleSpare('${r.id}',${defaultSpare})" style="background:#fff;border-radius:14px;border:1.5px solid #e5e0d8;padding:16px 18px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#bbf7d0';this.style.background='#f9fefb'" onmouseout="this.style.borderColor='#e5e0d8';this.style.background='#fff'">
+      <div onclick="toggleSpare('${r.id}',${defaultSpare})" style="background:#fff;border-radius:10px;border:1.5px solid #e5e0d8;padding:16px 18px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#bbf7d0';this.style.background='#f9fefb'" onmouseout="this.style.borderColor='#e5e0d8';this.style.background='#fff'">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div style="flex:1">
             <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0 0 3px">${r.truck} · ${r.day} · ${SLOT_LABELS[r.slot].split(' ')[0]}</p>
@@ -1581,7 +1581,7 @@ function renderSpareCapacityTab() {
   if (supplyScheduleRoutes.length === 0) {
     c.innerHTML = `<div class="page-content">
       <div class="page-header"><h1>Spare Capacity</h1><p>List unused tonnage on your scheduled routes for encrypted matching</p></div>
-      <div style="background:#f0fdf4;border:1.5px dashed #bbf7d0;border-radius:14px;padding:48px;text-align:center">
+      <div style="background:#f0fdf4;border:1.5px dashed #bbf7d0;border-radius:10px;padding:48px;text-align:center">
         <p style="font-size:15px;font-weight:700;color:#166534;margin:0 0 6px">No routes in your schedule yet</p>
         <p style="font-size:13px;color:#16a34a;margin:0 0 16px">Add routes to your schedule first, then list spare capacity here</p>
         <button onclick="switchTab('tab-schedule')" style="font-size:12px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:9px 20px;border-radius:9px;cursor:pointer">Go to My Schedule →</button>
@@ -1685,7 +1685,7 @@ const _reqStatusCfg = {
 function _incomingCard(r) {
   const sc = _reqStatusCfg[r.status];
   const needsPipeline = ['accepted','active','completed'].includes(r.status);
-  return `<div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:8px">
+  return `<div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:8px">
     <div style="padding:12px 14px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
       <div>
         <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
@@ -1790,7 +1790,7 @@ function renderOutgoingRequests() {
       </div>
     </div>
     <div class="cards-grid">${outgoingRequests.map(r => `
-    <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden">
+    <div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;overflow:hidden">
       <div style="padding:14px 16px 12px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
         <div>
           <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0 0 2px">#${r.id} · ${r.route}</p>
@@ -1958,8 +1958,8 @@ function buildIncomingCard(r) {
   }
 
   return `
-    <div id="icard-${r.id}" class="slide-in" style="background:#fff;border-radius:16px;border:2px solid ${border};transition:border .2s">
-      <div style="padding:13px 16px 10px;background:${headerBg};border-bottom:1px solid ${headerBd};border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:center">
+    <div id="icard-${r.id}" class="slide-in" style="background:#fff;border-radius:10px;border:2px solid ${border};transition:border .2s">
+      <div style="padding:13px 16px 10px;background:${headerBg};border-bottom:1px solid ${headerBd};border-radius:10px 14px 0 0;display:flex;justify-content:space-between;align-items:center">
         <div>
           <p style="font-size:10px;font-weight:700;color:${labelCol};text-transform:uppercase;letter-spacing:.1em;margin:0 0 1px">${label}</p>
           <p style="font-size:11px;color:${subCol};margin:0">#${r.id} · Received ${r.ago}</p>
@@ -2101,7 +2101,7 @@ function renderRequests() {
     const sc = statusCfg[r.status];
     const needsPipeline = ['accepted','active','completed'].includes(r.status);
     const pipelineId = 'rpipe-'+r.id;
-    return `<div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden">
+    return `<div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;overflow:hidden">
       <div style="padding:12px 14px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
         <div>
           <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
