@@ -290,10 +290,10 @@
       <div id="schedule-tab-content"></div>
     </div>
 
-    <!-- ── TAB: REQUESTS (supply only) ── -->
-    <div id="tab-requests" class="tab-pane">
-      <div id="requests-summary" style="margin-bottom:12px"></div>
-      <div id="requests-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    <!-- ── TAB: OUTGOING REQUESTS (client only) ── -->
+    <div id="tab-outgoing" class="tab-pane">
+      <div id="outgoing-summary" style="margin-bottom:12px"></div>
+      <div id="outgoing-list" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
 
     <!-- ── TAB: ACTIVE REQUESTS ── -->
@@ -496,7 +496,8 @@ const TABS = {
     {id:'tab-schedule',  label:'My Schedule'},
     {id:'tab-spare',     label:'Spare Capacity'},
     {id:'tab-new',       label:'Capacity Needed'},
-    {id:'tab-requests',  label:'Requests'},
+    {id:'tab-incoming',  label:'Incoming'},
+    {id:'tab-outgoing',  label:'Outgoing'},
   ],
   regulator: [],
 };
@@ -627,7 +628,8 @@ function switchTab(tabId) {
   });
   if (tabId === 'tab-schedule') renderScheduleTab();
   if (tabId === 'tab-spare') renderSpareCapacityTab();
-  if (tabId === 'tab-requests') renderClientRequests();
+  if (tabId === 'tab-incoming') renderIncomingRequests();
+  if (tabId === 'tab-outgoing') renderOutgoingRequests();
 }
 
 function doLogout() {
@@ -1268,6 +1270,16 @@ function renderScheduleTab() {
     </div>`;
 }
 
+// Sample addresses for one-click autofill in the Add Route form
+const SAMPLE_ADDRESSES = [
+  '31 Jurong Port Road, Singapore 619115',
+  '30 Tuas Ave 1, Singapore 639494',
+  '21 Woodlands Close, Singapore 737854',
+  '30 Airport Boulevard, Changi, Singapore 819642',
+  '3 Tampines Industrial Avenue 2, Singapore 528763',
+  '12 Pasir Panjang Road, Singapore 117438',
+];
+
 function buildAddRouteForm(day, slot, side) {
   const allZones = [...new Set([...pickupZones, ...dropoffZones, ...ALL_SUPPLY_ZONES])];
   const prefix = side === 'supply' ? 'snr' : 'dnr';
@@ -1276,23 +1288,79 @@ function buildAddRouteForm(day, slot, side) {
   const cancelFn = side === 'supply' ? `addingSupplyRoute=false;renderScheduleTab()` : `addingDemandRoute=false;renderDemandScheduleTab()`;
   const saveFn   = side === 'supply' ? `saveNewRoute('${day}','${slot}')` : `saveNewDemandRoute('${day}','${slot}')`;
   const truckPlaceholder = side === 'supply' ? 'e.g. SG-104' : 'e.g. FD-204';
+  const sampleBtns = SAMPLE_ADDRESSES.slice(0,3).map((a,i) =>
+    `<button type="button" onclick="nrFillSample(this,'${prefix}-from-addr-${slot}','${prefix}-from-pills-${slot}')" data-addr="${a}" style="font-size:9px;padding:3px 8px;border-radius:6px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">${a.split(',')[0]}</button>`
+  ).join('');
+  const sampleBtnsTo = SAMPLE_ADDRESSES.slice(3).map((a,i) =>
+    `<button type="button" onclick="nrFillSample(this,'${prefix}-to-addr-${slot}','${prefix}-to-pills-${slot}')" data-addr="${a}" style="font-size:9px;padding:3px 8px;border-radius:6px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">${a.split(',')[0]}</button>`
+  ).join('');
   return `
     <div style="background:#f0f9ff;border-radius:10px;border:1.5px solid #bfdbfe;padding:12px 14px;margin-bottom:6px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0">Add route · ${SLOT_LABELS[slot]}</p>
         <button onclick="${cancelFn}" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
       </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+
+        <!-- TRUCK ID -->
         <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">Truck ID</label>
-          <input id="${prefix}-truck-${slot}" type="text" placeholder="${truckPlaceholder}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px"/></div>
-        <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">From zone</label>
-          <div id="${prefix}-from-pills-${slot}" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">${zFrom}</div>
-          <input id="${prefix}-from-addr-${slot}" type="text" placeholder="Paste address — zone autofills" oninput="addressToZone(this,'${prefix}-from-pills-${slot}')" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;background:#fafaf8"/></div>
-        <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">To zone</label>
-          <div id="${prefix}-to-pills-${slot}" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">${zTo}</div>
-          <input id="${prefix}-to-addr-${slot}" type="text" placeholder="Paste address — zone autofills" oninput="addressToZone(this,'${prefix}-to-pills-${slot}')" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;background:#fafaf8"/></div>
-        <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">Capacity (tons)</label>
-          <input id="${prefix}-tons-${slot}" type="number" min="1" max="30" value="10" style="width:80px;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px"/></div>
+          <input id="${prefix}-truck-${slot}" type="text" placeholder="${truckPlaceholder}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;box-sizing:border-box"/></div>
+
+        <!-- FROM ADDRESS (paste first) -->
+        <div>
+          <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">From — Paste address or pick a sample</label>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px">${sampleBtns}</div>
+          <input id="${prefix}-from-addr-${slot}" type="text" placeholder="Paste full address here…" oninput="addressToZone(this,'${prefix}-from-pills-${slot}');nrUpdatePincode(this,'${prefix}-from-pin-${slot}')" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;background:#fff;box-sizing:border-box"/>
+          <div style="display:flex;gap:8px;margin-top:5px;align-items:center">
+            <div style="flex:1">
+              <label style="font-size:9px;color:#94a3b8;display:block;margin-bottom:2px">Zone (autofilled)</label>
+              <div id="${prefix}-from-pills-${slot}" style="display:flex;flex-wrap:wrap;gap:4px">${zFrom}</div>
+            </div>
+            <div>
+              <label style="font-size:9px;color:#94a3b8;display:block;margin-bottom:2px">Pincode</label>
+              <input id="${prefix}-from-pin-${slot}" type="text" placeholder="——" readonly style="width:64px;font-size:11px;font-weight:600;border:1px solid #e2e8f0;border-radius:7px;padding:5px 8px;background:#f8f7f4;color:#1e293b"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- TO ADDRESS (paste first) -->
+        <div>
+          <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">To — Paste address or pick a sample</label>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px">${sampleBtnsTo}</div>
+          <input id="${prefix}-to-addr-${slot}" type="text" placeholder="Paste full address here…" oninput="addressToZone(this,'${prefix}-to-pills-${slot}');nrUpdatePincode(this,'${prefix}-to-pin-${slot}')" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;background:#fff;box-sizing:border-box"/>
+          <div style="display:flex;gap:8px;margin-top:5px;align-items:center">
+            <div style="flex:1">
+              <label style="font-size:9px;color:#94a3b8;display:block;margin-bottom:2px">Zone (autofilled)</label>
+              <div id="${prefix}-to-pills-${slot}" style="display:flex;flex-wrap:wrap;gap:4px">${zTo}</div>
+            </div>
+            <div>
+              <label style="font-size:9px;color:#94a3b8;display:block;margin-bottom:2px">Pincode</label>
+              <input id="${prefix}-to-pin-${slot}" type="text" placeholder="——" readonly style="width:64px;font-size:11px;font-weight:600;border:1px solid #e2e8f0;border-radius:7px;padding:5px 8px;background:#f8f7f4;color:#1e293b"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- TRUCKS + CAPACITY → TOTAL TONS -->
+        <div>
+          <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Fleet capacity</label>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:5px">
+              <label style="font-size:10px;color:#64748b">No. of trucks</label>
+              <input id="${prefix}-numtrucks-${slot}" type="number" min="1" max="50" value="3" oninput="nrUpdateTotalTons('${prefix}','${slot}')" style="width:50px;font-size:12px;font-weight:700;border:1px solid #e2e8f0;border-radius:7px;padding:5px 7px;text-align:center"/>
+            </div>
+            <span style="font-size:12px;color:#cbd5e1">×</span>
+            <div style="display:flex;align-items:center;gap:5px">
+              <label style="font-size:10px;color:#64748b">Capacity / truck (t)</label>
+              <input id="${prefix}-captruck-${slot}" type="number" min="1" max="50" value="10" oninput="nrUpdateTotalTons('${prefix}','${slot}')" style="width:50px;font-size:12px;font-weight:700;border:1px solid #e2e8f0;border-radius:7px;padding:5px 7px;text-align:center"/>
+            </div>
+            <span style="font-size:12px;color:#cbd5e1">=</span>
+            <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:5px 12px;display:flex;align-items:baseline;gap:3px">
+              <span id="${prefix}-total-tons-${slot}" style="font-size:16px;font-weight:800;color:#16a34a">30</span>
+              <span style="font-size:10px;color:#16a34a;font-weight:600">t total</span>
+            </div>
+          </div>
+        </div>
+
         <button onclick="${saveFn}" style="width:100%;padding:9px;border-radius:9px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Add to schedule</button>
       </div>
     </div>`;
@@ -1305,15 +1373,50 @@ function nrSelectZone(el, groupId, addrId) {
   if (inp && !inp.value) inp.value = ZONE_ADDRESSES[el.textContent.trim()] || '';
 }
 
+// Fill address input from sample button, then trigger zone + pincode autofill
+function nrFillSample(btn, addrId, pillsId) {
+  const addr = btn.dataset.addr;
+  const inp = document.getElementById(addrId);
+  if (!inp) return;
+  inp.value = addr;
+  inp.style.borderColor = '#bbf7d0';
+  addressToZone(inp, pillsId);
+  // Extract pincode (6-digit SG postcode)
+  const pinMatch = addr.match(/\b(\d{6})\b/);
+  // Find the sibling pincode input — it's the next input with id ending in -pin-*
+  const pinId = addrId.replace('-addr-', '-pin-');
+  const pinEl = document.getElementById(pinId);
+  if (pinEl && pinMatch) pinEl.value = pinMatch[1];
+}
+
+// Extract pincode on manual paste
+function nrUpdatePincode(addrEl, pinId) {
+  const pinEl = document.getElementById(pinId);
+  if (!pinEl) return;
+  const pinMatch = addrEl.value.match(/\b(\d{6})\b/);
+  pinEl.value = pinMatch ? pinMatch[1] : '';
+}
+
+// Recompute total tons live as user changes truck count or capacity
+function nrUpdateTotalTons(prefix, slot) {
+  const n = parseInt(document.getElementById(`${prefix}-numtrucks-${slot}`)?.value) || 0;
+  const c = parseInt(document.getElementById(`${prefix}-captruck-${slot}`)?.value) || 0;
+  const el = document.getElementById(`${prefix}-total-tons-${slot}`);
+  if (el) el.textContent = n * c;
+}
+
 function saveNewRoute(day, slot) {
   const prefix = 'snr';
-  const truckEl  = document.getElementById(`${prefix}-truck-${slot}`);
-  const fromSel  = document.querySelector(`#${prefix}-from-pills-${slot} .zone-pill.selected`);
-  const fromAddr = document.getElementById(`${prefix}-from-addr-${slot}`);
-  const toSel    = document.querySelector(`#${prefix}-to-pills-${slot} .zone-pill.selected`);
-  const toAddr   = document.getElementById(`${prefix}-to-addr-${slot}`);
-  const tonsEl   = document.getElementById(`${prefix}-tons-${slot}`);
+  const truckEl     = document.getElementById(`${prefix}-truck-${slot}`);
+  const fromSel     = document.querySelector(`#${prefix}-from-pills-${slot} .zone-pill.selected`);
+  const fromAddr    = document.getElementById(`${prefix}-from-addr-${slot}`);
+  const toSel       = document.querySelector(`#${prefix}-to-pills-${slot} .zone-pill.selected`);
+  const toAddr      = document.getElementById(`${prefix}-to-addr-${slot}`);
+  const numTrucksEl = document.getElementById(`${prefix}-numtrucks-${slot}`);
+  const capTruckEl  = document.getElementById(`${prefix}-captruck-${slot}`);
   if (!fromSel || !toSel) { alert('Please select From and To zones'); return; }
+  const numTrucks = parseInt(numTrucksEl?.value) || 3;
+  const capTruck  = parseInt(capTruckEl?.value)  || 10;
   supplyScheduleRoutes.push({
     id: 'r' + Date.now(),
     day, slot,
@@ -1322,7 +1425,9 @@ function saveNewRoute(day, slot) {
     fromAddr: fromAddr?.value.trim() || '',
     to:       toSel.textContent.trim(),
     toAddr:   toAddr?.value.trim() || '',
-    tons:     parseInt(tonsEl?.value) || 10,
+    tons:     numTrucks * capTruck,
+    numTrucks,
+    capTruck,
   });
   addingSupplyRoute = false;
   renderScheduleTab();
@@ -1426,25 +1531,36 @@ function updateSpareNote(routeId, val) {
   if (entry) entry.note = val;
 }
 
-// Outgoing requests data (capacity the client has asked for)
+// Outgoing requests data (capacity the client has asked for from others)
 const outgoingRequests = [
   {id:'SG-0891', route:'Jurong → Woodlands',  detail:'30t · 19 Mar · Morning',   step:1, provider:'Swift Haulage Pte Ltd',   statusLabel:'Commercials agreed', statusBg:'#eff6ff', statusText:'#1d4ed8', statusBorder:'#bfdbfe', note:'Awaiting pickup confirmation'},
   {id:'SG-0892', route:'Tuas → Tampines',     detail:'50t · 19 Mar · Afternoon', step:2, provider:'Apex Logistics SG',        statusLabel:'En route',           statusBg:'#fefce8', statusText:'#854d0e', statusBorder:'#fde68a', note:'Cargo picked up · En route to Tampines Industrial Ave'},
 ];
 
+// Called from setupPortal — pre-renders both tabs on login
 function renderClientRequests() {
-  const cs = document.getElementById('requests-summary');
-  const cl = document.getElementById('requests-list');
-  if (!cs || !cl) return;
+  renderIncomingRequests();
+  renderOutgoingRequests();
+}
 
-  // ── INCOMING section (others want your spare capacity) ──
-  const pending   = supplyRequests.filter(r => r.status === 'pending').length;
-  const accepted  = supplyRequests.filter(r => ['accepted','active','completed'].includes(r.status)).length;
-  const declined  = supplyRequests.filter(r => r.status === 'declined').length;
+const _reqStatusCfg = {
+  pending:   {label:'Pending',   bg:'#fffbeb', text:'#92400e', border:'#fde68a'},
+  accepted:  {label:'Accepted',  bg:'#eff6ff', text:'#1d4ed8', border:'#bfdbfe'},
+  active:    {label:'Active',    bg:'#fefce8', text:'#854d0e', border:'#fde68a'},
+  completed: {label:'Completed', bg:'#dcfce7', text:'#166534', border:'#bbf7d0'},
+  declined:  {label:'Declined',  bg:'#fef2f2', text:'#dc2626', border:'#fecaca'},
+};
 
-  cs.innerHTML = `
-    <p style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin:0 0 8px">Incoming — Others want your spare capacity</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:4px">
+function renderIncomingRequests() {
+  const cl = document.getElementById('incoming-list');
+  if (!cl) return;
+
+  const pending  = supplyRequests.filter(r => r.status === 'pending').length;
+  const accepted = supplyRequests.filter(r => ['accepted','active','completed'].includes(r.status)).length;
+  const declined = supplyRequests.filter(r => r.status === 'declined').length;
+
+  const stats = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">
       <div style="background:#fffbeb;border-radius:10px;border:1px solid #fde68a;padding:9px 10px;text-align:center">
         <p style="font-size:18px;font-weight:800;color:#92400e;margin:0">${pending}</p>
         <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Pending</p>
@@ -1459,18 +1575,10 @@ function renderClientRequests() {
       </div>
     </div>`;
 
-  const statusCfg = {
-    pending:   {label:'Pending',   bg:'#fffbeb', text:'#92400e', border:'#fde68a'},
-    accepted:  {label:'Accepted',  bg:'#eff6ff', text:'#1d4ed8', border:'#bfdbfe'},
-    active:    {label:'Active',    bg:'#fefce8', text:'#854d0e', border:'#fde68a'},
-    completed: {label:'Completed', bg:'#dcfce7', text:'#166534', border:'#bbf7d0'},
-    declined:  {label:'Declined',  bg:'#fef2f2', text:'#dc2626', border:'#fecaca'},
-  };
-
-  const incomingHtml = supplyRequests.map(r => {
-    const sc = statusCfg[r.status];
+  const cards = supplyRequests.map(r => {
+    const sc = _reqStatusCfg[r.status];
     const needsPipeline = ['accepted','active','completed'].includes(r.status);
-    return `<div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden">
+    return `<div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:8px">
       <div style="padding:12px 14px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
         <div>
           <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
@@ -1490,33 +1598,46 @@ function renderClientRequests() {
     </div>`;
   }).join('');
 
-  // ── OUTGOING section (your capacity asks) ──
-  const outgoingHtml = `
-    <div style="margin:16px 0 8px">
-      <p style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin:0 0 8px">Outgoing — Your capacity asks</p>
-      ${outgoingRequests.map(r => `
-      <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:8px">
-        <div style="padding:12px 14px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
-            <p style="font-size:10px;color:#94a3b8;margin:0">${r.detail}</p>
-          </div>
-          <span style="font-size:10px;font-weight:700;background:${r.statusBg};color:${r.statusText};border:1px solid ${r.statusBorder};padding:3px 8px;border-radius:20px">${r.statusLabel}</span>
-        </div>
-        <div style="padding:10px 14px">
-          <p style="font-size:11px;color:#64748b;margin:0 0 8px">Provider: <strong style="color:#1e293b">${r.provider}</strong></p>
-          <div id="out-pipe-${r.id}" style="margin-bottom:6px"></div>
-          <p style="font-size:10px;color:#94a3b8;margin:0">${r.note}</p>
-        </div>
-      </div>`).join('')}
-    </div>`;
-
-  cl.innerHTML = incomingHtml + outgoingHtml;
-
-  // Render pipelines
+  cl.innerHTML = stats + cards;
   supplyRequests.filter(r => ['accepted','active','completed'].includes(r.status)).forEach(r => {
     renderPipeline('rpipe-' + r.id, r.step || 0);
   });
+}
+
+function renderOutgoingRequests() {
+  const cs = document.getElementById('outgoing-summary');
+  const cl = document.getElementById('outgoing-list');
+  if (!cs || !cl) return;
+
+  const inProgress = outgoingRequests.filter(r => r.step < 3).length;
+  cs.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+      <div style="background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;padding:9px 10px;text-align:center">
+        <p style="font-size:18px;font-weight:800;color:#1d4ed8;margin:0">${inProgress}</p>
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">In progress</p>
+      </div>
+      <div style="background:#dcfce7;border-radius:10px;border:1px solid #bbf7d0;padding:9px 10px;text-align:center">
+        <p style="font-size:18px;font-weight:800;color:#166534;margin:0">${outgoingRequests.length - inProgress}</p>
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Completed</p>
+      </div>
+    </div>`;
+
+  cl.innerHTML = outgoingRequests.map(r => `
+    <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:8px">
+      <div style="padding:12px 14px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
+          <p style="font-size:10px;color:#94a3b8;margin:0">${r.detail}</p>
+        </div>
+        <span style="font-size:10px;font-weight:700;background:${r.statusBg};color:${r.statusText};border:1px solid ${r.statusBorder};padding:3px 8px;border-radius:20px">${r.statusLabel}</span>
+      </div>
+      <div style="padding:10px 14px">
+        <p style="font-size:11px;color:#64748b;margin:0 0 8px">Provider: <strong style="color:#1e293b">${r.provider}</strong></p>
+        <div id="out-pipe-${r.id}" style="margin-bottom:6px"></div>
+        <p style="font-size:10px;color:#94a3b8;margin:0">${r.note}</p>
+      </div>
+    </div>`).join('');
+
   outgoingRequests.forEach(r => renderPipeline('out-pipe-' + r.id, r.step || 0));
 }
 
