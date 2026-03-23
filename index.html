@@ -74,11 +74,11 @@
     .imp-btn.active{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;}
     /* Desktop content layout */
     .page-content{max-width:900px;}
-    .page-header{margin-bottom:24px;}
-    .page-header h1{font-size:22px;font-weight:800;color:#1e293b;margin:0 0 4px;}
-    .page-header p{font-size:13px;color:#64748b;margin:0;}
-    .cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-    .card{background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden;}
+    .page-header{margin-bottom:20px;}
+    .page-header h1{font-size:18px;font-weight:700;color:#1e293b;margin:0 0 3px;}
+    .page-header p{font-size:12px;color:#64748b;margin:0;}
+    .cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .card{background:#fff;border-radius:10px;border:1px solid #e5e0d8;overflow:hidden;}
     @media(max-width:860px){.cards-grid{grid-template-columns:1fr;}}
   </style>
 </head>
@@ -291,7 +291,7 @@
         </div>
       </div>
       <!-- S2: matching -->
-      <div id="s2" style="display:none;background:#fff;border-radius:20px;border:1px solid #e5e0d8;padding:48px 28px;text-align:center">
+      <div id="s2" style="display:none;background:#fff;border-radius:20px;border:1px solid #e5e0d8;padding:48px 28px;text-align:center;max-width:640px">
         <div style="width:60px;height:60px;border-radius:16px;background:#eff6ff;display:flex;align-items:center;justify-content:center;margin:0 auto 18px">
           <svg class="spin" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
@@ -305,7 +305,7 @@
         </div>
       </div>
       <!-- S3: results -->
-      <div id="s3" style="display:none;background:#fff;border-radius:20px;border:1px solid #e5e0d8;overflow:hidden">
+      <div id="s3" style="display:none;background:#fff;border-radius:20px;border:1px solid #e5e0d8;overflow:hidden;max-width:640px">
         <div style="padding:18px 20px 14px;border-bottom:1px solid #f1f0ec">
           <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:3px 10px;border-radius:20px">3 matches found</span>
           <h2 style="font-size:15px;font-weight:700;color:#1e293b;margin:8px 0 3px">Available hauliers</h2>
@@ -331,7 +331,7 @@
         </div>
       </div>
       <!-- S4: confirmed -->
-      <div id="s4" style="display:none;background:#fff;border-radius:20px;border:1px solid #e5e0d8;padding:40px 24px;text-align:center">
+      <div id="s4" style="display:none;background:#fff;border-radius:20px;border:1px solid #e5e0d8;padding:40px 24px;text-align:center;max-width:640px">
         <div style="width:56px;height:56px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
@@ -352,7 +352,7 @@
 
     <!-- ── TAB: INCOMING (supply only) ── -->
     <div id="tab-incoming" class="tab-pane">
-      <div id="incoming-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div id="incoming-list"></div>
     </div>
 
     <!-- ── TAB: SCHEDULE & CAPACITY (supply only) ── -->
@@ -362,8 +362,8 @@
 
     <!-- ── TAB: OUTGOING REQUESTS (client only) ── -->
     <div id="tab-outgoing" class="tab-pane">
-      <div id="outgoing-summary" style="margin-bottom:12px"></div>
-      <div id="outgoing-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div id="outgoing-summary"></div>
+      <div id="outgoing-list"></div>
     </div>
 
     <!-- ── TAB: ACTIVE REQUESTS ── -->
@@ -1340,8 +1340,8 @@ function renderScheduleTab() {
       <button onclick="switchTab('tab-spare')" style="font-size:11px;font-weight:600;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:7px 14px;border-radius:9px;cursor:pointer;white-space:nowrap">List spare capacity →</button>
     </div>
     ${buildImportSection('supply')}
-    <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;margin-bottom:18px;background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:12px 14px">${dayPills}</div>
-    <div class="${dayRoutes.length > 1 ? 'cards-grid' : ''}">
+    <div style="display:flex;gap:4px;overflow-x:auto;margin-bottom:18px;background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:12px 14px">${dayPills}</div>
+    <div>
       ${dayRoutes.length === 0 && !addingSupplyRoute
         ? `<div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:40px;text-align:center;grid-column:1/-1"><p style="font-size:14px;color:#94a3b8;margin:0 0 16px">No routes scheduled for ${selectedWeekDay}</p>${SLOT_KEYS.map(key => `<button onclick="addingSupplyRoute='${selectedWeekDay}_${key}';renderScheduleTab()" style="font-size:11px;color:#1d4ed8;background:#f0f9ff;border:1px dashed #93c5fd;padding:7px 16px;border-radius:8px;cursor:pointer;margin:4px">+ Add ${SLOT_LABELS[key].split(' ')[0]} route</button>`).join('')}</div>`
         : slotSections}
@@ -1774,33 +1774,21 @@ function renderOutgoingRequests() {
   const cl = document.getElementById('outgoing-list');
   if (!cs || !cl) return;
 
-  const inProgress = outgoingRequests.filter(r => r.step < 3).length;
-  cs.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
-      <div style="background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;padding:9px 10px;text-align:center">
-        <p style="font-size:18px;font-weight:800;color:#1d4ed8;margin:0">${inProgress}</p>
-        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">In progress</p>
-      </div>
-      <div style="background:#dcfce7;border-radius:10px;border:1px solid #bbf7d0;padding:9px 10px;text-align:center">
-        <p style="font-size:18px;font-weight:800;color:#166534;margin:0">${outgoingRequests.length - inProgress}</p>
-        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Completed</p>
-      </div>
-    </div>`;
-
   const inProgressCount = outgoingRequests.filter(r => r.step < 3).length;
-  cs.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:20px">
-    <div style="background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;padding:9px 10px;text-align:center">
-      <p style="font-size:18px;font-weight:800;color:#1d4ed8;margin:0">${inProgressCount}</p>
-      <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">In progress</p>
-    </div>
-    <div style="background:#dcfce7;border-radius:10px;border:1px solid #bbf7d0;padding:9px 10px;text-align:center">
-      <p style="font-size:18px;font-weight:800;color:#166534;margin:0">${outgoingRequests.length - inProgressCount}</p>
-      <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Completed</p>
-    </div>
-  </div>`;
+  cs.innerHTML = '';
 
   cl.innerHTML = `<div class="page-content">
     <div class="page-header"><h1>Outgoing Requests</h1><p>Capacity you have requested from other hauliers</p></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:20px;max-width:320px">
+      <div style="background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;padding:9px 10px;text-align:center">
+        <p style="font-size:18px;font-weight:800;color:#1d4ed8;margin:0">${inProgressCount}</p>
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">In progress</p>
+      </div>
+      <div style="background:#dcfce7;border-radius:10px;border:1px solid #bbf7d0;padding:9px 10px;text-align:center">
+        <p style="font-size:18px;font-weight:800;color:#166534;margin:0">${outgoingRequests.length - inProgressCount}</p>
+        <p style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Completed</p>
+      </div>
+    </div>
     <div class="cards-grid">${outgoingRequests.map(r => `
     <div style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;overflow:hidden">
       <div style="padding:14px 16px 12px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
