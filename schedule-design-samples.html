@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Schedule Tab — Design Samples</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f5f4f0; margin: 0; padding: 32px; color: #111827; }
+    h2 { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 6px; }
+    .desc { font-size: 12px; color: #6b7280; margin: 0 0 16px; }
+    .sample { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; margin-bottom: 48px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .sample-label { padding: 14px 20px; background: #f9fafb; border-bottom: 1px solid #f0f0ee; display: flex; justify-content: space-between; align-items: center; }
+    .sample-label h3 { font-size: 13px; font-weight: 700; color: #111827; margin: 0; }
+    .sample-label p { font-size: 11px; color: #9ca3af; margin: 0; }
+    .badge { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+    .badge-blue { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+    .badge-grey { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .badge-green { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .badge-amber { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .pill { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: inline-block; }
+
+    /* ── OPTION A: Full table ── */
+    .table-a { width: 100%; border-collapse: collapse; }
+    .table-a thead tr { background: #f9fafb; }
+    .table-a th { font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .05em; padding: 10px 16px; text-align: left; border-bottom: 1px solid #f0ede8; white-space: nowrap; }
+    .table-a td { font-size: 12px; color: #374151; padding: 11px 16px; border-bottom: 1px solid #f9fafb; vertical-align: middle; }
+    .table-a tr:last-child td { border-bottom: none; }
+    .table-a tr:hover td { background: #fafafa; }
+    .slot-tag { font-size: 9px; font-weight: 600; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+    .slot-morning   { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .slot-afternoon { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+    .slot-evening   { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+    .route-cell { font-weight: 600; color: #111827; }
+    .sub { font-size: 10px; color: #9ca3af; font-weight: 400; display: block; margin-top: 1px; }
+    .action-btn { font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 6px; border: none; cursor: pointer; white-space: nowrap; }
+    .btn-ghost { background: #f9fafb; color: #6b7280; border: 1px solid #e5e7eb; }
+    .btn-ghost:hover { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+    .btn-remove { background: none; border: none; color: #d1d5db; font-size: 14px; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+    .btn-remove:hover { color: #ef4444; background: #fef2f2; }
+    .spare-shown { font-size: 10px; color: #16a34a; font-weight: 600; }
+    .tons-cell { font-weight: 700; color: #111827; }
+
+    /* ── OPTION B: Week grid ── */
+    .week-grid { display: grid; grid-template-columns: 80px repeat(5, 1fr); gap: 0; }
+    .wg-header { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .05em; padding: 10px 12px; background: #f9fafb; border-bottom: 1px solid #f0ede8; text-align: center; }
+    .wg-slot-label { font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .04em; padding: 12px 8px; background: #f9fafb; border-right: 1px solid #f0ede8; border-bottom: 1px solid #f0ede8; display: flex; align-items: center; writing-mode: vertical-rl; transform: rotate(180deg); justify-content: center; }
+    .wg-cell { padding: 8px; border-right: 1px solid #f0ede8; border-bottom: 1px solid #f0ede8; min-height: 64px; background: #fff; }
+    .wg-cell:last-child { border-right: none; }
+    .wg-route { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 7px; padding: 6px 8px; font-size: 10px; }
+    .wg-route .rt { font-weight: 700; color: #1d4ed8; font-size: 10px; }
+    .wg-route .meta { color: #6b7280; font-size: 9px; margin-top: 2px; }
+    .wg-route.has-spare { background: #f0fdf4; border-color: #bbf7d0; }
+    .wg-route.has-spare .rt { color: #15803d; }
+    .wg-empty { color: #e5e7eb; font-size: 10px; display: flex; align-items: center; justify-content: center; height: 100%; min-height: 48px; cursor: pointer; }
+    .wg-empty:hover { background: #f9fafb; color: #9ca3af; }
+
+    /* ── OPTION C: Grouped by day, compact rows ── */
+    .day-section { border-bottom: 1px solid #f0ede8; }
+    .day-section:last-child { border-bottom: none; }
+    .day-header { padding: 8px 16px; background: #f9fafb; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f0ede8; }
+    .day-header span { font-size: 11px; font-weight: 700; color: #374151; }
+    .day-header small { font-size: 10px; color: #9ca3af; }
+    .compact-row { display: grid; grid-template-columns: 90px 140px 1fr 80px 80px 90px 80px; align-items: center; gap: 0; padding: 9px 16px; border-bottom: 1px solid #f9fafb; }
+    .compact-row:last-child { border-bottom: none; }
+    .compact-row:hover { background: #fafafa; }
+    .compact-row > div { font-size: 11px; color: #374151; padding-right: 12px; }
+    .col-label { font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .05em; }
+    .compact-actions { display: flex; gap: 5px; align-items: center; }
+  </style>
+</head>
+<body>
+
+  <h1 style="font-size:18px;font-weight:800;color:#111827;margin:0 0 4px">Schedule Tab — Design Options</h1>
+  <p style="font-size:12px;color:#6b7280;margin:0 0 40px">Three table-style layouts for review. Pick one or mix elements from each.</p>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- OPTION A: Full flat table                   -->
+  <!-- ════════════════════════════════════════════ -->
+
+  <h2>Option A</h2>
+  <p class="desc">Flat table — all routes in one table, sorted by day + slot. Every field as a column. Actions inline on each row.</p>
+
+  <div class="sample">
+    <div class="sample-label">
+      <div>
+        <h3>My Schedule</h3>
+        <p>10 routes · Week of 24 Mar</p>
+      </div>
+      <button style="font-size:11px;font-weight:600;padding:7px 14px;border-radius:8px;background:#2563eb;color:#fff;border:none;cursor:pointer">+ Add route</button>
+    </div>
+
+    <table class="table-a">
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>Slot</th>
+          <th>Vehicle</th>
+          <th>Route</th>
+          <th>Container</th>
+          <th>Tons</th>
+          <th>Spare</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600;color:#111827">Mon</td>
+          <td><span class="slot-tag slot-morning">Morning</span></td>
+          <td style="font-family:monospace;font-size:11px;font-weight:600">XD3351E</td>
+          <td class="route-cell">Jurong → Woodlands<span class="sub">31 Jurong Port Rd → 21 Woodlands Close</span></td>
+          <td><span class="pill badge-grey">45G1</span> <span class="pill badge-blue">ONE</span></td>
+          <td class="tons-cell">10t</td>
+          <td><span class="spare-shown">4t listed ✓</span></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:#111827">Mon</td>
+          <td><span class="slot-tag slot-afternoon">Afternoon</span></td>
+          <td style="font-family:monospace;font-size:11px;font-weight:600">XE1218Y</td>
+          <td class="route-cell">Tuas → Changi<span class="sub">30 Tuas Ave 1 → 30 Airport Boulevard</span></td>
+          <td><span class="pill badge-grey">22G1</span> <span class="pill badge-blue">CC</span></td>
+          <td class="tons-cell">10t</td>
+          <td><button class="action-btn btn-ghost">+ List spare</button></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:#111827">Mon</td>
+          <td><span class="slot-tag slot-afternoon">Afternoon</span></td>
+          <td style="font-family:monospace;font-size:11px;font-weight:600">XD6566P</td>
+          <td class="route-cell">Pasir Panjang → Tampines<span class="sub">12 Pasir Panjang Rd → 10 Tampines Ave 11</span></td>
+          <td><span class="pill badge-grey">45G1</span> <span class="pill badge-blue">HL</span></td>
+          <td class="tons-cell">8t</td>
+          <td><button class="action-btn btn-ghost">+ List spare</button></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:#111827">Tue</td>
+          <td><span class="slot-tag slot-morning">Morning</span></td>
+          <td style="font-family:monospace;font-size:11px;font-weight:600">XD3351E</td>
+          <td class="route-cell">Jurong → Tampines<span class="sub">31 Jurong Port Rd → 10 Tampines Ave 11</span></td>
+          <td><span class="pill badge-grey">45G1</span> <span class="pill badge-blue">ONE</span></td>
+          <td class="tons-cell">10t</td>
+          <td><span class="spare-shown">3t listed ✓</span></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:#111827">Tue</td>
+          <td><span class="slot-tag slot-afternoon">Afternoon</span></td>
+          <td style="font-family:monospace;font-size:11px;font-weight:600">XD6566P</td>
+          <td class="route-cell">Pasir Panjang → Woodlands<span class="sub">12 Pasir Panjang Rd → 21 Woodlands Close</span></td>
+          <td><span class="pill badge-grey">22G1</span> <span class="pill badge-blue">CK</span></td>
+          <td class="tons-cell">8t</td>
+          <td><button class="action-btn btn-ghost">+ List spare</button></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+        <tr style="opacity:.5">
+          <td colspan="8" style="font-size:11px;color:#9ca3af;padding:10px 16px;font-style:italic">+ 5 more routes (Wed–Fri) …</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- OPTION B: Week grid                         -->
+  <!-- ════════════════════════════════════════════ -->
+
+  <h2>Option B</h2>
+  <p class="desc">Week grid — days across the top, slots down the side. Instantly see your full week pattern. Click any empty cell to add a route.</p>
+
+  <div class="sample">
+    <div class="sample-label">
+      <div>
+        <h3>My Schedule</h3>
+        <p>Week of 24 Mar · Click a cell to add a route</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:10px;color:#9ca3af">Legend:</span>
+        <span class="pill badge-blue" style="font-size:9px">Route</span>
+        <span class="pill badge-green" style="font-size:9px">+ Spare listed</span>
+      </div>
+    </div>
+
+    <div class="week-grid">
+      <!-- Headers -->
+      <div class="wg-header" style="border-bottom:1px solid #f0ede8;border-right:1px solid #f0ede8"></div>
+      <div class="wg-header" style="border-right:1px solid #f0ede8">Mon</div>
+      <div class="wg-header" style="border-right:1px solid #f0ede8">Tue</div>
+      <div class="wg-header" style="border-right:1px solid #f0ede8">Wed</div>
+      <div class="wg-header" style="border-right:1px solid #f0ede8">Thu</div>
+      <div class="wg-header">Fri</div>
+
+      <!-- Morning row -->
+      <div class="wg-slot-label">Morning</div>
+      <div class="wg-cell">
+        <div class="wg-route has-spare">
+          <div class="rt">Jurong → Woodlands</div>
+          <div class="meta">XD3351E · 45G1 · ONE · 10t <span style="color:#16a34a">· 4t spare</span></div>
+        </div>
+      </div>
+      <div class="wg-cell">
+        <div class="wg-route">
+          <div class="rt">Jurong → Tampines</div>
+          <div class="meta">XD3351E · 45G1 · ONE · 10t <span style="color:#16a34a">· 3t spare</span></div>
+        </div>
+      </div>
+      <div class="wg-cell">
+        <div class="wg-route">
+          <div class="rt">Tuas → Yishun</div>
+          <div class="meta">XE1218Y · 45G1 · CC · 10t</div>
+        </div>
+      </div>
+      <div class="wg-cell">
+        <div class="wg-route has-spare">
+          <div class="rt">Changi → Jurong</div>
+          <div class="meta">XE1218Y · 45G1 · HL · 10t <span style="color:#16a34a">· 5t spare</span></div>
+        </div>
+        <div class="wg-route" style="margin-top:5px">
+          <div class="rt">Jurong → Woodlands</div>
+          <div class="meta">XD6566P · 45G1 · ONE · 8t</div>
+        </div>
+      </div>
+      <div class="wg-cell">
+        <div class="wg-route">
+          <div class="rt">Tuas → Changi</div>
+          <div class="meta">XD3351E · 22G1 · CC · 10t</div>
+        </div>
+      </div>
+
+      <!-- Afternoon row -->
+      <div class="wg-slot-label">Afternoon</div>
+      <div class="wg-cell">
+        <div class="wg-route">
+          <div class="rt">Tuas → Changi</div>
+          <div class="meta">XE1218Y · 22G1 · CC · 10t</div>
+        </div>
+        <div class="wg-route" style="margin-top:5px">
+          <div class="rt">Pasir Panjang → Tampines</div>
+          <div class="meta">XD6566P · 45G1 · HL · 8t</div>
+        </div>
+      </div>
+      <div class="wg-cell">
+        <div class="wg-route">
+          <div class="rt">Pasir Panjang → Woodlands</div>
+          <div class="meta">XD6566P · 22G1 · CK · 8t</div>
+        </div>
+      </div>
+      <div class="wg-cell">
+        <div class="wg-route">
+          <div class="rt">Woodlands → Jurong</div>
+          <div class="meta">XD3351E · 22G1 · PIL · 10t</div>
+        </div>
+      </div>
+      <div class="wg-cell">
+        <div class="wg-empty">+ Add</div>
+      </div>
+      <div class="wg-cell">
+        <div class="wg-empty">+ Add</div>
+      </div>
+
+      <!-- Evening row -->
+      <div class="wg-slot-label" style="border-bottom:none">Evening</div>
+      <div class="wg-cell" style="border-bottom:none"><div class="wg-empty">+ Add</div></div>
+      <div class="wg-cell" style="border-bottom:none"><div class="wg-empty">+ Add</div></div>
+      <div class="wg-cell" style="border-bottom:none"><div class="wg-empty">+ Add</div></div>
+      <div class="wg-cell" style="border-bottom:none"><div class="wg-empty">+ Add</div></div>
+      <div class="wg-cell" style="border-bottom:none"><div class="wg-empty">+ Add</div></div>
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- OPTION C: Grouped by day, compact rows      -->
+  <!-- ════════════════════════════════════════════ -->
+
+  <h2>Option C</h2>
+  <p class="desc">Day-grouped table — routes grouped under collapsible day headers. Compact rows with all key info. Cleaner than cards, more scannable than Option A.</p>
+
+  <div class="sample">
+    <div class="sample-label">
+      <div>
+        <h3>My Schedule</h3>
+        <p>10 routes · Week of 24 Mar</p>
+      </div>
+      <button style="font-size:11px;font-weight:600;padding:7px 14px;border-radius:8px;background:#2563eb;color:#fff;border:none;cursor:pointer">+ Add route</button>
+    </div>
+
+    <!-- Column headers -->
+    <div style="display:grid;grid-template-columns:90px 140px 1fr 80px 80px 90px 80px;padding:8px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8">
+      <div class="col-label">Slot</div>
+      <div class="col-label">Vehicle</div>
+      <div class="col-label">Route</div>
+      <div class="col-label">Container</div>
+      <div class="col-label">Operator</div>
+      <div class="col-label">Tons</div>
+      <div class="col-label">Spare</div>
+    </div>
+
+    <!-- Monday -->
+    <div class="day-section">
+      <div class="day-header">
+        <span>Monday</span>
+        <small>3 routes</small>
+        <button style="margin-left:auto;font-size:10px;font-weight:600;padding:3px 10px;border-radius:6px;background:#f0f9ff;color:#2563eb;border:1px dashed #93c5fd;cursor:pointer">+ Add route</button>
+      </div>
+      <div class="compact-row">
+        <div><span class="slot-tag slot-morning">Morning</span></div>
+        <div style="font-family:monospace;font-weight:700;font-size:11px">XD3351E</div>
+        <div style="font-weight:600;color:#111827">Jurong → Woodlands<span class="sub">619115 → 737854</span></div>
+        <div><span class="pill badge-grey">45G1</span></div>
+        <div><span class="pill badge-blue">ONE</span></div>
+        <div style="font-weight:700">10t</div>
+        <div class="compact-actions"><span class="spare-shown">4t ✓</span><button class="btn-remove">✕</button></div>
+      </div>
+      <div class="compact-row">
+        <div><span class="slot-tag slot-afternoon">Afternoon</span></div>
+        <div style="font-family:monospace;font-weight:700;font-size:11px">XE1218Y</div>
+        <div style="font-weight:600;color:#111827">Tuas → Changi<span class="sub">639494 → 819642</span></div>
+        <div><span class="pill badge-grey">22G1</span></div>
+        <div><span class="pill badge-blue">CC</span></div>
+        <div style="font-weight:700">10t</div>
+        <div class="compact-actions"><button class="action-btn btn-ghost">+ Spare</button><button class="btn-remove">✕</button></div>
+      </div>
+      <div class="compact-row">
+        <div><span class="slot-tag slot-afternoon">Afternoon</span></div>
+        <div style="font-family:monospace;font-weight:700;font-size:11px">XD6566P</div>
+        <div style="font-weight:600;color:#111827">Pasir Panjang → Tampines<span class="sub">117438 → 529433</span></div>
+        <div><span class="pill badge-grey">45G1</span></div>
+        <div><span class="pill badge-blue">HL</span></div>
+        <div style="font-weight:700">8t</div>
+        <div class="compact-actions"><button class="action-btn btn-ghost">+ Spare</button><button class="btn-remove">✕</button></div>
+      </div>
+    </div>
+
+    <!-- Tuesday -->
+    <div class="day-section">
+      <div class="day-header">
+        <span>Tuesday</span>
+        <small>2 routes</small>
+        <button style="margin-left:auto;font-size:10px;font-weight:600;padding:3px 10px;border-radius:6px;background:#f0f9ff;color:#2563eb;border:1px dashed #93c5fd;cursor:pointer">+ Add route</button>
+      </div>
+      <div class="compact-row">
+        <div><span class="slot-tag slot-morning">Morning</span></div>
+        <div style="font-family:monospace;font-weight:700;font-size:11px">XD3351E</div>
+        <div style="font-weight:600;color:#111827">Jurong → Tampines<span class="sub">619115 → 529433</span></div>
+        <div><span class="pill badge-grey">45G1</span></div>
+        <div><span class="pill badge-blue">ONE</span></div>
+        <div style="font-weight:700">10t</div>
+        <div class="compact-actions"><span class="spare-shown">3t ✓</span><button class="btn-remove">✕</button></div>
+      </div>
+      <div class="compact-row">
+        <div><span class="slot-tag slot-afternoon">Afternoon</span></div>
+        <div style="font-family:monospace;font-weight:700;font-size:11px">XD6566P</div>
+        <div style="font-weight:600;color:#111827">Pasir Panjang → Woodlands<span class="sub">117438 → 737854</span></div>
+        <div><span class="pill badge-grey">22G1</span></div>
+        <div><span class="pill badge-blue">CK</span></div>
+        <div style="font-weight:700">8t</div>
+        <div class="compact-actions"><button class="action-btn btn-ghost">+ Spare</button><button class="btn-remove">✕</button></div>
+      </div>
+    </div>
+
+    <!-- Wed–Fri collapsed -->
+    <div class="day-section" style="opacity:.55">
+      <div class="day-header" style="cursor:pointer">
+        <span>Wednesday</span><small>2 routes</small>
+        <span style="margin-left:auto;font-size:10px;color:#9ca3af">▸ expand</span>
+      </div>
+    </div>
+    <div class="day-section" style="opacity:.55">
+      <div class="day-header" style="cursor:pointer">
+        <span>Thursday</span><small>2 routes</small>
+        <span style="margin-left:auto;font-size:10px;color:#9ca3af">▸ expand</span>
+      </div>
+    </div>
+    <div class="day-section" style="opacity:.55;border-bottom:none">
+      <div class="day-header" style="cursor:pointer">
+        <span>Friday</span><small>1 route</small>
+        <span style="margin-left:auto;font-size:10px;color:#9ca3af">▸ expand</span>
+      </div>
+    </div>
+
+  </div>
+
+  <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:8px">Review and let me know which option to build into the demo — or which elements to combine.</p>
+
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- HYBRID: Week grid + Option C detail chips   -->
+  <!-- ════════════════════════════════════════════ -->
+
+  <h2 style="margin-top:48px">Hybrid — Option B grid + Option C detail</h2>
+  <p class="desc">Week grid layout, but each route chip shows full detail: vehicle plate, container ISO + operator, tonnage, spare status, and inline actions.</p>
+
+  <div class="sample">
+    <div class="sample-label">
+      <div>
+        <h3>My Schedule</h3>
+        <p>Week of 24 Mar · 10 routes</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="pill badge-green" style="font-size:9px">● Spare listed</span>
+        <span class="pill badge-grey" style="font-size:9px">○ No spare</span>
+        <button style="font-size:11px;font-weight:600;padding:7px 14px;border-radius:8px;background:#2563eb;color:#fff;border:none;cursor:pointer;margin-left:8px">+ Add route</button>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div style="display:grid;grid-template-columns:88px repeat(5,1fr);border-bottom:1px solid #f0ede8">
+
+      <!-- Header row -->
+      <div style="background:#f9fafb;border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8"></div>
+      <div style="background:#f9fafb;border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:10px 12px;font-size:10px;font-weight:700;color:#374151;text-align:center">Mon<br><span style="font-size:9px;font-weight:400;color:#9ca3af">3 routes</span></div>
+      <div style="background:#f9fafb;border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:10px 12px;font-size:10px;font-weight:700;color:#374151;text-align:center">Tue<br><span style="font-size:9px;font-weight:400;color:#9ca3af">2 routes</span></div>
+      <div style="background:#f9fafb;border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:10px 12px;font-size:10px;font-weight:700;color:#374151;text-align:center">Wed<br><span style="font-size:9px;font-weight:400;color:#9ca3af">2 routes</span></div>
+      <div style="background:#f9fafb;border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:10px 12px;font-size:10px;font-weight:700;color:#374151;text-align:center">Thu<br><span style="font-size:9px;font-weight:400;color:#9ca3af">2 routes</span></div>
+      <div style="background:#f9fafb;border-bottom:1px solid #f0ede8;padding:10px 12px;font-size:10px;font-weight:700;color:#374151;text-align:center">Fri<br><span style="font-size:9px;font-weight:400;color:#9ca3af">1 route</span></div>
+
+      <!-- Morning row -->
+      <div style="background:#fffbeb;border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:10px 8px;display:flex;align-items:flex-start;justify-content:center">
+        <span style="font-size:8px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.05em;writing-mode:vertical-rl;transform:rotate(180deg)">Morning</span>
+      </div>
+
+      <!-- Mon Morning -->
+      <div style="border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:8px;background:#fff">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px">
+          <div style="font-size:11px;font-weight:700;color:#111827;margin-bottom:4px">Jurong → Woodlands</div>
+          <div style="font-size:9px;color:#6b7280;margin-bottom:6px">619115 → 737854</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
+            <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px">XD3351E</span>
+            <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:10px;padding:1px 6px">45G1</span>
+            <span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:10px;padding:1px 6px">ONE</span>
+            <span style="font-size:10px;font-weight:700;color:#111827;margin-left:2px">10t</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:9px;font-weight:700;color:#16a34a">4t spare ✓</span>
+            <button style="font-size:9px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tue Morning -->
+      <div style="border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:8px;background:#fff">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px">
+          <div style="font-size:11px;font-weight:700;color:#111827;margin-bottom:4px">Jurong → Tampines</div>
+          <div style="font-size:9px;color:#6b7280;margin-bottom:6px">619115 → 529433</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
+            <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px">XD3351E</span>
+            <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:10px;padding:1px 6px">45G1</span>
+            <span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:10px;padding:1px 6px">ONE</span>
+            <span style="font-size:10px;font-weight:700;color:#111827;margin-left:2px">10t</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:9px;font-weight:700;color:#16a34a">3t spare ✓</span>
+            <button style="font-size:9px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wed Morning -->
+      <div style="border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:8px;background:#fff">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">
+          <div style="font-size:11px;font-weight:700;color:#111827;margin-bottom:4px">Tuas → Yishun</div>
+          <div style="font-size:9px;color:#6b7280;margin-bottom:6px">639494 → 768903</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
+            <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px">XE1218Y</span>
+            <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:10px;padding:1px 6px">45G1</span>
+            <span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:10px;padding:1px 6px">CC</span>
+            <span style="font-size:10px;font-weight:700;color:#111827;margin-left:2px">10t</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <button style="font-size:9px;font-weight:600;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:2px 7px;cursor:pointer">+ List spare</button>
+            <button style="font-size:9px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thu Morning — 2 routes stacked -->
+      <div style="border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:8px;background:#fff;display:flex;flex-direction:column;gap:6px">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px">
+          <div style="font-size:11px;font-weight:700;color:#111827;margin-bottom:4px">Changi → Jurong</div>
+          <div style="font-size:9px;color:#6b7280;margin-bottom:6px">819642 → 619115</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
+            <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px">XE1218Y</span>
+            <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:10px;padding:1px 6px">45G1</span>
+            <span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:10px;padding:1px 6px">HL</span>
+            <span style="font-size:10px;font-weight:700;color:#111827;margin-left:2px">10t</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:9px;font-weight:700;color:#16a34a">5t spare ✓</span>
+            <button style="font-size:9px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">✕</button>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">
+          <div style="font-size:11px;font-weight:700;color:#111827;margin-bottom:4px">Jurong → Woodlands</div>
+          <div style="font-size:9px;color:#6b7280;margin-bottom:6px">619115 → 737854</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
+            <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px">XD6566P</span>
+            <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:10px;padding:1px 6px">45G1</span>
+            <span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:10px;padding:1px 6px">ONE</span>
+            <span style="font-size:10px;font-weight:700;color:#111827;margin-left:2px">8t</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <button style="font-size:9px;font-weight:600;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:2px 7px;cursor:pointer">+ List spare</button>
+            <button style="font-size:9px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fri Morning -->
+      <div style="border-bottom:1px solid #f0ede8;padding:8px;background:#fff">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">
+          <div style="font-size:11px;font-weight:700;color:#111827;margin-bottom:4px">Tuas → Changi</div>
+          <div style="font-size:9px;color:#6b7280;margin-bottom:6px">639494 → 819642</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
+            <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px">XD3351E</span>
+            <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:10px;padding:1px 6px">22G1</span>
+            <span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:10px;padding:1px 6px">CC</span>
+            <span style="font-size:10px;font-weight:700;color:#111827;margin-left:2px">10t</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <button style="font-size:9px;font-weight:600;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:2px 7px;cursor:pointer">+ List spare</button>
+            <button style="font-size:9px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Afternoon row -->
+      <div style="background:#eff6ff;border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:10px 8px;display:flex;align-items:flex-start;justify-content:center">
+        <span style="font-size:8px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.05em;writing-mode:vertical-rl;transform:rotate(180deg)">Afternoon</span>
+      </div>
+
+      <!-- Mon Afternoon — 2 routes -->
+      <div style="border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:8px;background:#fff;display:flex;flex-direction:column;gap:6px">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">
+          <div style="font-size:11px;font-weight:700;color:#111827;margin-bottom:4px">Tuas → Changi</div>
+          <div style="font-size:9px;color:#6b7280;margin-bottom:6px">639494 → 819642</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
+            <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px">XE1218Y</span>
+            <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:10px;padding:1px 6px">22G1</span>
+            <span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:10px;padding:1px 6px">CC</span>
+            <span style="font-size:10px;font-weight:700;color:#111827;margin-left:2px">10t</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <button style="font-size:9px;font-weight:600;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:2px 7px;cursor:pointer">+ List spare</button>
+            <button style="font-size:9px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">✕</button>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">
+          <div style="font-size:11px;font-weight:700;color:#111827;margin-bottom:4px">Pasir Panjang → Tampines</div>
+          <div style="font-size:9px;color:#6b7280;margin-bottom:6px">117438 → 529433</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
+            <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px">XD6566P</span>
+            <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:10px;padding:1px 6px">45G1</span>
+            <span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:10px;padding:1px 6px">HL</span>
+            <span style="font-size:10px;font-weight:700;color:#111827;margin-left:2px">8t</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <button style="font-size:9px;font-weight:600;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:2px 7px;cursor:pointer">+ List spare</button>
+            <button style="font-size:9px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tue Afternoon -->
+      <div style="border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:8px;background:#fff">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">
+          <div style="font-size:11px;font-weight:700;color:#111827;margin-bottom:4px">Pasir Panjang → Woodlands</div>
+          <div style="font-size:9px;color:#6b7280;margin-bottom:6px">117438 → 737854</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
+            <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px">XD6566P</span>
+            <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:10px;padding:1px 6px">22G1</span>
+            <span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:10px;padding:1px 6px">CK</span>
+            <span style="font-size:10px;font-weight:700;color:#111827;margin-left:2px">8t</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <button style="font-size:9px;font-weight:600;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:2px 7px;cursor:pointer">+ List spare</button>
+            <button style="font-size:9px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wed Afternoon -->
+      <div style="border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:8px;background:#fff">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">
+          <div style="font-size:11px;font-weight:700;color:#111827;margin-bottom:4px">Woodlands → Jurong</div>
+          <div style="font-size:9px;color:#6b7280;margin-bottom:6px">737854 → 619115</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
+            <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px">XD3351E</span>
+            <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:10px;padding:1px 6px">22G1</span>
+            <span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:10px;padding:1px 6px">PIL</span>
+            <span style="font-size:10px;font-weight:700;color:#111827;margin-left:2px">10t</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <button style="font-size:9px;font-weight:600;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:2px 7px;cursor:pointer">+ List spare</button>
+            <button style="font-size:9px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thu Afternoon — empty -->
+      <div style="border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8;padding:8px;background:#fff">
+        <div style="border:1.5px dashed #e5e7eb;border-radius:8px;padding:16px 8px;text-align:center;cursor:pointer" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:10px;color:#d1d5db">+ Add route</span>
+        </div>
+      </div>
+
+      <!-- Fri Afternoon — empty -->
+      <div style="border-bottom:1px solid #f0ede8;padding:8px;background:#fff">
+        <div style="border:1.5px dashed #e5e7eb;border-radius:8px;padding:16px 8px;text-align:center;cursor:pointer" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:10px;color:#d1d5db">+ Add route</span>
+        </div>
+      </div>
+
+      <!-- Evening row — all empty -->
+      <div style="background:#f5f3ff;border-right:1px solid #f0ede8;padding:10px 8px;display:flex;align-items:flex-start;justify-content:center">
+        <span style="font-size:8px;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.05em;writing-mode:vertical-rl;transform:rotate(180deg)">Evening</span>
+      </div>
+      <div style="border-right:1px solid #f0ede8;padding:8px;background:#fff">
+        <div style="border:1.5px dashed #e5e7eb;border-radius:8px;padding:16px 8px;text-align:center;cursor:pointer" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:10px;color:#d1d5db">+ Add route</span>
+        </div>
+      </div>
+      <div style="border-right:1px solid #f0ede8;padding:8px;background:#fff">
+        <div style="border:1.5px dashed #e5e7eb;border-radius:8px;padding:16px 8px;text-align:center;cursor:pointer" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:10px;color:#d1d5db">+ Add route</span>
+        </div>
+      </div>
+      <div style="border-right:1px solid #f0ede8;padding:8px;background:#fff">
+        <div style="border:1.5px dashed #e5e7eb;border-radius:8px;padding:16px 8px;text-align:center;cursor:pointer" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:10px;color:#d1d5db">+ Add route</span>
+        </div>
+      </div>
+      <div style="border-right:1px solid #f0ede8;padding:8px;background:#fff">
+        <div style="border:1.5px dashed #e5e7eb;border-radius:8px;padding:16px 8px;text-align:center;cursor:pointer" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:10px;color:#d1d5db">+ Add route</span>
+        </div>
+      </div>
+      <div style="padding:8px;background:#fff">
+        <div style="border:1.5px dashed #e5e7eb;border-radius:8px;padding:16px 8px;text-align:center;cursor:pointer" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+          <span style="font-size:10px;color:#d1d5db">+ Add route</span>
+        </div>
+      </div>
+
+    </div><!-- end grid -->
+  </div><!-- end sample -->
+
+  <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:8px">Hybrid shows the same week-at-a-glance grid with full route detail in each chip. Green border = spare listed. Empty cells = dashed + Add.</p>
+
+</body>
+</html>

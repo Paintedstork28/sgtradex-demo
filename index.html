@@ -294,7 +294,7 @@
     </div>
 
     <!-- TAB: CAPACITY NEEDED (demand — multi-step form) -->
-    <div id="tab-new" class="tab-pane active">
+    <div id="tab-new" class="tab-pane">
       <div class="page-content">
         <div class="page-header">
           <h1>Capacity Needed</h1>
@@ -307,8 +307,23 @@
       </div>
     </div><!-- /tab-new -->
 
+    <!-- TAB: OVERVIEW -->
+    <div id="tab-overview" class="tab-pane">
+      <div id="overview-content"></div>
+    </div>
+
+    <!-- TAB: CAPACITY (spare + needed combined) -->
+    <div id="tab-capacity" class="tab-pane">
+      <div id="capacity-tab-content"></div>
+    </div>
+
+    <!-- TAB: REQUESTS (incoming + outgoing pending actions) -->
+    <div id="tab-requests" class="tab-pane">
+      <div id="requests-tab-content"></div>
+    </div>
+
     <!-- TAB: MY SCHEDULE (supply) -->
-    <div id="tab-schedule" class="tab-pane">
+    <div id="tab-schedule" class="tab-pane active">
       <div id="schedule-tab-content"></div>
     </div>
 
@@ -401,170 +416,191 @@
     <!-- TAB: HISTORY -->
     <div id="tab-history" class="tab-pane">
       <div class="page-content">
-        <div class="page-header"><h1>History</h1><p>Completed and unfulfilled requests from the last 30 days</p></div>
-
-        <!-- OUTGOING: I needed capacity, others carried my cargo -->
-        <p class="section-label" style="margin-bottom:10px">Outgoing — I needed capacity, others carried my cargo</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px">
-
-          <div class="card" style="padding:14px 18px;border-color:#bfdbfe">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-              <div><p style="font-size:12px;font-weight:600;color:#111827;margin:0 0 2px">#SG-0885 · Jurong → Changi</p><p style="font-size:10px;color:#9ca3af;margin:0">Swift Haulage · 40t · 18 Mar</p></div>
-              <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 9px;border-radius:20px">Completed</span>
-            </div>
-            <div style="display:flex;gap:14px;font-size:11px;color:#6b7280;margin-bottom:8px">
-              <span>Pickup: ✓ 08:42</span><span>Delivery: ✓ 11:15</span><span style="color:#16a34a;font-weight:600">On time</span>
-            </div>
-            <div style="background:#f0fdf4;border-radius:7px;padding:7px 10px;display:flex;justify-content:space-between;font-size:11px">
-              <span style="color:#6b7280">+38 km route &nbsp;−7 km detour</span>
-              <strong style="color:#16a34a">+31 km saved</strong>
-            </div>
+        <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <h1>History</h1>
+            <p>Completed and unfulfilled requests · last 30 days</p>
           </div>
-
-          <div class="card" style="padding:14px 18px;border-color:#bfdbfe">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-              <div><p style="font-size:12px;font-weight:600;color:#111827;margin:0 0 2px">#SG-0881 · Tuas → Woodlands</p><p style="font-size:10px;color:#9ca3af;margin:0">Apex Logistics · 60t · 17 Mar</p></div>
-              <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 9px;border-radius:20px">Completed</span>
-            </div>
-            <div style="display:flex;gap:14px;font-size:11px;color:#6b7280;margin-bottom:8px">
-              <span>Pickup: ✓ 13:05</span><span>Delivery: ✓ 15:50</span><span style="color:#16a34a;font-weight:600">On time</span>
-            </div>
-            <div style="background:#f0fdf4;border-radius:7px;padding:7px 10px;display:flex;justify-content:space-between;font-size:11px">
-              <span style="color:#6b7280">+43 km route &nbsp;−9 km detour</span>
-              <strong style="color:#16a34a">+34 km saved</strong>
-            </div>
+          <!-- Month filter -->
+          <div style="display:flex;gap:5px;align-items:center">
+            <button id="hist-btn-mar" onclick="histSetMonth('Mar 2026',this)" style="font-size:10px;font-weight:700;padding:5px 12px;border-radius:7px;background:#111827;color:#fff;border:none;cursor:pointer">Mar 2026</button>
+            <button id="hist-btn-feb" onclick="histSetMonth('Feb 2026',this)" style="font-size:10px;font-weight:700;padding:5px 12px;border-radius:7px;background:#f9fafb;color:#6b7280;border:1px solid #e5e7eb;cursor:pointer">Feb 2026</button>
+            <button id="hist-btn-jan" onclick="histSetMonth('Jan 2026',this)" style="font-size:10px;font-weight:700;padding:5px 12px;border-radius:7px;background:#f9fafb;color:#6b7280;border:1px solid #e5e7eb;cursor:pointer">Jan 2026</button>
           </div>
-
-          <div class="card" style="padding:14px 18px;border-color:#bfdbfe">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-              <div><p style="font-size:12px;font-weight:600;color:#111827;margin:0 0 2px">#SG-0874 · Jurong → Tampines</p><p style="font-size:10px;color:#9ca3af;margin:0">Pinnacle Transport · 35t · 14 Mar</p></div>
-              <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 9px;border-radius:20px">Completed</span>
-            </div>
-            <div style="display:flex;gap:14px;font-size:11px;color:#6b7280;margin-bottom:8px">
-              <span>Pickup: ✓ 09:18</span><span>Delivery: ✓ 11:45</span><span style="color:#16a34a;font-weight:600">On time</span>
-            </div>
-            <div style="background:#f0fdf4;border-radius:7px;padding:7px 10px;display:flex;justify-content:space-between;font-size:11px">
-              <span style="color:#6b7280">+38 km route &nbsp;−8 km detour</span>
-              <strong style="color:#16a34a">+30 km saved</strong>
-            </div>
-          </div>
-
-          <div class="card" style="padding:14px 18px;border-color:#bfdbfe">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-              <div><p style="font-size:12px;font-weight:600;color:#111827;margin:0 0 2px">#SG-0868 · Brani → Woodlands</p><p style="font-size:10px;color:#9ca3af;margin:0">Swift Haulage · 20t · 12 Mar</p></div>
-              <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 9px;border-radius:20px">Completed</span>
-            </div>
-            <div style="display:flex;gap:14px;font-size:11px;color:#6b7280;margin-bottom:8px">
-              <span>Pickup: ✓ 16:10</span><span>Delivery: ✓ 18:22</span><span style="color:#ca8a04;font-weight:600">Slight delay</span>
-            </div>
-            <div style="background:#f0fdf4;border-radius:7px;padding:7px 10px;display:flex;justify-content:space-between;font-size:11px">
-              <span style="color:#6b7280">+30 km route &nbsp;−5 km detour</span>
-              <strong style="color:#16a34a">+25 km saved</strong>
-            </div>
-          </div>
-
-          <div class="card" style="padding:14px 18px;border-color:#fecaca">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-              <div><p style="font-size:12px;font-weight:600;color:#111827;margin:0 0 2px">#SG-0878 · Pasir Panjang → Yishun</p><p style="font-size:10px;color:#9ca3af;margin:0">25t · 15 Mar · Evening</p></div>
-              <span style="font-size:10px;font-weight:700;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:2px 9px;border-radius:20px">Not fulfilled</span>
-            </div>
-            <p style="font-size:11px;color:#dc2626;margin:0">No available supply matched for this slot. Demand logged to regulator.</p>
-          </div>
-
         </div>
 
-        <!-- INCOMING: I had spare capacity, I fulfilled for others -->
-        <p class="section-label" style="margin-bottom:10px">Incoming — I had spare capacity, I fulfilled for others</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-
-          <div class="card" style="padding:14px 18px;border-color:#bbf7d0">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-              <div><p style="font-size:12px;font-weight:600;color:#111827;margin:0 0 2px">#SG-0882 · Jurong → Woodlands</p><p style="font-size:10px;color:#9ca3af;margin:0">Swift Freight SG · 30t · 18 Mar</p></div>
-              <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 9px;border-radius:20px">Completed</span>
-            </div>
-            <div style="display:flex;gap:14px;font-size:11px;color:#6b7280">
-              <span>Pickup: ✓ 07:55</span><span>Delivery: ✓ 10:30</span><span style="color:#16a34a;font-weight:600">On time</span>
-            </div>
-          </div>
-
-          <div class="card" style="padding:14px 18px;border-color:#fecaca">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-              <div><p style="font-size:12px;font-weight:600;color:#111827;margin:0 0 2px">#SG-0876 · Tuas → Changi</p><p style="font-size:10px;color:#9ca3af;margin:0">GlobeTrans SG · 45t · 16 Mar</p></div>
-              <span style="font-size:10px;font-weight:700;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:2px 9px;border-radius:20px">Declined</span>
-            </div>
-            <p style="font-size:11px;color:#dc2626;margin:0">Route not serviceable by our fleet</p>
-          </div>
-
+        <!-- Stats strip -->
+        <div class="card" style="padding:12px 20px;margin-bottom:14px;display:flex;gap:24px;align-items:center">
+          <div><div style="font-size:8px;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Total requests</div><div style="font-size:20px;font-weight:800;color:#111827">7</div></div>
+          <div style="width:1px;height:32px;background:#f0ede8"></div>
+          <div><div style="font-size:8px;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Completed</div><div style="font-size:20px;font-weight:800;color:#16a34a">5</div></div>
+          <div><div style="font-size:8px;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Not fulfilled</div><div style="font-size:20px;font-weight:800;color:#ef4444">1</div></div>
+          <div><div style="font-size:8px;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Declined</div><div style="font-size:20px;font-weight:800;color:#f59e0b">1</div></div>
+          <div style="width:1px;height:32px;background:#f0ede8"></div>
+          <div><div style="font-size:8px;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Tons matched</div><div style="font-size:20px;font-weight:800;color:#111827">230t</div></div>
+          <div style="width:1px;height:32px;background:#f0ede8"></div>
+          <div><div style="font-size:8px;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Km saved (month)</div><div style="font-size:20px;font-weight:800;color:#16a34a">120 km</div></div>
         </div>
 
-        <!-- KM SAVED SUMMARY: per fulfilled outgoing request -->
-        <p class="section-label" style="margin:28px 0 10px">Kilometres saved — fulfilled outgoing requests</p>
-        <div class="card" style="padding:0;overflow:hidden;margin-bottom:4px">
-
-          <!-- Header row -->
-          <div style="display:grid;grid-template-columns:90px 1fr 130px 130px 130px 100px;gap:0;padding:8px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em">
-            <span>Request</span>
-            <span>Route</span>
-            <span>My depot → Pickup</span>
-            <span>Pickup → Dropoff</span>
-            <span>Dropoff → My depot</span>
-            <span style="text-align:right">Km saved</span>
+        <!-- Main table -->
+        <div class="card" style="overflow:hidden;padding:0;margin-bottom:6px">
+          <!-- Col headers -->
+          <div style="display:grid;grid-template-columns:80px 50px 60px 1fr 140px 50px 75px 80px 90px;padding:8px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb">
+            <div class="section-label" style="margin:0">Request</div>
+            <div class="section-label" style="margin:0">Dir</div>
+            <div class="section-label" style="margin:0">Date</div>
+            <div class="section-label" style="margin:0">Route</div>
+            <div class="section-label" style="margin:0">Counterparty</div>
+            <div class="section-label" style="margin:0">Tons</div>
+            <div class="section-label" style="margin:0">Slot</div>
+            <div class="section-label" style="margin:0">Status</div>
+            <div class="section-label" style="margin:0;text-align:right">Km saved</div>
           </div>
 
-          <!-- SG-0885 -->
-          <div style="display:grid;grid-template-columns:90px 1fr 130px 130px 130px 100px;gap:0;padding:11px 16px;border-bottom:1px solid #f3f4f6;font-size:11px;align-items:center">
-            <span style="font-weight:600;color:#111827">#SG-0885</span>
-            <span style="color:#374151">Jurong → Changi <span style="color:#9ca3af">· Swift Haulage</span></span>
-            <span style="color:#dc2626">+4 km <span style="color:#9ca3af;font-size:10px">(detour cost)</span></span>
-            <span style="color:#16a34a;font-weight:600">+38 km <span style="color:#9ca3af;font-size:10px;font-weight:400">(route)</span></span>
-            <span style="color:#dc2626">+3 km <span style="color:#9ca3af;font-size:10px">(detour cost)</span></span>
-            <span style="font-weight:800;color:#16a34a;font-size:13px;text-align:right">+31 km</span>
+          <!-- SG-0885 · Outgoing · Completed -->
+          <div style="display:grid;grid-template-columns:80px 50px 60px 1fr 140px 50px 75px 80px 90px;padding:10px 16px;border-bottom:1px solid #f3f4f6;align-items:center" onmouseover="this.style.background='#fafafa';document.getElementById('km-detail').style.display='block'" onmouseout="this.style.background=''">
+            <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">#SG-0885</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:7px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">↑ Out</span></div>
+            <div style="font-size:10px;color:#6b7280">18 Mar</div>
+            <div style="font-size:11px;font-weight:600;color:#111827">Jurong → Changi</div>
+            <div style="font-size:11px;color:#374151">Swift Haulage</div>
+            <div style="font-size:11px;font-weight:700;color:#111827">40t</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:6px;background:#fffbeb;color:#92400e;border:1px solid #fde68a">AM</span></div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 7px;border-radius:8px;background:#dcfce7;color:#166534;border:1px solid #bbf7d0">Done</span></div>
+            <div><div style="font-size:12px;font-weight:800;color:#16a34a;text-align:right">+31 km</div><div style="font-size:8px;color:#9ca3af;text-align:right">+38 −7 detour</div></div>
           </div>
 
-          <!-- SG-0881 -->
-          <div style="display:grid;grid-template-columns:90px 1fr 130px 130px 130px 100px;gap:0;padding:11px 16px;border-bottom:1px solid #f3f4f6;font-size:11px;align-items:center">
-            <span style="font-weight:600;color:#111827">#SG-0881</span>
-            <span style="color:#374151">Tuas → Woodlands <span style="color:#9ca3af">· Apex Logistics</span></span>
-            <span style="color:#dc2626">+5 km <span style="color:#9ca3af;font-size:10px">(detour cost)</span></span>
-            <span style="color:#16a34a;font-weight:600">+43 km <span style="color:#9ca3af;font-size:10px;font-weight:400">(route)</span></span>
-            <span style="color:#dc2626">+4 km <span style="color:#9ca3af;font-size:10px">(detour cost)</span></span>
-            <span style="font-weight:800;color:#16a34a;font-size:13px;text-align:right">+34 km</span>
+          <!-- SG-0882 · Incoming · Completed -->
+          <div style="display:grid;grid-template-columns:80px 50px 60px 1fr 140px 50px 75px 80px 90px;padding:10px 16px;border-bottom:1px solid #f3f4f6;align-items:center" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+            <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">#SG-0882</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:7px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0">↓ In</span></div>
+            <div style="font-size:10px;color:#6b7280">18 Mar</div>
+            <div style="font-size:11px;font-weight:600;color:#111827">Jurong → Woodlands</div>
+            <div style="font-size:11px;color:#374151">Swift Freight SG</div>
+            <div style="font-size:11px;font-weight:700;color:#111827">30t</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:6px;background:#fffbeb;color:#92400e;border:1px solid #fde68a">AM</span></div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 7px;border-radius:8px;background:#dcfce7;color:#166534;border:1px solid #bbf7d0">Done</span></div>
+            <div style="font-size:11px;color:#9ca3af;text-align:right">—</div>
           </div>
 
-          <!-- SG-0874 -->
-          <div style="display:grid;grid-template-columns:90px 1fr 130px 130px 130px 100px;gap:0;padding:11px 16px;border-bottom:1px solid #f3f4f6;font-size:11px;align-items:center">
-            <span style="font-weight:600;color:#111827">#SG-0874</span>
-            <span style="color:#374151">Jurong → Tampines <span style="color:#9ca3af">· Pinnacle Transport</span></span>
-            <span style="color:#dc2626">+4 km <span style="color:#9ca3af;font-size:10px">(detour cost)</span></span>
-            <span style="color:#16a34a;font-weight:600">+38 km <span style="color:#9ca3af;font-size:10px;font-weight:400">(route)</span></span>
-            <span style="color:#dc2626">+4 km <span style="color:#9ca3af;font-size:10px">(detour cost)</span></span>
-            <span style="font-weight:800;color:#16a34a;font-size:13px;text-align:right">+30 km</span>
+          <!-- SG-0881 · Outgoing · Completed -->
+          <div style="display:grid;grid-template-columns:80px 50px 60px 1fr 140px 50px 75px 80px 90px;padding:10px 16px;border-bottom:1px solid #f3f4f6;align-items:center" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+            <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">#SG-0881</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:7px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">↑ Out</span></div>
+            <div style="font-size:10px;color:#6b7280">17 Mar</div>
+            <div style="font-size:11px;font-weight:600;color:#111827">Tuas → Woodlands</div>
+            <div style="font-size:11px;color:#374151">Apex Logistics</div>
+            <div style="font-size:11px;font-weight:700;color:#111827">60t</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:6px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">PM</span></div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 7px;border-radius:8px;background:#dcfce7;color:#166534;border:1px solid #bbf7d0">Done</span></div>
+            <div><div style="font-size:12px;font-weight:800;color:#16a34a;text-align:right">+34 km</div><div style="font-size:8px;color:#9ca3af;text-align:right">+43 −9 detour</div></div>
           </div>
 
-          <!-- SG-0868 -->
-          <div style="display:grid;grid-template-columns:90px 1fr 130px 130px 130px 100px;gap:0;padding:11px 16px;border-bottom:1px solid #f3f4f6;font-size:11px;align-items:center">
-            <span style="font-weight:600;color:#111827">#SG-0868</span>
-            <span style="color:#374151">Brani → Woodlands <span style="color:#9ca3af">· Swift Haulage</span></span>
-            <span style="color:#dc2626">+2 km <span style="color:#9ca3af;font-size:10px">(detour cost)</span></span>
-            <span style="color:#16a34a;font-weight:600">+30 km <span style="color:#9ca3af;font-size:10px;font-weight:400">(route)</span></span>
-            <span style="color:#dc2626">+3 km <span style="color:#9ca3af;font-size:10px">(detour cost)</span></span>
-            <span style="font-weight:800;color:#16a34a;font-size:13px;text-align:right">+25 km</span>
+          <!-- SG-0878 · Outgoing · Not fulfilled -->
+          <div style="display:grid;grid-template-columns:80px 50px 60px 1fr 140px 50px 75px 80px 90px;padding:10px 16px;border-bottom:1px solid #f3f4f6;align-items:center" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+            <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">#SG-0878</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:7px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">↑ Out</span></div>
+            <div style="font-size:10px;color:#6b7280">15 Mar</div>
+            <div style="font-size:11px;font-weight:600;color:#111827">Pasir Panjang → Yishun</div>
+            <div style="font-size:11px;color:#9ca3af;font-style:italic">No match</div>
+            <div style="font-size:11px;font-weight:700;color:#111827">25t</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:6px;background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe">EVE</span></div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 7px;border-radius:8px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca">Unfulfilled</span></div>
+            <div style="font-size:11px;color:#9ca3af;text-align:right">—</div>
+          </div>
+
+          <!-- SG-0876 · Incoming · Declined -->
+          <div style="display:grid;grid-template-columns:80px 50px 60px 1fr 140px 50px 75px 80px 90px;padding:10px 16px;border-bottom:1px solid #f3f4f6;align-items:center" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+            <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">#SG-0876</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:7px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0">↓ In</span></div>
+            <div style="font-size:10px;color:#6b7280">16 Mar</div>
+            <div style="font-size:11px;font-weight:600;color:#111827">Tuas → Changi</div>
+            <div style="font-size:11px;color:#374151">GlobeTrans SG</div>
+            <div style="font-size:11px;font-weight:700;color:#111827">45t</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:6px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">PM</span></div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 7px;border-radius:8px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca">Declined</span></div>
+            <div style="font-size:11px;color:#9ca3af;text-align:right">—</div>
+          </div>
+
+          <!-- SG-0874 · Outgoing · Completed -->
+          <div style="display:grid;grid-template-columns:80px 50px 60px 1fr 140px 50px 75px 80px 90px;padding:10px 16px;border-bottom:1px solid #f3f4f6;align-items:center" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+            <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">#SG-0874</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:7px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">↑ Out</span></div>
+            <div style="font-size:10px;color:#6b7280">14 Mar</div>
+            <div style="font-size:11px;font-weight:600;color:#111827">Jurong → Tampines</div>
+            <div style="font-size:11px;color:#374151">Pinnacle Transport</div>
+            <div style="font-size:11px;font-weight:700;color:#111827">35t</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:6px;background:#fffbeb;color:#92400e;border:1px solid #fde68a">AM</span></div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 7px;border-radius:8px;background:#dcfce7;color:#166534;border:1px solid #bbf7d0">Done</span></div>
+            <div><div style="font-size:12px;font-weight:800;color:#16a34a;text-align:right">+30 km</div><div style="font-size:8px;color:#9ca3af;text-align:right">+38 −8 detour</div></div>
+          </div>
+
+          <!-- SG-0868 · Outgoing · Completed (slight delay) -->
+          <div style="display:grid;grid-template-columns:80px 50px 60px 1fr 140px 50px 75px 80px 90px;padding:10px 16px;border-bottom:1px solid #f3f4f6;align-items:center" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+            <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">#SG-0868</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:7px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">↑ Out</span></div>
+            <div style="font-size:10px;color:#6b7280">12 Mar</div>
+            <div style="font-size:11px;font-weight:600;color:#111827">Brani → Woodlands</div>
+            <div style="font-size:11px;color:#374151">Swift Haulage</div>
+            <div style="font-size:11px;font-weight:700;color:#111827">20t</div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:6px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">PM</span></div>
+            <div><span style="font-size:8px;font-weight:700;padding:2px 7px;border-radius:8px;background:#fef9c3;color:#854d0e;border:1px solid #fde68a">Done·delay</span></div>
+            <div><div style="font-size:12px;font-weight:800;color:#16a34a;text-align:right">+25 km</div><div style="font-size:8px;color:#9ca3af;text-align:right">+30 −5 detour</div></div>
           </div>
 
           <!-- Totals footer -->
-          <div style="display:grid;grid-template-columns:90px 1fr 130px 130px 130px 100px;gap:0;padding:10px 16px;background:#f0fdf4;font-size:11px;align-items:center">
-            <span></span>
-            <span style="font-size:10px;color:#6b7280">4 fulfilled trips · 149t total</span>
-            <span style="color:#dc2626;font-weight:600">−15 km total</span>
-            <span style="color:#16a34a;font-weight:600">+149 km total</span>
-            <span style="color:#dc2626;font-weight:600">−14 km total</span>
-            <span style="font-weight:800;color:#16a34a;font-size:14px;text-align:right">+120 km</span>
+          <div style="display:grid;grid-template-columns:80px 50px 60px 1fr 140px 50px 75px 80px 90px;padding:9px 16px;background:#f0fdf4;align-items:center;border-top:1px solid #e5e7eb">
+            <div></div><div></div><div></div>
+            <div style="font-size:10px;color:#6b7280">7 requests · Mar 2026</div>
+            <div></div>
+            <div style="font-size:11px;font-weight:700;color:#111827">230t</div>
+            <div></div>
+            <div style="font-size:10px;font-weight:600;color:#16a34a">5 done</div>
+            <div style="font-size:13px;font-weight:800;color:#16a34a;text-align:right">+120 km</div>
           </div>
-
         </div>
 
-        <!-- Formula note -->
-        <p style="font-size:10px;color:#9ca3af;margin:8px 0 0">Km saved = (Pickup → Dropoff distance) − (My depot → Pickup detour) − (Dropoff → My depot detour). Saved km represent distance moved that would have required a separate truck without this match.</p>
+        <!-- Km breakdown detail (shown on hover of SG-0885 row — demo) -->
+        <div id="km-detail" style="display:none;background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-bottom:4px">
+          <div style="padding:9px 16px;background:#f0fdf4;border-bottom:1px solid #d1fae5;display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:10px;font-weight:700;color:#166534">#SG-0885 · Jurong → Changi · km saved breakdown</span>
+            <button onclick="document.getElementById('km-detail').style.display='none'" style="font-size:10px;color:#9ca3af;background:none;border:none;cursor:pointer">✕ close</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 120px 120px 90px;padding:7px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8">
+            <div class="section-label" style="margin:0">Segment</div>
+            <div class="section-label" style="margin:0">From → To</div>
+            <div class="section-label" style="margin:0">Distance</div>
+            <div class="section-label" style="margin:0">Type</div>
+            <div class="section-label" style="margin:0;text-align:right">Km impact</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 120px 120px 90px;padding:9px 16px;border-bottom:1px solid #f3f4f6;font-size:11px;align-items:center">
+            <div style="font-weight:600;color:#111827">Main route</div>
+            <div style="color:#374151">Jurong → Changi</div>
+            <div style="color:#374151">38 km</div>
+            <div style="color:#16a34a;font-weight:600">Revenue km</div>
+            <div style="font-weight:800;color:#16a34a;text-align:right">+38 km</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 120px 120px 90px;padding:9px 16px;border-bottom:1px solid #f3f4f6;font-size:11px;align-items:center">
+            <div style="font-weight:600;color:#111827">Pickup detour</div>
+            <div style="color:#374151">Depot → Jurong</div>
+            <div style="color:#374151">4 km</div>
+            <div style="color:#ef4444">Dead km (cost)</div>
+            <div style="font-weight:800;color:#ef4444;text-align:right">−4 km</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 120px 120px 90px;padding:9px 16px;border-bottom:1px solid #f3f4f6;font-size:11px;align-items:center">
+            <div style="font-weight:600;color:#111827">Dropoff detour</div>
+            <div style="color:#374151">Changi → Depot</div>
+            <div style="color:#374151">3 km</div>
+            <div style="color:#ef4444">Dead km (cost)</div>
+            <div style="font-weight:800;color:#ef4444;text-align:right">−3 km</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 120px 120px 90px;padding:9px 16px;background:#f0fdf4;font-size:11px;align-items:center">
+            <div style="font-weight:700;color:#166534">Net km saved</div>
+            <div></div><div></div><div></div>
+            <div style="font-size:14px;font-weight:800;color:#16a34a;text-align:right">+31 km</div>
+          </div>
+        </div>
+        <p style="font-size:10px;color:#9ca3af;margin:6px 0 0">Km saved = (Pickup → Dropoff) − (Depot → Pickup detour) − (Dropoff → Depot detour). Hover a completed outgoing row to see breakdown.</p>
 
       </div>
     </div>
@@ -657,11 +693,10 @@ const CREDS = {
 const TABS = {
   client: [
     {id:'tab-schedule',  label:'My Schedule'},
-    {id:'tab-spare',     label:'Spare Capacity'},
-    {id:'tab-new',       label:'Capacity Needed'},
-    {id:'tab-incoming',  label:'Incoming'},
-    {id:'tab-outgoing',  label:'Outgoing'},
+    {id:'tab-capacity',  label:'Capacity'},
+    {id:'tab-requests',  label:'Requests'},
     {id:'tab-active',    label:'Active'},
+    {id:'tab-overview',  label:'Overview'},
     {id:'tab-history',   label:'History'},
     {id:'tab-billing',   label:'Billing'},
   ],
@@ -753,8 +788,8 @@ let supplySpareCapacity = [
 
 // ── Incoming supply requests ───────────────────────────────────────────────
 let supplyRequests = [
-  {id:'SG-0895', route:'Jurong → Changi',        date:'20 Mar', slot:'Morning',   tonnage:'40 tons (4 trucks)', requester:'Cargotec SG Pte Ltd', ago:'8 min ago', status:'pending',   step:null, declineReason:null, cargoRef:'CCSU7245309390'},
-  {id:'SG-0893', route:'Tuas → Tampines',         date:'20 Mar', slot:'Afternoon', tonnage:'50 tons (5 trucks)', requester:'—',                   ago:'2h ago',     status:'pending',   step:null, declineReason:null, cargoRef:'ONEYSIND45008900'},
+  {id:'SG-0895', route:'Jurong → Woodlands',      date:'20 Mar', slot:'Morning',   tonnage:'40 tons (4 trucks)', requester:'Cargotec SG Pte Ltd', ago:'8 min ago', status:'pending',   step:null, declineReason:null, cargoRef:'CCSU7245309390', routeId:'r1', bookedTons:2},
+  {id:'SG-0893', route:'Changi → Jurong',         date:'20 Mar', slot:'Afternoon', tonnage:'50 tons (5 trucks)', requester:'—',                   ago:'2h ago',     status:'pending',   step:null, declineReason:null, cargoRef:'ONEYSIND45008900', routeId:'r8', bookedTons:3},
   {id:'SG-0888', route:'Pasir Panjang → Yishun', date:'19 Mar', slot:'Morning',   tonnage:'25 tons (3 trucks)', requester:'Fairview Cargo',       ago:'1d ago',     status:'active',    step:2,    declineReason:null, cargoRef:'HLCU25505182'},
   {id:'SG-0882', route:'Jurong → Woodlands',      date:'18 Mar', slot:'Morning',   tonnage:'30 tons (3 trucks)', requester:'Swift Freight SG',     ago:'2d ago',     status:'completed', step:4,    declineReason:null, cargoRef:'ONEYSIND41769500'},
   {id:'SG-0876', route:'Tuas → Changi',           date:'16 Mar', slot:'Afternoon', tonnage:'45 tons (5 trucks)', requester:'GlobeTrans SG',        ago:'4d ago',     status:'declined',  step:null, declineReason:'Route not serviceable by our fleet', cargoRef:'CCSU7249648260'},
@@ -762,8 +797,8 @@ let supplyRequests = [
 
 // ── Outgoing demand requests ───────────────────────────────────────────────
 let outgoingRequests = [
-  {id:'SG-0891', route:'Jurong → Woodlands', detail:'30t · 19 Mar · Morning',   step:1, provider:'Swift Haulage Pte Ltd', statusLabel:'Commercials agreed', statusBg:'#eff6ff', statusText:'#2563eb', statusBorder:'#bfdbfe', note:'Awaiting pickup confirmation',                      cargoRef:'ONEYSINE22132300'},
-  {id:'SG-0892', route:'Tuas → Tampines',    detail:'50t · 19 Mar · Afternoon', step:2, provider:'Apex Logistics SG',     statusLabel:'En route',           statusBg:'#fefce8', statusText:'#854d0e', statusBorder:'#fde68a', note:'Cargo picked up · En route to Tampines Industrial Ave', cargoRef:'BMOU6083920'},
+  {id:'SG-0891', route:'Jurong → Woodlands', detail:'30t · 24 Mar · Morning',   step:1, day:'Mon', slot:'morning',   from:'Jurong',  to:'Woodlands', tons:30, provider:'Swift Haulage Pte Ltd', statusLabel:'Commercials agreed', statusBg:'#eff6ff', statusText:'#2563eb', statusBorder:'#bfdbfe', note:'Awaiting pickup confirmation',                      cargoRef:'ONEYSINE22132300'},
+  {id:'SG-0892', route:'Tuas → Tampines',    detail:'50t · 26 Mar · Afternoon', step:2, day:'Wed', slot:'afternoon', from:'Tuas',    to:'Tampines',  tons:50, provider:'Apex Logistics SG',     statusLabel:'En route',           statusBg:'#fefce8', statusText:'#854d0e', statusBorder:'#fde68a', note:'Cargo picked up · En route to Tampines Industrial Ave', cargoRef:'BMOU6083920'},
 ];
 
 // ── Regulator entity data ──────────────────────────────────────────────────
@@ -795,6 +830,15 @@ let scheduledOverrides = {};
 let cnRequests        = [];
 let cnResults         = {};
 let cnSelections      = {};
+let manualCnRequests  = []; // capacity requests added manually from Requests tab
+let addingNewRequest  = false;
+let acceptedBookings  = []; // {reqId, routeId, tons} — incoming requests user has accepted
+let actionsHistory    = [   // pre-populated demo history for this week
+  {action:'Accepted',  reqId:'SG-0882', direction:'incoming', route:'Jurong → Woodlands',    counterparty:'Swift Freight SG',     tons:8,  outcome:'8t booked ✓', when:'24 Mar · 09:14'},
+  {action:'Confirmed', reqId:'SG-0876', direction:'outgoing', route:'Tuas → Changi',          counterparty:'GlobeTrans SG',        tons:20, outcome:'Matched ✓',  when:'24 Mar · 11:40'},
+  {action:'Declined',  reqId:'SG-0871', direction:'incoming', route:'Pasir Panjang → Changi', counterparty:'Pacific Freight',      tons:15, outcome:'—',          when:'25 Mar · 08:55'},
+  {action:'Accepted',  reqId:'SG-0869', direction:'incoming', route:'Changi → Jurong',        counterparty:'Apex Logistics SG',    tons:5,  outcome:'5t booked ✓', when:'26 Mar · 14:22'},
+];
 let cnShowManualForm  = false;
 let cnManualDay       = null;
 let cnManualSlot      = null;
@@ -930,9 +974,12 @@ function switchTab(tabId) {
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
     b.classList.toggle('active', TABS[selectedRole][i]?.id === tabId);
   });
+  if (tabId === 'tab-overview')  renderOverviewTab();
   if (tabId === 'tab-schedule')  renderScheduleTab();
   if (tabId === 'tab-spare')     renderSpareCapacityTab();
-  if (tabId === 'tab-new')      { cnInitRequests(); cnRenderS1(); cnShowStep('s1'); }
+  if (tabId === 'tab-capacity')  renderCapacityTab();
+  if (tabId === 'tab-requests')  renderRequestsTab();
+  if (tabId === 'tab-new')       { cnInitRequests(); cnRenderS1(); cnShowStep('s1'); }
   if (tabId === 'tab-incoming')  renderIncomingRequests();
   if (tabId === 'tab-outgoing')  renderOutgoingRequests();
   if (tabId === 'tab-active')   { renderPipeline('pipeline-0888',2,'SG-0888'); renderPipeline('pipeline-0891',1,'SG-0891'); renderPipeline('pipeline-0892',2,'SG-0892'); }
@@ -1077,10 +1124,16 @@ function buildAddRouteForm(day, slot) {
   return `
     <div style="background:#f0f9ff;border-radius:10px;border:1.5px solid #bfdbfe;padding:14px 16px;margin-bottom:6px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <p style="font-size:12px;font-weight:700;color:#111827;margin:0">Add route · ${SLOT_LABELS[slot]}</p>
+        <p style="font-size:12px;font-weight:700;color:#111827;margin:0">Add route</p>
         <button onclick="addingSupplyRoute=false;renderScheduleTab()" style="font-size:10px;color:#9ca3af;background:none;border:none;cursor:pointer">✕ Cancel</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:11px">
+        <div>
+          <label class="section-label" style="display:block;margin-bottom:4px">Time slot</label>
+          <div style="display:flex;gap:6px">
+            ${SLOT_KEYS.map(k=>`<button type="button" onclick="addingSupplyRoute='${day}_${k}';renderScheduleTab()" style="font-size:10px;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;${k===slot?'background:#2563eb;color:#fff;border:1px solid #2563eb':'background:#f9fafb;color:#374151;border:1px solid #e5e7eb'}">${SLOT_LABELS[k].split(' ')[0]}</button>`).join('')}
+          </div>
+        </div>
         <div>
           <label class="section-label" style="display:block;margin-bottom:4px">Truck ID</label>
           <input id="${prefix}-truck-${slot}" type="text" placeholder="e.g. SG-104" style="width:100%;font-size:11px;border:1px solid #e5e7eb;border-radius:7px;padding:7px 10px"/>
@@ -1178,8 +1231,588 @@ function removeSupplyRoute(id) {
 }
 
 function quickAddSpare(routeId) {
-  switchTab('tab-spare');
+  switchTab('tab-capacity');
   setTimeout(() => { toggleSpare(routeId, Math.max(1, Math.floor((supplyScheduleRoutes.find(r=>r.id===routeId)?.tons||10)*0.3))); }, 60);
+}
+
+// ══════════════════════════════════════════════
+//  OVERVIEW TAB
+// ══════════════════════════════════════════════
+// Demo-only booking data: routeId → tons of spare already taken
+const DEMO_BOOKED_TONS = { r1: 2, r4: 3, r8: 3 };
+
+// Pending capacity requests not yet matched (purple in overview)
+const DEMO_PENDING_REQUESTS = [
+  {day:'Mon', slot:'afternoon', from:'Jurong',        to:'Changi',    tons:15, id:'SG-0901'},
+  {day:'Thu', slot:'afternoon', from:'Pasir Panjang', to:'Woodlands', tons:10, id:'SG-0903'},
+];
+
+function renderOverviewTab() {
+  const c = document.getElementById('overview-content');
+  if (!c) return;
+
+  // Week dates (Mon–Fri)
+  const today = new Date();
+  const mondayOffset = today.getDay() === 0 ? -6 : 1 - today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + mondayOffset);
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const ordSuffix = n => n===1||n===21||n===31?'st':n===2||n===22?'nd':n===3||n===23?'rd':'th';
+  const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri'];
+  const FULL_DAY = {Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday'};
+  const weekDates = WEEKDAYS.map((_, i) => {
+    const d = new Date(monday); d.setDate(monday.getDate() + i);
+    return `${d.getDate()}${ordSuffix(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  });
+
+  // Build lookup: {day_slot: [routes]}
+  const routesByCell = {};
+  supplyScheduleRoutes.forEach(r => {
+    const key = r.day + '_' + r.slot;
+    if (!routesByCell[key]) routesByCell[key] = [];
+    routesByCell[key].push(r);
+  });
+
+  // Build lookup: {day_slot: [outgoing requests]}
+  const outgoingByCell = {};
+  outgoingRequests.forEach(r => {
+    if (!r.day || !r.slot) return;
+    const key = r.day + '_' + r.slot;
+    if (!outgoingByCell[key]) outgoingByCell[key] = [];
+    outgoingByCell[key].push(r);
+  });
+
+  // Build lookup: {day_slot: [pending requests]}
+  const pendingByCell = {};
+  DEMO_PENDING_REQUESTS.forEach(r => {
+    const key = r.day + '_' + r.slot;
+    if (!pendingByCell[key]) pendingByCell[key] = [];
+    pendingByCell[key].push(r);
+  });
+
+  // Chip styles per state
+  const CHIP_STYLES = {
+    plain:    { wrap:'background:#f9fafb;border:1px solid #e5e7eb',            route:'color:#111827', meta:'color:#9ca3af' },
+    free:     { wrap:'background:#f0fdf4;border:1px solid #bbf7d0',            route:'color:#166534', meta:'color:#4ade80' },
+    partial:  { wrap:'background:#eff6ff;border:1px solid #bfdbfe',            route:'color:#1d4ed8', meta:'color:#93c5fd' },
+    full:     { wrap:'background:#fffbeb;border:1px solid #fde68a',            route:'color:#92400e', meta:'color:#fbbf24' },
+    pending:  { wrap:'background:#fdf4ff;border:1.5px dashed #d8b4fe',        route:'color:#7e22ce', meta:'color:#c084fc' },
+    secured:  { wrap:'background:#f0fdf4;border:1.5px dashed #6ee7b7',        route:'color:#065f46', meta:'color:#34d399' },
+  };
+
+  function badge(text, bg, color, border) {
+    return `<span style="font-size:8px;font-weight:700;padding:1px 6px;border-radius:8px;white-space:nowrap;background:${bg};color:${color};border:1px solid ${border}">${text}</span>`;
+  }
+
+  function routeChip(r) {
+    const spare      = supplySpareCapacity.find(s => s.routeId === r.id);
+    const booked     = DEMO_BOOKED_TONS[r.id] || 0;
+    const fromPin    = r.fromAddr?.match(/\b(\d{6})\b/)?.[1] || '';
+    const toPin      = r.toAddr?.match(/\b(\d{6})\b/)?.[1] || '';
+    const plateMeta  = [r.truck, r.containerIso, r.containerOperator].filter(Boolean).join(' · ');
+
+    let st, b;
+    if (!spare) {
+      st = CHIP_STYLES.plain;
+      b  = badge('No spare listed', '#f1f5f9', '#6b7280', '#e2e8f0');
+    } else if (booked >= spare.spareTons) {
+      st = CHIP_STYLES.full;
+      b  = badge('Fully booked · ' + spare.spareTons + 't', '#fef3c7', '#92400e', '#fde68a');
+    } else if (booked > 0) {
+      st = CHIP_STYLES.partial;
+      b  = badge(booked + 't / ' + spare.spareTons + 't taken', '#dbeafe', '#2563eb', '#bfdbfe');
+    } else {
+      st = CHIP_STYLES.free;
+      b  = badge(spare.spareTons + 't spare · available', '#dcfce7', '#16a34a', '#bbf7d0');
+    }
+
+    return `<div style="border-radius:8px;padding:7px 9px;${st.wrap}">
+      <div style="font-size:10px;font-weight:700;line-height:1.3;${st.route}">${r.from} → ${r.to}</div>
+      ${fromPin||toPin ? `<div style="font-size:9px;margin-top:1px;${st.meta}">${fromPin}${fromPin&&toPin?' → ':''}${toPin}</div>` : ''}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;gap:4px">
+        <span style="font-family:monospace;font-size:9px;font-weight:700;opacity:.65;${st.route};flex-shrink:0">${plateMeta}</span>
+        ${b}
+      </div>
+    </div>`;
+  }
+
+  function outgoingChip(r) {
+    const secured = r.step >= 2;
+    const st = secured ? CHIP_STYLES.secured : CHIP_STYLES.secured;
+    const b  = secured
+      ? badge('En route ✓', '#d1fae5', '#065f46', '#6ee7b7')
+      : badge('Capacity secured', '#d1fae5', '#065f46', '#6ee7b7');
+    return `<div style="border-radius:8px;padding:7px 9px;${st.wrap}">
+      <div style="font-size:10px;font-weight:700;line-height:1.3;${st.route}">${r.from} → ${r.to}</div>
+      <div style="font-size:9px;margin-top:1px;${st.meta}">${r.tons}t · ${r.provider}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;gap:4px">
+        <span style="font-family:monospace;font-size:9px;font-weight:700;opacity:.65;${st.route}">${r.id}</span>
+        ${b}
+      </div>
+    </div>`;
+  }
+
+  function pendingChip(r) {
+    const st = CHIP_STYLES.pending;
+    return `<div style="border-radius:8px;padding:7px 9px;${st.wrap}">
+      <div style="font-size:10px;font-weight:700;line-height:1.3;${st.route}">${r.from} → ${r.to}</div>
+      <div style="font-size:9px;margin-top:1px;${st.meta}">${r.tons}t · capacity needed</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;gap:4px">
+        <span style="font-family:monospace;font-size:9px;font-weight:700;opacity:.65;${st.route}">${r.id}</span>
+        ${badge('Pending match', '#f3e8ff', '#7e22ce', '#d8b4fe')}
+      </div>
+    </div>`;
+  }
+
+  const SLOT_LABEL_SHORT = {morning:'Morning', afternoon:'Afternoon', evening:'Evening'};
+  const SLOT_LABEL_STYLE = {
+    morning:   'background:#fffdf5;color:#92400e',
+    afternoon: 'background:#f5f8ff;color:#1d4ed8',
+    evening:   'background:#faf8ff;color:#6d28d9',
+  };
+
+  // Build column headers
+  const colHeaders = WEEKDAYS.map((d, i) => {
+    const dayRoutes = supplyScheduleRoutes.filter(r => r.day === d);
+    const dayOut    = outgoingRequests.filter(r => r.day === d);
+    const parts = [];
+    if (dayRoutes.length) parts.push(dayRoutes.length + ' route' + (dayRoutes.length!==1?'s':''));
+    if (dayOut.length)    parts.push(dayOut.length + ' request' + (dayOut.length!==1?'s':''));
+    return `<div style="background:#f9fafb;border-right:${d!=='Fri'?'1px solid #f0ede8':'none'};border-bottom:1px solid #f0ede8;padding:10px 14px;text-align:center">
+      <div style="font-size:11px;font-weight:700;color:#374151">${FULL_DAY[d]}</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">${weekDates[i]}</div>
+      ${parts.length ? `<div style="font-size:9px;color:#bfbfbf;margin-top:3px">${parts.join(' · ')}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  // Build rows for each slot
+  const slotRows = SLOT_KEYS.map(slot => {
+    const cells = WEEKDAYS.map((d, di) => {
+      const key     = d + '_' + slot;
+      const routes    = routesByCell[key]   || [];
+      const outReqs   = outgoingByCell[key] || [];
+      const pendReqs  = pendingByCell[key]  || [];
+      const chips     = [...routes.map(r => routeChip(r)), ...outReqs.map(r => outgoingChip(r)), ...pendReqs.map(r => pendingChip(r))];
+      const isLast  = di === 4;
+      const content = chips.length
+        ? chips.join('')
+        : `<div style="border:1.5px dashed #e5e7eb;border-radius:8px;display:flex;align-items:center;justify-content:center;min-height:52px;cursor:pointer" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''"><span style="font-size:9px;color:#d1d5db">+ Add route</span></div>`;
+      return `<div style="border-right:${isLast?'none':'1px solid #f0ede8'};border-bottom:1px solid #f0ede8;padding:8px;background:#fff;display:flex;flex-direction:column;gap:5px;min-height:72px">${content}</div>`;
+    }).join('');
+
+    const isLastSlot = slot === 'evening';
+    return `
+      <div style="${SLOT_LABEL_STYLE[slot]};border-right:1px solid #f0ede8;border-bottom:${isLastSlot?'none':'1px solid #f0ede8'};padding:10px 6px;display:flex;align-items:flex-start;justify-content:center">
+        <span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;writing-mode:vertical-rl;transform:rotate(180deg)">${SLOT_LABEL_SHORT[slot]}</span>
+      </div>
+      ${cells.replace(/border-bottom:1px solid #f0ede8(?=[^;]*min-height)/g, isLastSlot ? 'border-bottom:none' : 'border-bottom:1px solid #f0ede8')}`;
+  }).join('');
+
+  // Legend
+  const legendItems = [
+    ['#f1f5f9','#e2e8f0','solid', 'My route · no spare listed'],
+    ['#dcfce7','#bbf7d0','solid', 'Spare available'],
+    ['#dbeafe','#bfdbfe','solid', 'Spare partially booked'],
+    ['#fef3c7','#fde68a','solid', 'Spare fully booked'],
+    ['#f3e8ff','#d8b4fe','dashed','Capacity needed · pending match'],
+    ['#d1fae5','#6ee7b7','dashed','Capacity secured'],
+  ].map(([bg,border,style,label]) =>
+    `<div style="display:flex;align-items:center;gap:6px;font-size:10px;color:#374151">
+      <div style="width:10px;height:10px;border-radius:3px;flex-shrink:0;background:${bg};border:1px ${style} ${border}"></div>${label}
+    </div>`
+  ).join('');
+
+  c.innerHTML = `<div class="page-content">
+    <div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between">
+      <div><h1>Overview</h1><p>Your full week at a glance — schedule, spare capacity status, and capacity requests</p></div>
+    </div>
+    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:18px">
+      <span style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin-right:2px">Legend</span>
+      ${legendItems}
+    </div>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+      <div style="display:grid;grid-template-columns:88px repeat(5,1fr)">
+        <div style="background:#f9fafb;border-right:1px solid #f0ede8;border-bottom:1px solid #f0ede8"></div>
+        ${colHeaders}
+        ${slotRows}
+      </div>
+    </div>
+  </div>`;
+}
+
+function histSetMonth(label, btn) {
+  // Visual toggle only — data is static demo
+  document.querySelectorAll('[id^="hist-btn-"]').forEach(b => {
+    b.style.background = '#f9fafb'; b.style.color = '#6b7280'; b.style.border = '1px solid #e5e7eb';
+  });
+  btn.style.background = '#111827'; btn.style.color = '#fff'; btn.style.border = 'none';
+}
+
+function nowLabel() {
+  const d = new Date();
+  const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${d.getDate()} ${M[d.getMonth()]} · ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// ══════════════════════════════════════════════
+//  CAPACITY TAB (spare + needed combined)
+// ══════════════════════════════════════════════
+function renderCapacityTab() {
+  const c = document.getElementById('capacity-tab-content');
+  if (!c) return;
+
+  const SLOT_SHORT = {morning:'Morning', afternoon:'Afternoon', evening:'Evening'};
+  const SLOT_STYLE = {
+    morning:   'background:#fffbeb;color:#92400e;border:1px solid #fde68a',
+    afternoon: 'background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe',
+    evening:   'background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe',
+  };
+
+  // Merge DEMO_BOOKED_TONS with runtime acceptedBookings
+  const bookedByRoute = {...DEMO_BOOKED_TONS};
+  acceptedBookings.forEach(b => {
+    bookedByRoute[b.routeId] = (bookedByRoute[b.routeId] || 0) + b.tons;
+  });
+
+  // ── Section 1: Spare Capacity ──────────────────
+  const spareRows = supplyScheduleRoutes.map(r => {
+    const spare   = supplySpareCapacity.find(s => s.routeId === r.id);
+    const booked  = bookedByRoute[r.id] || 0;
+    const fromPin = r.fromAddr?.match(/\b(\d{6})\b/)?.[1] || '';
+    const toPin   = r.toAddr?.match(/\b(\d{6})\b/)?.[1]   || '';
+
+    let spareCell, bookedCell;
+    if (!spare) {
+      spareCell  = `<button onclick="quickAddSpare('${r.id}')" style="font-size:9px;font-weight:600;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:2px 7px;cursor:pointer">+ List spare</button>`;
+      bookedCell = `<span style="font-size:10px;color:#d1d5db">—</span>`;
+    } else {
+      const avail = spare.spareTons - booked;
+      if (booked >= spare.spareTons) {
+        spareCell = `<span style="font-size:9px;font-weight:700;background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:2px 7px;border-radius:8px">Fully booked</span>`;
+      } else if (booked > 0) {
+        spareCell = `<span style="font-size:9px;font-weight:700;background:#dbeafe;color:#2563eb;border:1px solid #bfdbfe;padding:2px 7px;border-radius:8px">${avail}t of ${spare.spareTons}t left</span>`;
+      } else {
+        spareCell = `<span style="font-size:9px;font-weight:700;background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;padding:2px 7px;border-radius:8px">${spare.spareTons}t available</span>`;
+      }
+      bookedCell = booked > 0
+        ? `<span style="font-size:10px;color:#374151;font-weight:600">${booked}t booked</span>`
+        : `<span style="font-size:10px;color:#d1d5db">—</span>`;
+    }
+
+    return `<div style="display:grid;grid-template-columns:44px 90px 110px 1fr 60px 68px 52px 140px 90px;align-items:center;padding:9px 16px;border-bottom:1px solid #f9fafb" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+      <div style="font-size:10px;font-weight:700;color:#374151">${r.day}</div>
+      <div><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;${SLOT_STYLE[r.slot]}">${SLOT_SHORT[r.slot]}</span></div>
+      <div style="font-family:monospace;font-size:11px;font-weight:700;color:#374151">${r.truck}</div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#111827">${r.from} → ${r.to}</div>
+        ${fromPin||toPin?`<div style="font-size:9px;color:#9ca3af;margin-top:1px">${fromPin}${fromPin&&toPin?' → ':''}${toPin}</div>`:''}
+      </div>
+      <div><span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 6px;border-radius:10px">${r.containerIso||'—'}</span></div>
+      <div><span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:2px 6px;border-radius:10px">${r.containerOperator||'—'}</span></div>
+      <div style="font-size:11px;font-weight:700;color:#111827">${r.tons}t</div>
+      <div>${spareCell}</div>
+      <div>${bookedCell}</div>
+    </div>`;
+  }).join('');
+
+  // ── Section 2: Capacity Needed ─────────────────
+  const neededRoutes = supplyScheduleRoutes.filter(r => r.additionalTonsNeeded > 0);
+  const neededRows = neededRoutes.length === 0
+    ? `<div style="padding:32px;text-align:center;font-size:12px;color:#9ca3af">No capacity requests pending</div>`
+    : neededRoutes.map(r => {
+        const matched = outgoingRequests.find(o => o.from === r.from && o.to === r.to && o.day === r.day && o.slot === r.slot);
+        const statusCell = matched
+          ? `<span style="font-size:9px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:2px 7px;border-radius:8px">Matched ✓</span>`
+          : `<span style="font-size:9px;font-weight:700;background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;padding:2px 7px;border-radius:8px">Pending match</span>`;
+        const haulierCell = matched
+          ? `<span style="font-size:11px;color:#374151">${matched.provider}</span>`
+          : `<span style="font-size:10px;color:#d1d5db">—</span>`;
+        return `<div style="display:grid;grid-template-columns:44px 90px 1fr 90px 140px 1fr;align-items:center;padding:9px 16px;border-bottom:1px solid #f9fafb" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+          <div style="font-size:10px;font-weight:700;color:#374151">${r.day}</div>
+          <div><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;${SLOT_STYLE[r.slot]}">${SLOT_SHORT[r.slot]}</span></div>
+          <div style="font-size:11px;font-weight:600;color:#111827">${r.from} → ${r.to}</div>
+          <div style="font-size:11px;font-weight:700;color:#111827">${r.additionalTonsNeeded}t</div>
+          <div>${statusCell}</div>
+          <div>${haulierCell}</div>
+        </div>`;
+      }).join('');
+
+  const spareCount = supplySpareCapacity.length;
+  const neededCount = neededRoutes.length;
+
+  c.innerHTML = `<div class="page-content">
+    <div class="page-header">
+      <h1>Capacity</h1>
+      <p>Spare capacity across your scheduled routes, and requests for additional capacity</p>
+    </div>
+    <div class="card" style="overflow:hidden;padding:0">
+
+      <!-- Spare Capacity section header -->
+      <div style="padding:10px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8;display:flex;align-items:center;gap:10px;border-left:3px solid #16a34a">
+        <span style="font-size:9px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.06em">Spare Capacity</span>
+        <span style="font-size:10px;color:#9ca3af">${spareCount} of ${supplyScheduleRoutes.length} routes have spare listed</span>
+        <button onclick="switchTab('tab-schedule')" style="margin-left:auto;font-size:10px;font-weight:600;color:#6b7280;background:#fff;border:1px solid #e5e7eb;padding:3px 10px;border-radius:6px;cursor:pointer">Manage in Schedule →</button>
+      </div>
+      <!-- Spare column headers -->
+      <div style="display:grid;grid-template-columns:44px 90px 110px 1fr 60px 68px 52px 140px 90px;padding:7px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8">
+        <div class="section-label" style="margin:0">Day</div>
+        <div class="section-label" style="margin:0">Slot</div>
+        <div class="section-label" style="margin:0">Vehicle</div>
+        <div class="section-label" style="margin:0">Route</div>
+        <div class="section-label" style="margin:0">ISO</div>
+        <div class="section-label" style="margin:0">Operator</div>
+        <div class="section-label" style="margin:0">Tons</div>
+        <div class="section-label" style="margin:0">Spare</div>
+        <div class="section-label" style="margin:0">Booked</div>
+      </div>
+      ${spareRows}
+
+      <!-- Capacity Needed section header -->
+      <div style="padding:10px 16px;background:#f9fafb;border-top:1px solid #f0ede8;border-bottom:1px solid #f0ede8;display:flex;align-items:center;gap:10px;border-left:3px solid #7c3aed">
+        <span style="font-size:9px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.06em">Capacity Needed</span>
+        <span style="font-size:10px;color:#9ca3af">${neededCount} routes need additional capacity</span>
+        <span style="margin-left:auto;font-size:10px;color:#9ca3af;font-style:italic">Add requests from the Requests tab →</span>
+      </div>
+      <!-- Needed column headers -->
+      <div style="display:grid;grid-template-columns:44px 90px 1fr 90px 140px 1fr;padding:7px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8">
+        <div class="section-label" style="margin:0">Day</div>
+        <div class="section-label" style="margin:0">Slot</div>
+        <div class="section-label" style="margin:0">Route</div>
+        <div class="section-label" style="margin:0">Tons needed</div>
+        <div class="section-label" style="margin:0">Status</div>
+        <div class="section-label" style="margin:0">Haulier</div>
+      </div>
+      ${neededRows}
+
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  REQUESTS TAB (incoming + outgoing pending)
+// ══════════════════════════════════════════════
+function renderRequestsTab() {
+  const c = document.getElementById('requests-tab-content');
+  if (!c) return;
+
+  const SLOT_STYLE = {
+    morning:   'background:#fffbeb;color:#92400e;border:1px solid #fde68a',
+    afternoon: 'background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe',
+    Morning:   'background:#fffbeb;color:#92400e;border:1px solid #fde68a',
+    Afternoon: 'background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe',
+    Evening:   'background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe',
+    evening:   'background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe',
+  };
+  const SLOT_SHORT = {morning:'Morning', afternoon:'Afternoon', evening:'Evening', Morning:'Morning', Afternoon:'Afternoon', Evening:'Evening'};
+
+  const pendingIncoming    = supplyRequests.filter(r => r.status === 'pending');
+  const pendingOutgoing    = outgoingRequests.filter(r => r.step === 1);
+  const pendingManual      = manualCnRequests.filter(r => r.status === 'pending');
+  const pendingCount       = pendingIncoming.length + pendingOutgoing.length + pendingManual.length;
+
+  // ── Incoming rows ──────────────────────────────
+  const incomingRows = pendingIncoming.length === 0
+    ? `<div style="padding:28px;text-align:center;font-size:11px;color:#9ca3af">No incoming requests pending</div>`
+    : pendingIncoming.map(r => {
+        const slotKey   = (r.slot||'morning').toLowerCase();
+        const slotStyle = SLOT_STYLE[slotKey] || SLOT_STYLE.morning;
+        const slotLabel = SLOT_SHORT[r.slot] || r.slot;
+        const tons      = r.tonnage ? r.tonnage.split(' ')[0] : '—';
+        return `<div style="display:grid;grid-template-columns:90px 90px 1fr 140px 60px 140px 160px;align-items:center;padding:10px 16px;border-bottom:1px solid #f9fafb" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+          <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">${r.id}</div>
+          <div><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;${slotStyle}">${slotLabel}</span></div>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:#111827">${r.route}</div>
+            <div style="font-size:9px;color:#9ca3af;margin-top:1px">${r.date}</div>
+          </div>
+          <div style="font-size:11px;color:#374151">${r.requester}</div>
+          <div style="font-size:11px;font-weight:700;color:#111827">${tons}t</div>
+          <div style="font-family:monospace;font-size:9px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.cargoRef||'—'}</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="acceptIncomingRequest('${r.id}')" style="font-size:10px;font-weight:700;padding:5px 12px;border-radius:7px;border:none;cursor:pointer;background:#16a34a;color:#fff">Accept</button>
+            <button onclick="declineIncomingRequest('${r.id}')" style="font-size:10px;font-weight:700;padding:5px 12px;border-radius:7px;cursor:pointer;border:1px solid #fca5a5;background:#fff;color:#ef4444">Decline</button>
+          </div>
+        </div>`;
+      }).join('');
+
+  // ── Outgoing rows (confirmed via matching flow) ──
+  const outgoingConfirmedRows = pendingOutgoing.map(r => {
+    const slotStyle = SLOT_STYLE[r.slot] || SLOT_STYLE.morning;
+    const slotLabel = SLOT_SHORT[r.slot] || r.slot;
+    return `<div style="display:grid;grid-template-columns:90px 90px 1fr 140px 60px 120px 160px;align-items:center;padding:10px 16px;border-bottom:1px solid #f9fafb" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+      <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">${r.id}</div>
+      <div><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;${slotStyle}">${slotLabel}</span></div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#111827">${r.from} → ${r.to}</div>
+        <div style="font-size:9px;color:#9ca3af;margin-top:1px">${r.detail||''}</div>
+      </div>
+      <div style="font-size:11px;color:#374151">${r.provider}</div>
+      <div style="font-size:11px;font-weight:700;color:#111827">${r.tons}t</div>
+      <div style="font-size:10px;color:#6b7280">${r.statusLabel||''}</div>
+      <div style="display:flex;gap:6px">
+        <button onclick="confirmOutgoingRequest('${r.id}')" style="font-size:10px;font-weight:700;padding:5px 12px;border-radius:7px;border:none;cursor:pointer;background:#2563eb;color:#fff">Confirm</button>
+        <button onclick="cancelOutgoingRequest('${r.id}')" style="font-size:10px;font-weight:700;padding:5px 12px;border-radius:7px;cursor:pointer;border:1px solid #e5e7eb;background:#fff;color:#6b7280">Cancel</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // ── Manual pending rows (awaiting match) ──────
+  const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const manualPendingRows = pendingManual.map(r => {
+    const slotStyle = SLOT_STYLE[(r.slot||'morning').toLowerCase()] || SLOT_STYLE.morning;
+    const slotLabel = SLOT_SHORT[r.slot] || r.slot;
+    return `<div style="display:grid;grid-template-columns:90px 90px 1fr 140px 60px 120px 160px;align-items:center;padding:10px 16px;border-bottom:1px solid #f9fafb;background:#fafbff" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='#fafbff'">
+      <div style="font-family:monospace;font-size:10px;font-weight:700;color:#7c3aed">${r.id}</div>
+      <div><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;${slotStyle}">${slotLabel}</span></div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#111827">${r.from} → ${r.to}</div>
+        <div style="font-size:9px;color:#9ca3af;margin-top:1px">${r.day} · ${r.tons}t</div>
+      </div>
+      <div style="font-size:11px;color:#9ca3af;font-style:italic">Awaiting match</div>
+      <div style="font-size:11px;font-weight:700;color:#111827">${r.tons}t</div>
+      <div><span style="font-size:8px;font-weight:700;padding:2px 7px;border-radius:8px;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe">Unmatched</span></div>
+      <div style="font-size:10px;color:#9ca3af">Run match to assign</div>
+    </div>`;
+  }).join('');
+
+  const outgoingRows = (outgoingConfirmedRows + manualPendingRows) ||
+    `<div style="padding:28px;text-align:center;font-size:11px;color:#9ca3af">No outgoing requests — add one below or run encrypted match</div>`;
+
+  // ── Add new request form ───────────────────────
+  const DAY_KEYS   = ['Mon','Tue','Wed','Thu','Fri'];
+  const SLOT_KEYS2 = ['morning','afternoon','evening'];
+  const SLOT_LBL2  = {morning:'Morning',afternoon:'Afternoon',evening:'Evening'};
+  const newReqForm = addingNewRequest ? `
+    <div style="padding:14px 16px;background:#f5f3ff;border-top:1px solid #ede9fe">
+      <div style="font-size:10px;font-weight:700;color:#7c3aed;margin-bottom:10px">New capacity request</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 80px auto;gap:8px;align-items:end">
+        <div>
+          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">From</div>
+          <input id="nr-from" placeholder="e.g. Jurong" style="width:100%;font-size:11px;padding:6px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">To</div>
+          <input id="nr-to" placeholder="e.g. Changi" style="width:100%;font-size:11px;padding:6px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Tons needed</div>
+          <input id="nr-tons" type="number" min="1" max="100" placeholder="e.g. 20" style="width:100%;font-size:11px;padding:6px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Day</div>
+          <select id="nr-day" style="width:100%;font-size:11px;padding:6px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+            ${DAY_KEYS.map(d=>`<option value="${d}">${d}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Slot</div>
+          <select id="nr-slot" style="font-size:11px;padding:6px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+            ${SLOT_KEYS2.map(k=>`<option value="${k}">${SLOT_LBL2[k]}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="saveNewCapacityRequest()" style="font-size:10px;font-weight:700;padding:6px 16px;border-radius:7px;border:none;cursor:pointer;background:#7c3aed;color:#fff">Save request</button>
+        <button onclick="addingNewRequest=false;renderRequestsTab()" style="font-size:10px;padding:6px 14px;border-radius:7px;cursor:pointer;border:1px solid #ddd6fe;background:#fff;color:#6b7280">Cancel</button>
+      </div>
+    </div>` : '';
+
+
+  c.innerHTML = `<div class="page-content">
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div>
+        <h1>Requests</h1>
+        <p>${pendingCount} pending your action · once actioned, updates the Capacity tab</p>
+      </div>
+      <button onclick="addingNewRequest=!addingNewRequest;renderRequestsTab()" style="font-size:11px;font-weight:700;padding:7px 16px;border-radius:8px;border:none;cursor:pointer;background:#7c3aed;color:#fff;white-space:nowrap">+ New request</button>
+    </div>
+    <div class="card" style="overflow:hidden;padding:0">
+
+      <!-- Incoming section -->
+      <div style="padding:10px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8;display:flex;align-items:center;gap:10px;border-left:3px solid #16a34a">
+        <span style="font-size:9px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.06em">↓ Incoming</span>
+        <span style="font-size:10px;color:#9ca3af">Hauliers requesting to use your spare capacity — accept or decline</span>
+        <span style="margin-left:auto;font-size:9px;font-weight:700;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;padding:2px 8px;border-radius:8px">${pendingIncoming.length} pending</span>
+      </div>
+      <div style="display:grid;grid-template-columns:90px 90px 1fr 140px 60px 140px 160px;padding:7px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8">
+        <div class="section-label" style="margin:0">Request</div>
+        <div class="section-label" style="margin:0">Slot</div>
+        <div class="section-label" style="margin:0">Route</div>
+        <div class="section-label" style="margin:0">Haulier</div>
+        <div class="section-label" style="margin:0">Tons</div>
+        <div class="section-label" style="margin:0">Cargo Ref</div>
+        <div class="section-label" style="margin:0">Action</div>
+      </div>
+      ${incomingRows}
+
+      <!-- Outgoing section -->
+      <div style="padding:10px 16px;background:#f9fafb;border-top:1px solid #f0ede8;border-bottom:1px solid #f0ede8;display:flex;align-items:center;gap:10px;border-left:3px solid #2563eb">
+        <span style="font-size:9px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.06em">↑ Outgoing</span>
+        <span style="font-size:10px;color:#9ca3af">Your capacity requests — matched or awaiting match</span>
+        <button onclick="cnInitRequests();cnRenderS1();cnShowStep('s1');switchTab('tab-new')" style="margin-left:auto;font-size:10px;font-weight:700;color:#fff;background:#7c3aed;border:none;padding:5px 14px;border-radius:7px;cursor:pointer">Run encrypted match →</button>
+      </div>
+      <div style="display:grid;grid-template-columns:90px 90px 1fr 140px 60px 120px 160px;padding:7px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8">
+        <div class="section-label" style="margin:0">Request</div>
+        <div class="section-label" style="margin:0">Slot</div>
+        <div class="section-label" style="margin:0">Route</div>
+        <div class="section-label" style="margin:0">Haulier</div>
+        <div class="section-label" style="margin:0">Tons</div>
+        <div class="section-label" style="margin:0">Status</div>
+        <div class="section-label" style="margin:0">Action</div>
+      </div>
+      ${outgoingRows}
+      ${newReqForm}
+
+    </div>
+  </div>`;
+}
+
+function acceptIncomingRequest(reqId) {
+  const req = supplyRequests.find(r => r.id === reqId);
+  if (!req) return;
+  req.status = 'accepted';
+  if (req.routeId) acceptedBookings.push({reqId, routeId: req.routeId, tons: req.bookedTons || 3});
+  const tons = req.tonnage ? parseInt(req.tonnage) : (req.bookedTons || 3);
+  actionsHistory.unshift({action:'Accepted', reqId, direction:'incoming', route:req.route, counterparty:req.requester, tons, outcome:`${tons}t booked ✓`, when:nowLabel()});
+  renderRequestsTab();
+}
+
+function declineIncomingRequest(reqId) {
+  const req = supplyRequests.find(r => r.id === reqId);
+  if (!req) return;
+  req.status = 'declined';
+  const tons = req.tonnage ? parseInt(req.tonnage) : '?';
+  actionsHistory.unshift({action:'Declined', reqId, direction:'incoming', route:req.route, counterparty:req.requester, tons, outcome:'—', when:nowLabel()});
+  renderRequestsTab();
+}
+
+function confirmOutgoingRequest(reqId) {
+  const req = outgoingRequests.find(r => r.id === reqId);
+  if (!req) return;
+  req.step = 2;
+  actionsHistory.unshift({action:'Confirmed', reqId, direction:'outgoing', route:`${req.from} → ${req.to}`, counterparty:req.provider, tons:req.tons, outcome:'Matched ✓', when:nowLabel()});
+  renderRequestsTab();
+}
+
+function cancelOutgoingRequest(reqId) {
+  const req = outgoingRequests.find(r => r.id === reqId);
+  if (!req) return;
+  actionsHistory.unshift({action:'Cancelled', reqId, direction:'outgoing', route:`${req.from} → ${req.to}`, counterparty:req.provider, tons:req.tons, outcome:'—', when:nowLabel()});
+  outgoingRequests = outgoingRequests.filter(r => r.id !== reqId);
+  renderRequestsTab();
+}
+
+function saveNewCapacityRequest() {
+  const from = (document.getElementById('nr-from').value || '').trim();
+  const to   = (document.getElementById('nr-to').value   || '').trim();
+  const tons = parseInt(document.getElementById('nr-tons').value || '0');
+  const day  = document.getElementById('nr-day').value;
+  const slot = document.getElementById('nr-slot').value;
+  if (!from || !to || !tons) { alert('Please fill in From, To, and Tons.'); return; }
+  const newId = 'SG-' + (Math.floor(Math.random()*900)+900);
+  manualCnRequests.push({id:newId, from, to, tons, day, slot, status:'pending'});
+  addingNewRequest = false;
+  renderRequestsTab();
 }
 
 // ══════════════════════════════════════════════
@@ -1188,73 +1821,94 @@ function quickAddSpare(routeId) {
 function renderScheduleTab() {
   const c = document.getElementById('schedule-tab-content');
   if (!c) return;
+
+  // Compute date for each day of the current week (Mon=0 … Sun=6)
   const today = new Date();
-  const todayDayName = DAYS_OF_WEEK[(today.getDay()+6)%7];
+  const mondayOffset = today.getDay() === 0 ? -6 : 1 - today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + mondayOffset);
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const ordSuffix = n => n===1||n===21||n===31?'st':n===2||n===22?'nd':n===3||n===23?'rd':'th';
+  const weekDates = DAYS_OF_WEEK.map((_, i) => {
+    const d = new Date(monday); d.setDate(monday.getDate() + i);
+    return `${d.getDate()}${ordSuffix(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  });
 
-  const dayPills = DAYS_OF_WEEK.map(d => {
-    const count = supplyScheduleRoutes.filter(r => r.day===d).length;
-    const isSel = d === selectedWeekDay;
-    const isToday = d === todayDayName;
-    return `<div onclick="selectedWeekDay='${d}';addingSupplyRoute=false;renderScheduleTab()" style="min-width:48px;text-align:center;padding:8px 6px;border-radius:10px;cursor:pointer;border:2px solid ${isSel?'#2563eb':'transparent'};background:${isSel?'#eff6ff':'transparent'}">
-      <p style="font-size:10px;font-weight:700;color:${isSel?'#2563eb':'#6b7280'};margin:0 0 2px">${d}${isToday?'*':''}</p>
-      <p style="font-size:14px;font-weight:800;color:${count>0?'#111827':'#d1d5db'};margin:0">${count||'—'}</p>
-    </div>`;
-  }).join('');
-
-  const dayRoutes = supplyScheduleRoutes.filter(r => r.day===selectedWeekDay);
-
-  const slotSections = SLOT_KEYS.map(key => {
-    const routes = dayRoutes.filter(r => r.slot===key);
-    if (routes.length===0 && !addingSupplyRoute) return '';
-    const routeCards = routes.map(r => {
-      const spare = supplySpareCapacity.find(s => s.routeId===r.id);
-      return `<div class="card" style="padding:11px 14px;border-color:${spare?'#bbf7d0':'#e5e7eb'}">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div style="flex:1">
-            <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">
-              <p class="section-label" style="margin:0">${r.truck}</p>
-              <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:1px 7px;border-radius:10px">${r.containerIso}</span>
-              <span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:1px 7px;border-radius:10px">${r.containerOperator}</span>
-            </div>
-            <p style="font-size:13px;font-weight:700;color:#111827;margin:0">${r.from} → ${r.to}</p>
-            <p style="font-size:10px;color:#6b7280;margin:2px 0 4px">${r.numTrucks?`${r.numTrucks} trucks × ${r.capTruck}t = `:''}${r.tons}t${spare?` · <span style="color:#16a34a;font-weight:600">${spare.spareTons}t spare offered</span>`:''}</p>
-            ${!spare
-              ? `<button onclick="quickAddSpare('${r.id}')" style="font-size:9px;font-weight:600;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:3px 8px;border-radius:6px;cursor:pointer">+ List spare capacity</button>`
-              : `<span style="font-size:9px;color:#16a34a;font-weight:600">✓ Spare listed</span>`}
-          </div>
-          <button onclick="removeSupplyRoute('${r.id}')" style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0;margin-left:8px">✕</button>
-        </div>
-      </div>`;
-    }).join('');
-    return `<div style="margin-bottom:14px">
-      <p class="section-label" style="margin-bottom:8px">${SLOT_LABELS[key]}</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">${routeCards}</div>
-      ${addingSupplyRoute===(selectedWeekDay+'_'+key) ? buildAddRouteForm(selectedWeekDay,key) : ''}
-      <button onclick="addingSupplyRoute='${selectedWeekDay}_${key}';renderScheduleTab()" style="font-size:10px;color:#2563eb;background:#f0f9ff;border:1px dashed #93c5fd;padding:5px 14px;border-radius:8px;cursor:pointer;width:100%">+ Add route</button>
-    </div>`;
-  }).join('');
+  const FULL_DAY = {Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday',Sun:'Sunday'};
+  const SLOT_STYLE = {
+    morning:   'background:#fffbeb;color:#92400e;border:1px solid #fde68a',
+    afternoon: 'background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe',
+    evening:   'background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe',
+  };
+  const SLOT_SHORT = {morning:'Morning',afternoon:'Afternoon',evening:'Evening'};
 
   const totalTrucks = [...new Set(supplyScheduleRoutes.map(r=>r.truck))].length;
   const totalTons   = supplyScheduleRoutes.reduce((a,r)=>a+r.tons,0);
 
+  const colHeader = `
+    <div style="display:grid;grid-template-columns:96px 120px 1fr 68px 68px 52px 120px;padding:7px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8">
+      <div class="section-label" style="margin:0">Slot</div>
+      <div class="section-label" style="margin:0">Vehicle</div>
+      <div class="section-label" style="margin:0">Route</div>
+      <div class="section-label" style="margin:0">Container</div>
+      <div class="section-label" style="margin:0">Operator</div>
+      <div class="section-label" style="margin:0">Tons</div>
+      <div class="section-label" style="margin:0">Spare</div>
+    </div>`;
+
+  const daySections = DAYS_OF_WEEK.map((d, i) => {
+    const dayRoutes = supplyScheduleRoutes.filter(r => r.day === d);
+    const isAdding  = addingSupplyRoute && addingSupplyRoute.startsWith(d + '_');
+    const addingSlot = isAdding ? addingSupplyRoute.split('_')[1] : 'morning';
+
+    const rows = dayRoutes.map(r => {
+      const spare  = supplySpareCapacity.find(s => s.routeId === r.id);
+      const fromPin = r.fromAddr?.match(/\b(\d{6})\b/)?.[1] || '';
+      const toPin   = r.toAddr?.match(/\b(\d{6})\b/)?.[1] || '';
+      return `
+        <div style="display:grid;grid-template-columns:96px 120px 1fr 68px 68px 52px 120px;align-items:center;padding:9px 16px;border-bottom:1px solid #f9fafb;transition:background .1s" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+          <div><span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;${SLOT_STYLE[r.slot]}">${SLOT_SHORT[r.slot]}</span></div>
+          <div style="font-family:monospace;font-size:11px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.truck}</div>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:#111827">${r.from} → ${r.to}</div>
+            ${fromPin||toPin?`<div style="font-size:9px;color:#9ca3af;margin-top:1px">${fromPin}${fromPin&&toPin?' → ':''}${toPin}</div>`:''}
+          </div>
+          <div><span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:10px">${r.containerIso||'—'}</span></div>
+          <div><span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:2px 7px;border-radius:10px">${r.containerOperator||'—'}</span></div>
+          <div style="font-size:11px;font-weight:700;color:#111827">${r.tons}t</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            ${spare
+              ? `<span style="font-size:9px;font-weight:700;color:#16a34a">${spare.spareTons}t ✓</span>`
+              : `<button onclick="quickAddSpare('${r.id}')" style="font-size:9px;font-weight:600;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:2px 7px;cursor:pointer;white-space:nowrap">+ List spare</button>`}
+            <button onclick="removeSupplyRoute('${r.id}')" style="font-size:12px;color:#d1d5db;background:none;border:none;cursor:pointer;padding:0;margin-left:auto" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#d1d5db'">✕</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    const hasContent = dayRoutes.length > 0 || isAdding;
+    return `
+      <div style="border-bottom:1px solid #f0ede8">
+        <div style="padding:8px 16px;background:#f9fafb;display:flex;align-items:center;gap:8px;${hasContent?'border-bottom:1px solid #f0ede8':''}">
+          <span style="font-size:11px;font-weight:700;color:#374151">${FULL_DAY[d]}</span>
+          <span style="font-size:10px;color:#9ca3af">· ${weekDates[i]}</span>
+          ${dayRoutes.length > 0 ? `<span style="font-size:9px;color:#bfbfbf">· ${dayRoutes.length} route${dayRoutes.length!==1?'s':''}</span>` : ''}
+          ${!isAdding ? `<button onclick="addingSupplyRoute='${d}_morning';renderScheduleTab()" style="margin-left:auto;font-size:10px;font-weight:600;padding:3px 10px;border-radius:6px;background:#f0f9ff;color:#2563eb;border:1px dashed #93c5fd;cursor:pointer">+ Add route</button>` : ''}
+        </div>
+        ${rows}
+        ${isAdding ? `<div style="padding:12px 16px;background:#f8fbff;border-top:1px solid #e0eeff">${buildAddRouteForm(d, addingSlot)}</div>` : ''}
+      </div>`;
+  }).join('');
+
   c.innerHTML = `<div class="page-content">
     <div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between">
-      <div><h1>My Schedule</h1><p>${totalTrucks} trucks · ${totalTons}t total capacity across all days</p></div>
+      <div><h1>My Schedule</h1><p>${totalTrucks} truck${totalTrucks!==1?'s':''} · ${totalTons}t total capacity across all days</p></div>
       <button onclick="switchTab('tab-spare')" style="font-size:11px;font-weight:600;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:7px 16px;border-radius:9px;cursor:pointer;white-space:nowrap">List spare capacity →</button>
     </div>
     ${buildImportSection()}
-    <div class="card" style="padding:12px 16px;margin-bottom:18px">
-      <div style="display:flex;gap:4px;overflow-x:auto">${dayPills}</div>
+    <div class="card" style="overflow:hidden;padding:0;margin-bottom:0">
+      ${colHeader}
+      ${daySections}
     </div>
-    <div>
-      ${dayRoutes.length===0 && !addingSupplyRoute
-        ? `<div class="card" style="padding:48px;text-align:center">
-            <p style="font-size:14px;color:#9ca3af;margin:0 0 16px">No routes scheduled for ${selectedWeekDay}</p>
-            ${SLOT_KEYS.map(key=>`<button onclick="addingSupplyRoute='${selectedWeekDay}_${key}';renderScheduleTab()" style="font-size:11px;color:#2563eb;background:#f0f9ff;border:1px dashed #93c5fd;padding:7px 18px;border-radius:8px;cursor:pointer;margin:4px">+ Add ${SLOT_LABELS[key].split(' ')[0]} route</button>`).join('')}
-           </div>`
-        : slotSections}
-    </div>
-
   </div>`;
 }
 
@@ -1686,19 +2340,22 @@ function cnShowStep(id) {
 }
 
 function cnInitRequests() {
-  cnRequests = supplyScheduleRoutes
-    .filter(r => r.additionalTonsNeeded > 0)
-    .map(r => ({
-      id: 'cn-' + r.id,
-      routeId: r.id,
-      day: r.day,
-      slot: r.slot,
-      from: r.from,
-      to: r.to,
-      myTons: r.tons,
-      tons: r.additionalTonsNeeded,
-      manual: false,
-    }));
+  cnRequests = [
+    ...supplyScheduleRoutes
+      .filter(r => r.additionalTonsNeeded > 0)
+      .map(r => ({
+        id: 'cn-' + r.id,
+        routeId: r.id,
+        day: r.day,
+        slot: r.slot,
+        from: r.from,
+        to: r.to,
+        myTons: r.tons,
+        tons: r.additionalTonsNeeded,
+        manual: false,
+      })),
+    ...manualCnRequests.map(r => ({...r, manual: true})),
+  ];
   cnResults = {};
   cnSelections = {};
   cnShowManualForm = false;
@@ -2094,6 +2751,7 @@ function cnConfirmAll() {
       route: req.from + ' → ' + req.to,
       detail: req.tons + 't · ' + dateLabel + ' · ' + slotLabel,
       step: 1,
+      day: req.day, slot: req.slot, from: req.from, to: req.to, tons: req.tons,
       provider: sel.name,
       statusLabel: 'Commercials agreed',
       statusBg: '#eff6ff', statusText: '#2563eb', statusBorder: '#bfdbfe',
@@ -2125,7 +2783,7 @@ function cnConfirmAll() {
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <button onclick="cnReset()" class="btn-secondary" style="width:100%;padding:12px;border-radius:10px;font-size:13px">New Batch Request</button>
-      <button onclick="switchTab('tab-outgoing')" class="btn-primary" style="width:100%;padding:12px;border-radius:10px;font-size:13px">View Outgoing Requests →</button>
+      <button onclick="switchTab('tab-requests')" class="btn-primary" style="width:100%;padding:12px;border-radius:10px;font-size:13px">View Outgoing Requests →</button>
     </div>
   </div>`;
 

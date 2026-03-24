@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Capacity Tab — Design Sample</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { background: #f5f4f0; min-width: 1024px; margin: 0; padding: 32px; }
+
+    .section-label {
+      font-size: 9px;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      font-weight: 600;
+    }
+    .col-header {
+      font-size: 9px;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      font-weight: 600;
+      padding: 7px 16px;
+      background: #fafafa;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .trow {
+      font-size: 11px;
+      color: #111827;
+      border-bottom: 1px solid #f9fafb;
+      transition: background .12s;
+    }
+    .trow:hover { background: #fafafa; }
+    .trow td { padding: 9px 16px; vertical-align: middle; }
+
+    /* Slot tags */
+    .slot-morning  { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+    .slot-afternoon{ background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+    .slot-evening  { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+    .badge-green   { background: #d1fae5; color: #065f46; }
+    .badge-amber   { background: #fef3c7; color: #92400e; }
+    .badge-grey    { background: #f3f4f6; color: #6b7280; }
+    .badge-purple-dashed { background: transparent; color: #7c3aed; border: 1.5px dashed #a78bfa; padding: 2px 8px; }
+    .badge-matched { background: #d1fae5; color: #065f46; }
+
+    /* Pills */
+    .pill { display: inline-flex; align-items: center; font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: #f3f4f6; color: #374151; margin-right: 3px; white-space: nowrap; }
+
+    /* Mono */
+    .mono { font-family: 'Courier New', monospace; font-size: 10px; color: #374151; }
+
+    /* Btn */
+    .btn-xs { font-size: 9px; font-weight: 600; padding: 2px 8px; border-radius: 5px; border: 1px solid #e5e7eb; background: #fff; color: #374151; cursor: pointer; transition: background .12s; }
+    .btn-xs:hover { background: #f9fafb; }
+    .btn-primary { font-size: 11px; font-weight: 600; padding: 6px 14px; border-radius: 7px; border: none; background: #111827; color: #fff; cursor: pointer; }
+    .btn-primary:hover { background: #1f2937; }
+
+    /* Remove btn */
+    .btn-remove { color: #d1d5db; font-size: 12px; background: none; border: none; cursor: pointer; line-height: 1; padding: 2px 4px; border-radius: 3px; transition: color .12s; }
+    .btn-remove:hover { color: #6b7280; }
+
+    /* Card */
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 11px; overflow: hidden; margin-bottom: 20px; }
+    .card-header { padding: 14px 18px; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; }
+
+    /* Section divider row */
+    .section-divider td { background: #f9fafb; padding: 6px 16px; border-bottom: 1px solid #e5e7eb; }
+
+    /* Option label */
+    .option-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+    .option-desc { font-size: 11px; color: #6b7280; margin-top: 2px; }
+
+    /* Stats */
+    .stat-text { font-size: 11px; color: #6b7280; }
+
+    /* booked bar */
+    .booked-bar { width: 60px; height: 5px; background: #e5e7eb; border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; margin-left: 5px; }
+    .booked-fill { height: 100%; background: #10b981; border-radius: 3px; }
+    .booked-fill.full { background: #f59e0b; }
+  </style>
+</head>
+<body>
+
+  <!-- Page header -->
+  <div style="margin-bottom: 28px;">
+    <div class="section-label" style="margin-bottom: 4px;">SGTraDEX · Design Sample</div>
+    <h1 style="font-size: 20px; font-weight: 700; color: #111827; margin: 0 0 4px 0;">Capacity Tab</h1>
+    <p style="font-size: 12px; color: #6b7280; margin: 0;">Two design options for combining "Spare Capacity" and "Capacity Needed" into one tab.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- OPTION A -->
+  <!-- ============================================================ -->
+  <div style="margin-bottom: 10px;">
+    <span class="option-label" style="color: #2563eb;">Option A</span>
+    <span style="font-size: 10px; font-weight: 600; color: #2563eb; margin-left: 6px;">Unified Per-Route Table</span>
+    <div class="option-desc">One flat table — each row is a scheduled route showing both spare offered and capacity needed in the same view. No switching between tabs.</div>
+  </div>
+
+  <div class="card">
+    <!-- Card header -->
+    <div class="card-header">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <span style="font-size: 13px; font-weight: 600; color: #111827;">Capacity</span>
+        <span class="stat-text">10 routes</span>
+        <span style="color: #d1d5db; font-size: 11px;">·</span>
+        <span class="stat-text"><span style="color: #10b981; font-weight: 600;">3</span> with spare listed</span>
+        <span style="color: #d1d5db; font-size: 11px;">·</span>
+        <span class="stat-text"><span style="color: #7c3aed; font-weight: 600;">4</span> capacity requests active</span>
+      </div>
+      <button class="btn-primary">+ Add route</button>
+    </div>
+
+    <!-- Table -->
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th class="col-header" style="width: 48px;">Day</th>
+          <th class="col-header" style="width: 90px;">Slot</th>
+          <th class="col-header" style="width: 80px;">Vehicle</th>
+          <th class="col-header">Route</th>
+          <th class="col-header" style="width: 130px;">Container + Op.</th>
+          <th class="col-header" style="width: 70px;">My Tons</th>
+          <th class="col-header" style="width: 160px;">Spare Offered</th>
+          <th class="col-header" style="width: 160px;">Capacity Needed</th>
+          <th class="col-header" style="width: 30px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- Row 1 -->
+        <tr class="trow">
+          <td style="font-weight: 600; color: #374151;">Mon</td>
+          <td><span class="slot-morning">Morning</span></td>
+          <td><span class="mono">XD3351E</span></td>
+          <td>Jurong → Woodlands</td>
+          <td><span class="pill">45G1</span><span class="pill">ONE</span></td>
+          <td>10t</td>
+          <td>
+            <span class="badge badge-green">2t / 4t booked</span>
+            <div class="booked-bar"><div class="booked-fill" style="width: 50%;"></div></div>
+          </td>
+          <td><span class="badge badge-purple-dashed">40t pending</span></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+
+        <!-- Row 2 -->
+        <tr class="trow">
+          <td style="font-weight: 600; color: #374151;">Mon</td>
+          <td><span class="slot-afternoon">Afternoon</span></td>
+          <td><span class="mono">XE1218Y</span></td>
+          <td>Tuas → Changi</td>
+          <td><span class="pill">22G1</span><span class="pill">CC</span></td>
+          <td>10t</td>
+          <td>
+            <span class="badge badge-grey" style="margin-right: 4px;">Not listed</span>
+            <button class="btn-xs">+ List</button>
+          </td>
+          <td><span class="badge badge-purple-dashed">30t pending</span></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+
+        <!-- Row 3 -->
+        <tr class="trow">
+          <td style="font-weight: 600; color: #374151;">Mon</td>
+          <td><span class="slot-afternoon">Afternoon</span></td>
+          <td><span class="mono">XD6566P</span></td>
+          <td>Pasir Panjang → Tampines</td>
+          <td><span class="pill">45G1</span><span class="pill">HL</span></td>
+          <td>8t</td>
+          <td>
+            <span class="badge badge-grey" style="margin-right: 4px;">Not listed</span>
+            <button class="btn-xs">+ List</button>
+          </td>
+          <td><span style="color: #d1d5db; font-size: 13px;">—</span></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+
+        <!-- Row 4 -->
+        <tr class="trow">
+          <td style="font-weight: 600; color: #374151;">Tue</td>
+          <td><span class="slot-morning">Morning</span></td>
+          <td><span class="mono">XD3351E</span></td>
+          <td>Jurong → Tampines</td>
+          <td><span class="pill">45G1</span><span class="pill">ONE</span></td>
+          <td>10t</td>
+          <td>
+            <span class="badge badge-amber">Fully booked</span>
+            <div class="booked-bar"><div class="booked-fill full" style="width: 100%;"></div></div>
+          </td>
+          <td><span class="badge badge-purple-dashed">40t pending</span></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+
+        <!-- Row 5 -->
+        <tr class="trow">
+          <td style="font-weight: 600; color: #374151;">Tue</td>
+          <td><span class="slot-afternoon">Afternoon</span></td>
+          <td><span class="mono">XD6566P</span></td>
+          <td>Pasir Panjang → Woodlands</td>
+          <td><span class="pill">22G1</span><span class="pill">CK</span></td>
+          <td>8t</td>
+          <td>
+            <span class="badge badge-grey" style="margin-right: 4px;">Not listed</span>
+            <button class="btn-xs">+ List</button>
+          </td>
+          <td><span style="color: #d1d5db; font-size: 13px;">—</span></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+
+        <!-- Row 6 -->
+        <tr class="trow">
+          <td style="font-weight: 600; color: #374151;">Wed</td>
+          <td><span class="slot-morning">Morning</span></td>
+          <td><span class="mono">XE1218Y</span></td>
+          <td>Tuas → Yishun</td>
+          <td><span class="pill">45G1</span><span class="pill">CC</span></td>
+          <td>10t</td>
+          <td>
+            <span class="badge badge-green">4t available</span>
+            <div class="booked-bar"><div class="booked-fill" style="width: 0%;"></div></div>
+          </td>
+          <td><span class="badge badge-matched">Matched ✓</span></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+
+        <!-- Row 7 -->
+        <tr class="trow">
+          <td style="font-weight: 600; color: #374151;">Wed</td>
+          <td><span class="slot-afternoon">Afternoon</span></td>
+          <td><span class="mono">XD3351E</span></td>
+          <td>Woodlands → Jurong</td>
+          <td><span class="pill">22G1</span><span class="pill">PIL</span></td>
+          <td>10t</td>
+          <td>
+            <span class="badge badge-grey" style="margin-right: 4px;">Not listed</span>
+            <button class="btn-xs">+ List</button>
+          </td>
+          <td><span style="color: #d1d5db; font-size: 13px;">—</span></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+
+        <!-- Row 8 -->
+        <tr class="trow">
+          <td style="font-weight: 600; color: #374151;">Thu</td>
+          <td><span class="slot-morning">Morning</span></td>
+          <td><span class="mono">XE1218Y</span></td>
+          <td>Changi → Jurong</td>
+          <td><span class="pill">45G1</span><span class="pill">HL</span></td>
+          <td>10t</td>
+          <td>
+            <span class="badge badge-green">3t / 5t booked</span>
+            <div class="booked-bar"><div class="booked-fill" style="width: 60%;"></div></div>
+          </td>
+          <td><span class="badge badge-purple-dashed">40t pending</span></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+
+        <!-- Row 9 -->
+        <tr class="trow">
+          <td style="font-weight: 600; color: #374151;">Thu</td>
+          <td><span class="slot-morning">Morning</span></td>
+          <td><span class="mono">XD6566P</span></td>
+          <td>Jurong → Woodlands</td>
+          <td><span class="pill">45G1</span><span class="pill">ONE</span></td>
+          <td>8t</td>
+          <td>
+            <span class="badge badge-grey" style="margin-right: 4px;">Not listed</span>
+            <button class="btn-xs">+ List</button>
+          </td>
+          <td><span style="color: #d1d5db; font-size: 13px;">—</span></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+
+        <!-- Row 10 -->
+        <tr class="trow">
+          <td style="font-weight: 600; color: #374151;">Fri</td>
+          <td><span class="slot-afternoon">Afternoon</span></td>
+          <td><span class="mono">XD3351E</span></td>
+          <td>Tuas → Changi</td>
+          <td><span class="pill">22G1</span><span class="pill">CC</span></td>
+          <td>10t</td>
+          <td>
+            <span class="badge badge-grey" style="margin-right: 4px;">Not listed</span>
+            <button class="btn-xs">+ List</button>
+          </td>
+          <td><span style="color: #d1d5db; font-size: 13px;">—</span></td>
+          <td><button class="btn-remove">✕</button></td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- spacer -->
+  <div style="height: 40px;"></div>
+
+  <!-- ============================================================ -->
+  <!-- OPTION B -->
+  <!-- ============================================================ -->
+  <div style="margin-bottom: 10px;">
+    <span class="option-label" style="color: #7c3aed;">Option B</span>
+    <span style="font-size: 10px; font-weight: 600; color: #7c3aed; margin-left: 6px;">Two-Section Layout</span>
+    <div class="option-desc">Same card, two clearly labelled sections — Spare Capacity and Capacity Needed — each with their own columns. Only relevant routes shown per section.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span style="font-size: 13px; font-weight: 600; color: #111827;">Capacity</span>
+      <button class="btn-primary">+ Add route</button>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse;">
+
+      <!-- Section 1: Spare Capacity -->
+      <thead>
+        <tr class="section-divider">
+          <td colspan="8">
+            <span class="section-label" style="color: #10b981;">Spare Capacity</span>
+            <span style="font-size: 9px; color: #9ca3af; margin-left: 8px;">Routes where you have space to offer</span>
+          </td>
+        </tr>
+        <tr>
+          <th class="col-header">Route</th>
+          <th class="col-header" style="width: 80px;">Vehicle</th>
+          <th class="col-header" style="width: 48px;">Day</th>
+          <th class="col-header" style="width: 90px;">Slot</th>
+          <th class="col-header" style="width: 70px;">My Tons</th>
+          <th class="col-header" style="width: 140px;">Spare Offered</th>
+          <th class="col-header" style="width: 140px;">Bookings</th>
+          <th class="col-header" style="width: 80px;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Only rows with spare listed: rows 1, 4, 6, 8 -->
+        <tr class="trow">
+          <td>Jurong → Woodlands</td>
+          <td><span class="mono">XD3351E</span></td>
+          <td style="font-weight: 600;">Mon</td>
+          <td><span class="slot-morning">Morning</span></td>
+          <td>10t</td>
+          <td><span class="badge badge-green">4t spare</span></td>
+          <td>
+            <span style="font-size: 10px; color: #374151;">2t / 4t booked</span>
+            <div class="booked-bar" style="margin-left: 0; margin-top: 3px; display: block; width: 80px;"><div class="booked-fill" style="width: 50%;"></div></div>
+          </td>
+          <td><button class="btn-xs">Manage</button></td>
+        </tr>
+        <tr class="trow">
+          <td>Jurong → Tampines</td>
+          <td><span class="mono">XD3351E</span></td>
+          <td style="font-weight: 600;">Tue</td>
+          <td><span class="slot-morning">Morning</span></td>
+          <td>10t</td>
+          <td><span class="badge badge-amber">3t spare</span></td>
+          <td>
+            <span style="font-size: 10px; color: #374151;">3t / 3t booked</span>
+            <div class="booked-bar" style="margin-left: 0; margin-top: 3px; display: block; width: 80px;"><div class="booked-fill full" style="width: 100%;"></div></div>
+          </td>
+          <td><button class="btn-xs">Manage</button></td>
+        </tr>
+        <tr class="trow">
+          <td>Tuas → Yishun</td>
+          <td><span class="mono">XE1218Y</span></td>
+          <td style="font-weight: 600;">Wed</td>
+          <td><span class="slot-morning">Morning</span></td>
+          <td>10t</td>
+          <td><span class="badge badge-green">4t spare</span></td>
+          <td>
+            <span style="font-size: 10px; color: #6b7280;">No bookings yet</span>
+            <div class="booked-bar" style="margin-left: 0; margin-top: 3px; display: block; width: 80px;"><div class="booked-fill" style="width: 0%;"></div></div>
+          </td>
+          <td><button class="btn-xs">Manage</button></td>
+        </tr>
+        <tr class="trow">
+          <td>Changi → Jurong</td>
+          <td><span class="mono">XE1218Y</span></td>
+          <td style="font-weight: 600;">Thu</td>
+          <td><span class="slot-morning">Morning</span></td>
+          <td>10t</td>
+          <td><span class="badge badge-green">5t spare</span></td>
+          <td>
+            <span style="font-size: 10px; color: #374151;">3t / 5t booked</span>
+            <div class="booked-bar" style="margin-left: 0; margin-top: 3px; display: block; width: 80px;"><div class="booked-fill" style="width: 60%;"></div></div>
+          </td>
+          <td><button class="btn-xs">Manage</button></td>
+        </tr>
+        <tr>
+          <td colspan="8" style="padding: 8px 16px; border-bottom: 1px solid #f9fafb;">
+            <span style="font-size: 10px; color: #9ca3af;">7 routes without spare ·</span>
+            <button style="font-size: 10px; color: #2563eb; background: none; border: none; cursor: pointer; padding: 0; margin-left: 3px;">click to view all</button>
+          </td>
+        </tr>
+
+        <!-- Section 2: Capacity Needed -->
+        <tr class="section-divider">
+          <td colspan="8">
+            <span class="section-label" style="color: #7c3aed;">Capacity Needed</span>
+            <span style="font-size: 9px; color: #9ca3af; margin-left: 8px;">Routes where you need space from others</span>
+          </td>
+        </tr>
+      </tbody>
+
+      <!-- Section 2 header -->
+      <thead>
+        <tr>
+          <th class="col-header">Route</th>
+          <th class="col-header" style="width: 48px;">Day</th>
+          <th class="col-header" style="width: 90px;">Slot</th>
+          <th class="col-header" style="width: 80px;">Tons Needed</th>
+          <th class="col-header" style="width: 140px;">Status</th>
+          <th class="col-header">Haulier</th>
+          <th class="col-header" style="width: 70px;">Cost</th>
+          <th class="col-header" style="width: 80px;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows with active capacity requests: rows 1, 2, 4, 6, 8 -->
+        <tr class="trow">
+          <td>Jurong → Woodlands</td>
+          <td style="font-weight: 600;">Mon</td>
+          <td><span class="slot-morning">Morning</span></td>
+          <td>40t</td>
+          <td><span class="badge badge-purple-dashed">Pending match</span></td>
+          <td><span style="color: #9ca3af; font-size: 10px;">Searching…</span></td>
+          <td><span style="color: #9ca3af;">—</span></td>
+          <td><button class="btn-xs">Edit</button></td>
+        </tr>
+        <tr class="trow">
+          <td>Tuas → Changi</td>
+          <td style="font-weight: 600;">Mon</td>
+          <td><span class="slot-afternoon">Afternoon</span></td>
+          <td>30t</td>
+          <td><span class="badge badge-purple-dashed">Pending match</span></td>
+          <td><span style="color: #9ca3af; font-size: 10px;">Searching…</span></td>
+          <td><span style="color: #9ca3af;">—</span></td>
+          <td><button class="btn-xs">Edit</button></td>
+        </tr>
+        <tr class="trow">
+          <td>Jurong → Tampines</td>
+          <td style="font-weight: 600;">Tue</td>
+          <td><span class="slot-morning">Morning</span></td>
+          <td>40t</td>
+          <td><span class="badge badge-purple-dashed">Pending match</span></td>
+          <td><span style="color: #9ca3af; font-size: 10px;">Searching…</span></td>
+          <td><span style="color: #9ca3af;">—</span></td>
+          <td><button class="btn-xs">Edit</button></td>
+        </tr>
+        <tr class="trow">
+          <td>Tuas → Yishun</td>
+          <td style="font-weight: 600;">Wed</td>
+          <td><span class="slot-morning">Morning</span></td>
+          <td>30t</td>
+          <td><span class="badge badge-matched">Matched ✓</span></td>
+          <td style="font-size: 10px; font-weight: 500;">Apex Logistics</td>
+          <td style="font-size: 10px; font-weight: 600; color: #065f46;">S$420</td>
+          <td><button class="btn-xs">View</button></td>
+        </tr>
+        <tr class="trow">
+          <td>Changi → Jurong</td>
+          <td style="font-weight: 600;">Thu</td>
+          <td><span class="slot-morning">Morning</span></td>
+          <td>40t</td>
+          <td><span class="badge badge-purple-dashed">Pending match</span></td>
+          <td><span style="color: #9ca3af; font-size: 10px;">Searching…</span></td>
+          <td><span style="color: #9ca3af;">—</span></td>
+          <td><button class="btn-xs">Edit</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>

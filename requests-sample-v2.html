@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Requests Tab — Design Sample v2</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f5f4f0; margin: 0; padding: 32px; color: #111827; min-width: 1024px; }
+
+    .page-header { margin-bottom: 20px; }
+    .page-header h1 { font-size: 22px; font-weight: 800; color: #111827; margin: 0 0 4px; }
+    .page-header p  { font-size: 12px; color: #6b7280; margin: 0; }
+
+    .sample-label { margin: 0 0 6px; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .08em; }
+    .sample-desc  { font-size: 12px; color: #6b7280; margin: 0 0 16px; }
+
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 48px; }
+
+    /* Card header */
+    .card-head { padding: 14px 20px; background: #f9fafb; border-bottom: 1px solid #f0ede8; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .card-head h2 { font-size: 13px; font-weight: 700; color: #111827; margin: 0; }
+    .card-head p  { font-size: 11px; color: #9ca3af; margin: 0; }
+
+    /* Section divider */
+    .section-head { padding: 8px 20px; background: #f9fafb; border-bottom: 1px solid #f0ede8; border-top: 1px solid #f0ede8; display: flex; align-items: center; gap: 10px; }
+    .section-head span { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+    .section-head small { font-size: 10px; color: #9ca3af; }
+
+    /* Col header */
+    .col-head { display: grid; padding: 7px 20px; background: #f9fafb; border-bottom: 1px solid #f0ede8; }
+    .col-head div { font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .05em; }
+
+    /* Row */
+    .req-row { display: grid; align-items: center; padding: 10px 20px; border-bottom: 1px solid #f9fafb; transition: background .1s; }
+    .req-row:last-child { border-bottom: none; }
+    .req-row:hover { background: #fafafa; }
+
+    /* Pills / badges */
+    .pill { font-size: 8px; font-weight: 700; padding: 2px 7px; border-radius: 8px; white-space: nowrap; display: inline-block; }
+    .pill-green  { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .pill-blue   { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+    .pill-amber  { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .pill-grey   { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .pill-purple { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+
+    /* Slot tags */
+    .slot { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 6px; white-space: nowrap; }
+    .slot-m { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .slot-a { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+    .slot-e { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+
+    /* Action buttons */
+    .btn-accept  { font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 7px; border: none; cursor: pointer; background: #16a34a; color: #fff; }
+    .btn-decline { font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 7px; border: 1px solid #fca5a5; background: #fff; color: #ef4444; cursor: pointer; }
+    .btn-cancel  { font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 7px; border: 1px solid #e5e7eb; background: #fff; color: #6b7280; cursor: pointer; }
+    .btn-accept:hover  { background: #15803d; }
+    .btn-decline:hover { background: #fef2f2; }
+    .btn-cancel:hover  { background: #f9fafb; }
+
+    /* Empty state */
+    .empty-state { padding: 32px 20px; text-align: center; color: #9ca3af; font-size: 12px; }
+
+    /* Toast / feedback */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #111827; color: #fff; font-size: 11px; font-weight: 600; padding: 10px 18px; border-radius: 10px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 999; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Requests</h1>
+    <p>Actions pending your response. Once actioned, requests update the Capacity tab.</p>
+  </div>
+
+  <p class="sample-label">Design Sample</p>
+  <p class="sample-desc">Two sections: Incoming (others want your spare) and Outgoing (you've requested capacity, waiting on haulier). Each row has a clear action. Once acted on, the row is removed and the Capacity tab updates.</p>
+
+  <div class="card" id="requests-card">
+
+    <!-- ── Card header ── -->
+    <div class="card-head">
+      <div>
+        <h2>Pending Requests</h2>
+        <p id="summary-text">3 incoming · 2 outgoing awaiting response</p>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="pill pill-green" style="font-size:9px">● 3 incoming</span>
+        <span class="pill pill-blue"  style="font-size:9px">● 2 outgoing</span>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- SECTION: INCOMING                           -->
+    <!-- ════════════════════════════════════════════ -->
+    <div class="section-head" style="border-left: 3px solid #16a34a;">
+      <span style="color:#16a34a">↓ Incoming</span>
+      <small>Hauliers requesting to use your spare capacity — accept or decline</small>
+    </div>
+
+    <!-- Col headers -->
+    <div class="col-head" style="grid-template-columns: 90px 90px 1fr 110px 60px 140px 160px;">
+      <div>Request</div>
+      <div>Slot</div>
+      <div>Route</div>
+      <div>Haulier</div>
+      <div>Tons</div>
+      <div>Cargo Ref</div>
+      <div>Action</div>
+    </div>
+
+    <!-- Incoming rows -->
+    <div id="incoming-rows">
+
+      <div class="req-row" id="row-inc-1" style="grid-template-columns: 90px 90px 1fr 110px 60px 140px 160px;">
+        <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">SG-0895</div>
+        <div><span class="slot slot-a">Afternoon</span></div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#111827">Tuas → Changi</div>
+          <div style="font-size:9px;color:#9ca3af;margin-top:1px">Mon · 24 Mar</div>
+        </div>
+        <div style="font-size:11px;color:#374151">Pacific Freight</div>
+        <div style="font-size:11px;font-weight:700;color:#111827">10t</div>
+        <div style="font-family:monospace;font-size:9px;color:#6b7280">CCSU7245309390</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-accept"  onclick="acceptIncoming('row-inc-1', 'SG-0895', 10, 'r1')">Accept</button>
+          <button class="btn-decline" onclick="declineRow('row-inc-1')">Decline</button>
+        </div>
+      </div>
+
+      <div class="req-row" id="row-inc-2" style="grid-template-columns: 90px 90px 1fr 110px 60px 140px 160px;">
+        <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">SG-0893</div>
+        <div><span class="slot slot-m">Morning</span></div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#111827">Jurong → Woodlands</div>
+          <div style="font-size:9px;color:#9ca3af;margin-top:1px">Tue · 25 Mar</div>
+        </div>
+        <div style="font-size:11px;color:#374151">Lion Logistics SG</div>
+        <div style="font-size:11px;font-weight:700;color:#111827">12t</div>
+        <div style="font-family:monospace;font-size:9px;color:#6b7280">ONEYSIND45008900</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-accept"  onclick="acceptIncoming('row-inc-2', 'SG-0893', 12, 'r4')">Accept</button>
+          <button class="btn-decline" onclick="declineRow('row-inc-2')">Decline</button>
+        </div>
+      </div>
+
+      <div class="req-row" id="row-inc-3" style="grid-template-columns: 90px 90px 1fr 110px 60px 140px 160px;">
+        <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">SG-0888</div>
+        <div><span class="slot slot-m">Morning</span></div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#111827">Jurong → Tampines</div>
+          <div style="font-size:9px;color:#9ca3af;margin-top:1px">Thu · 27 Mar</div>
+        </div>
+        <div style="font-size:11px;color:#374151">Swift Haulage</div>
+        <div style="font-size:11px;font-weight:700;color:#111827">8t</div>
+        <div style="font-family:monospace;font-size:9px;color:#6b7280">HLCU25505182</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-accept"  onclick="acceptIncoming('row-inc-3', 'SG-0888', 8, 'r8')">Accept</button>
+          <button class="btn-decline" onclick="declineRow('row-inc-3')">Decline</button>
+        </div>
+      </div>
+
+      <div id="incoming-empty" class="empty-state" style="display:none">
+        No incoming requests pending.
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- SECTION: OUTGOING                           -->
+    <!-- ════════════════════════════════════════════ -->
+    <div class="section-head" style="border-left: 3px solid #2563eb;">
+      <span style="color:#2563eb">↑ Outgoing</span>
+      <small>Capacity requests you've submitted — waiting for haulier confirmation</small>
+    </div>
+
+    <!-- Col headers -->
+    <div class="col-head" style="grid-template-columns: 90px 90px 1fr 130px 60px 100px 160px;">
+      <div>Request</div>
+      <div>Slot</div>
+      <div>Route</div>
+      <div>Matched haulier</div>
+      <div>Tons</div>
+      <div>Est. cost</div>
+      <div>Action</div>
+    </div>
+
+    <!-- Outgoing rows -->
+    <div id="outgoing-rows">
+
+      <div class="req-row" id="row-out-1" style="grid-template-columns: 90px 90px 1fr 130px 60px 100px 160px;">
+        <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">SG-0891</div>
+        <div><span class="slot slot-m">Morning</span></div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#111827">Jurong → Woodlands</div>
+          <div style="font-size:9px;color:#9ca3af;margin-top:1px">Mon · 24 Mar · 30t</div>
+        </div>
+        <div style="font-size:11px;color:#374151">Swift Haulage Pte Ltd</div>
+        <div style="font-size:11px;font-weight:700;color:#111827">30t</div>
+        <div>
+          <div style="font-size:12px;font-weight:800;color:#111827">S$246</div>
+          <div style="font-size:9px;color:#16a34a;font-weight:600">14% below market</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-accept"  onclick="confirmOutgoing('row-out-1', 'SG-0891')">Confirm</button>
+          <button class="btn-cancel"  onclick="declineRow('row-out-1')">Cancel</button>
+        </div>
+      </div>
+
+      <div class="req-row" id="row-out-2" style="grid-template-columns: 90px 90px 1fr 130px 60px 100px 160px;">
+        <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">SG-0892</div>
+        <div><span class="slot slot-a">Afternoon</span></div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#111827">Tuas → Tampines</div>
+          <div style="font-size:9px;color:#9ca3af;margin-top:1px">Wed · 26 Mar · 50t</div>
+        </div>
+        <div style="font-size:11px;color:#374151">Apex Logistics SG</div>
+        <div style="font-size:11px;font-weight:700;color:#111827">50t</div>
+        <div>
+          <div style="font-size:12px;font-weight:800;color:#111827">S$410</div>
+          <div style="font-size:9px;color:#6b7280;font-weight:600">At market rate</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-accept"  onclick="confirmOutgoing('row-out-2', 'SG-0892')">Confirm</button>
+          <button class="btn-cancel"  onclick="declineRow('row-out-2')">Cancel</button>
+        </div>
+      </div>
+
+      <div id="outgoing-empty" class="empty-state" style="display:none">
+        No outgoing requests pending.
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- SECTION: ACTIONS TAKEN THIS WEEK            -->
+    <!-- ════════════════════════════════════════════ -->
+    <div class="section-head" style="border-left: 3px solid #9ca3af;">
+      <span style="color:#6b7280">✓ Actions taken this week</span>
+      <small>24 Mar – 28 Mar 2026 · read only</small>
+    </div>
+
+    <!-- Col headers -->
+    <div class="col-head" style="grid-template-columns: 80px 90px 90px 1fr 110px 60px 120px 100px;">
+      <div>Action</div>
+      <div>Request</div>
+      <div>Direction</div>
+      <div>Route</div>
+      <div>Counterparty</div>
+      <div>Tons</div>
+      <div>Outcome</div>
+      <div>When</div>
+    </div>
+
+    <!-- Pre-populated history rows -->
+    <div id="history-rows">
+
+      <div class="req-row" style="grid-template-columns: 80px 90px 90px 1fr 110px 60px 120px 100px;">
+        <div><span class="pill pill-green">Accepted</span></div>
+        <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">SG-0882</div>
+        <div><span class="pill" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:8px">↓ Incoming</span></div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#111827">Jurong → Tampines</div>
+          <div style="font-size:9px;color:#9ca3af;margin-top:1px">Mon · 24 Mar</div>
+        </div>
+        <div style="font-size:11px;color:#374151">Pinnacle Transport</div>
+        <div style="font-size:11px;font-weight:700;color:#111827">8t</div>
+        <div style="font-size:10px;color:#16a34a;font-weight:600">8t booked ✓</div>
+        <div style="font-size:10px;color:#9ca3af">24 Mar · 09:14</div>
+      </div>
+
+      <div class="req-row" style="grid-template-columns: 80px 90px 90px 1fr 110px 60px 120px 100px;">
+        <div><span class="pill pill-blue">Confirmed</span></div>
+        <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">SG-0876</div>
+        <div><span class="pill" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;font-size:8px">↑ Outgoing</span></div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#111827">Tuas → Woodlands</div>
+          <div style="font-size:9px;color:#9ca3af;margin-top:1px">Tue · 25 Mar</div>
+        </div>
+        <div style="font-size:11px;color:#374151">Swift Haulage Pte Ltd</div>
+        <div style="font-size:11px;font-weight:700;color:#111827">20t</div>
+        <div style="font-size:10px;color:#2563eb;font-weight:600">Matched ✓</div>
+        <div style="font-size:10px;color:#9ca3af">24 Mar · 11:40</div>
+      </div>
+
+      <div class="req-row" style="grid-template-columns: 80px 90px 90px 1fr 110px 60px 120px 100px;">
+        <div><span class="pill" style="background:#fef2f2;color:#ef4444;border:1px solid #fca5a5">Declined</span></div>
+        <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">SG-0871</div>
+        <div><span class="pill" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:8px">↓ Incoming</span></div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#111827">Pasir Panjang → Changi</div>
+          <div style="font-size:9px;color:#9ca3af;margin-top:1px">Wed · 26 Mar</div>
+        </div>
+        <div style="font-size:11px;color:#374151">Pacific Freight Carriers</div>
+        <div style="font-size:11px;font-weight:700;color:#111827">15t</div>
+        <div style="font-size:10px;color:#9ca3af">—</div>
+        <div style="font-size:10px;color:#9ca3af">25 Mar · 08:55</div>
+      </div>
+
+      <div class="req-row" style="grid-template-columns: 80px 90px 90px 1fr 110px 60px 120px 100px;">
+        <div><span class="pill pill-green">Accepted</span></div>
+        <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">SG-0869</div>
+        <div><span class="pill" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:8px">↓ Incoming</span></div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#111827">Changi → Jurong</div>
+          <div style="font-size:9px;color:#9ca3af;margin-top:1px">Thu · 27 Mar</div>
+        </div>
+        <div style="font-size:11px;color:#374151">Apex Logistics SG</div>
+        <div style="font-size:11px;font-weight:700;color:#111827">5t</div>
+        <div style="font-size:10px;color:#16a34a;font-weight:600">5t booked ✓</div>
+        <div style="font-size:10px;color:#9ca3af">26 Mar · 14:22</div>
+      </div>
+
+      <!-- Dynamically added rows go here -->
+      <div id="new-history-rows"></div>
+
+    </div>
+
+  </div><!-- /card -->
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let incomingCount = 3;
+    let outgoingCount = 2;
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    function updateSummary() {
+      document.getElementById('summary-text').textContent =
+        `${incomingCount} incoming · ${outgoingCount} outgoing awaiting response`;
+    }
+
+    function removeRow(rowId) {
+      const row = document.getElementById(rowId);
+      if (!row) return;
+      row.style.transition = 'opacity .2s, max-height .3s';
+      row.style.opacity = '0';
+      row.style.overflow = 'hidden';
+      row.style.maxHeight = row.offsetHeight + 'px';
+      setTimeout(() => { row.style.maxHeight = '0'; row.style.padding = '0'; }, 200);
+      setTimeout(() => row.remove(), 500);
+    }
+
+    function logAction(html) {
+      const log = document.getElementById('action-log');
+      const rows = document.getElementById('action-log-rows');
+      log.style.display = 'block';
+      const div = document.createElement('div');
+      div.style.cssText = 'font-size:11px;color:#374151;padding:7px 0;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:10px';
+      div.innerHTML = html;
+      rows.appendChild(div);
+    }
+
+    function checkEmpty(sectionId, emptyId) {
+      const rows = document.querySelectorAll(`#${sectionId} .req-row`);
+      const visible = [...rows].filter(r => r.style.opacity !== '0' && r.style.maxHeight !== '0px');
+      if (visible.length <= 1) {
+        setTimeout(() => {
+          const remaining = document.querySelectorAll(`#${sectionId} .req-row`);
+          if (remaining.length === 0) document.getElementById(emptyId).style.display = 'block';
+        }, 550);
+      }
+    }
+
+    function now() {
+      const d = new Date();
+      return d.getDate() + ' Mar · ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    }
+
+    function addHistoryRow(actionPill, reqId, directionPill, route, day, counterparty, tons, outcome) {
+      const container = document.getElementById('new-history-rows');
+      const div = document.createElement('div');
+      div.className = 'req-row';
+      div.style.gridTemplateColumns = '80px 90px 90px 1fr 110px 60px 120px 100px';
+      div.style.opacity = '0';
+      div.innerHTML = `
+        <div>${actionPill}</div>
+        <div style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">${reqId}</div>
+        <div>${directionPill}</div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#111827">${route}</div>
+          <div style="font-size:9px;color:#9ca3af;margin-top:1px">${day}</div>
+        </div>
+        <div style="font-size:11px;color:#374151">${counterparty}</div>
+        <div style="font-size:11px;font-weight:700;color:#111827">${tons}t</div>
+        <div style="font-size:10px;font-weight:600">${outcome}</div>
+        <div style="font-size:10px;color:#9ca3af">${now()}</div>`;
+      container.prepend(div);
+      requestAnimationFrame(() => { div.style.transition = 'opacity .3s'; div.style.opacity = '1'; });
+    }
+
+    function acceptIncoming(rowId, reqId, tons, routeRef) {
+      const row = document.getElementById(rowId);
+      const route     = row.querySelector('[style*="font-weight:600"]')?.textContent || '—';
+      const day       = row.querySelectorAll('div > div')[1]?.textContent || '—';
+      const haulier   = row.querySelector('[style*="color:#374151"]')?.textContent || '—';
+      removeRow(rowId);
+      incomingCount--;
+      updateSummary();
+      checkEmpty('incoming-rows', 'incoming-empty');
+      showToast(`${reqId} accepted — Capacity tab updated`);
+      addHistoryRow(
+        `<span class="pill pill-green">Accepted</span>`,
+        reqId,
+        `<span class="pill" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:8px">↓ Incoming</span>`,
+        route, day, haulier, tons,
+        `<span style="color:#16a34a">${tons}t booked ✓</span>`
+      );
+    }
+
+    function confirmOutgoing(rowId, reqId) {
+      const row = document.getElementById(rowId);
+      const route     = row.querySelector('[style*="font-weight:600"]')?.textContent || '—';
+      const day       = row.querySelectorAll('div > div')[1]?.textContent || '—';
+      const haulier   = row.querySelector('[style*="color:#374151"]')?.textContent || '—';
+      const tonsEl    = row.querySelector('[style*="font-weight:700;color:#111827"]');
+      const tons      = tonsEl ? tonsEl.textContent.replace('t','') : '—';
+      removeRow(rowId);
+      outgoingCount--;
+      updateSummary();
+      checkEmpty('outgoing-rows', 'outgoing-empty');
+      showToast(`${reqId} confirmed — Capacity tab updated`);
+      addHistoryRow(
+        `<span class="pill pill-blue">Confirmed</span>`,
+        reqId,
+        `<span class="pill" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;font-size:8px">↑ Outgoing</span>`,
+        route, day, haulier, tons,
+        `<span style="color:#2563eb">Matched ✓</span>`
+      );
+    }
+
+    function declineRow(rowId) {
+      const row = document.getElementById(rowId);
+      const reqId     = row.querySelector('[style*="monospace"]')?.textContent || '—';
+      const route     = row.querySelector('[style*="font-weight:600"]')?.textContent || '—';
+      const day       = row.querySelectorAll('div > div')[1]?.textContent || '—';
+      const haulier   = row.querySelector('[style*="color:#374151"]')?.textContent || '—';
+      const tonsEl    = row.querySelector('[style*="font-weight:700;color:#111827"]');
+      const tons      = tonsEl ? tonsEl.textContent.replace('t','') : '—';
+      const isIncoming = rowId.includes('inc');
+      removeRow(rowId);
+      if (isIncoming) { incomingCount--; checkEmpty('incoming-rows', 'incoming-empty'); }
+      else             { outgoingCount--; checkEmpty('outgoing-rows', 'outgoing-empty'); }
+      updateSummary();
+      showToast(`${reqId} declined`);
+      addHistoryRow(
+        `<span class="pill" style="background:#fef2f2;color:#ef4444;border:1px solid #fca5a5">Declined</span>`,
+        reqId,
+        isIncoming
+          ? `<span class="pill" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:8px">↓ Incoming</span>`
+          : `<span class="pill" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;font-size:8px">↑ Outgoing</span>`,
+        route, day, haulier, tons,
+        `<span style="color:#9ca3af">—</span>`
+      );
+    }
+  </script>
+
+</body>
+</html>

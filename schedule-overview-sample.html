@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Schedule Overview — Sample</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f5f4f0; margin: 0; padding: 32px; color: #111827; min-width: 1100px; }
+
+    .page-header { margin-bottom: 20px; }
+    .page-header h1 { font-size: 22px; font-weight: 800; color: #111827; margin: 0 0 4px; }
+    .page-header p  { font-size: 12px; color: #6b7280; margin: 0; }
+
+    /* ── Legend ── */
+    .legend { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; padding: 10px 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #374151; font-weight: 500; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ── Grid ── */
+    .grid-wrap { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .week-grid { display: grid; grid-template-columns: 100px repeat(5, 1fr); }
+
+    /* Headers */
+    .gh { background: #f9fafb; border-bottom: 1px solid #f0ede8; border-right: 1px solid #f0ede8; padding: 10px 14px; }
+    .gh-corner { display: flex; align-items: center; justify-content: center; }
+    .gh-day { text-align: center; }
+    .gh-day .day-name { font-size: 11px; font-weight: 700; color: #374151; }
+    .gh-day .day-date { font-size: 10px; color: #9ca3af; margin-top: 1px; }
+    .gh-day .day-count { font-size: 9px; color: #9ca3af; margin-top: 3px; }
+    .gh:last-child { border-right: none; }
+
+    /* Slot label */
+    .slot-label { background: #f9fafb; border-right: 1px solid #f0ede8; border-bottom: 1px solid #f0ede8; padding: 10px 6px; display: flex; align-items: center; justify-content: center; }
+    .slot-label span { font-size: 8px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .05em; writing-mode: vertical-rl; transform: rotate(180deg); }
+    .slot-label.morning   { background: #fffdf5; }
+    .slot-label.afternoon { background: #f5f8ff; }
+    .slot-label.evening   { background: #faf8ff; }
+    .slot-label.morning   span { color: #92400e; }
+    .slot-label.afternoon span { color: #1d4ed8; }
+    .slot-label.evening   span { color: #6d28d9; }
+
+    /* Cell */
+    .cell { border-right: 1px solid #f0ede8; border-bottom: 1px solid #f0ede8; padding: 8px; background: #fff; display: flex; flex-direction: column; gap: 5px; min-height: 72px; }
+    .cell:last-child { border-right: none; }
+    .cell.last-row { border-bottom: none; }
+
+    /* Route chip variants */
+    .chip { border-radius: 8px; padding: 7px 9px; font-size: 10px; }
+
+    /* My route, no spare */
+    .chip-plain { background: #f9fafb; border: 1px solid #e5e7eb; }
+    .chip-plain .chip-route { font-weight: 700; color: #111827; }
+    .chip-plain .chip-meta  { color: #9ca3af; margin-top: 2px; }
+
+    /* Spare available (not booked) */
+    .chip-spare-free { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .chip-spare-free .chip-route { font-weight: 700; color: #166534; }
+    .chip-spare-free .chip-meta  { color: #4ade80; margin-top: 2px; }
+    .chip-spare-free .chip-badge { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
+
+    /* Spare partially booked */
+    .chip-spare-partial { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .chip-spare-partial .chip-route { font-weight: 700; color: #1d4ed8; }
+    .chip-spare-partial .chip-meta  { color: #93c5fd; margin-top: 2px; }
+    .chip-spare-partial .chip-badge { background: #dbeafe; color: #2563eb; border: 1px solid #bfdbfe; }
+
+    /* Spare fully booked */
+    .chip-spare-full { background: #fffbeb; border: 1px solid #fde68a; }
+    .chip-spare-full .chip-route { font-weight: 700; color: #92400e; }
+    .chip-spare-full .chip-meta  { color: #fbbf24; margin-top: 2px; }
+    .chip-spare-full .chip-badge { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+    /* Capacity needed — pending */
+    .chip-need-pending { background: #fdf4ff; border: 1.5px dashed #d8b4fe; }
+    .chip-need-pending .chip-route { font-weight: 700; color: #7e22ce; }
+    .chip-need-pending .chip-meta  { color: #c084fc; margin-top: 2px; }
+    .chip-need-pending .chip-badge { background: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe; }
+
+    /* Capacity needed — fulfilled */
+    .chip-need-done { background: #f0fdf4; border: 1.5px dashed #6ee7b7; }
+    .chip-need-done .chip-route { font-weight: 700; color: #065f46; }
+    .chip-need-done .chip-meta  { color: #34d399; margin-top: 2px; }
+    .chip-need-done .chip-badge { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+
+    /* Shared chip elements */
+    .chip-route { font-size: 10px; line-height: 1.3; }
+    .chip-meta   { font-size: 9px; line-height: 1.3; }
+    .chip-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+    .chip-badge  { font-size: 8px; font-weight: 700; padding: 1px 6px; border-radius: 8px; white-space: nowrap; }
+    .chip-plate  { font-family: monospace; font-size: 9px; font-weight: 700; color: inherit; opacity: .7; }
+
+    /* Empty cell */
+    .cell-empty { border: 1.5px dashed #e5e7eb; border-radius: 8px; display: flex; align-items: center; justify-content: center; min-height: 52px; cursor: pointer; transition: background .12s; }
+    .cell-empty:hover { background: #f9fafb; border-color: #d1d5db; }
+    .cell-empty span { font-size: 9px; color: #d1d5db; }
+    .cell-empty:hover span { color: #9ca3af; }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Overview</h1>
+    <p>Week of 24 Mar 2026 · Your full schedule, spare capacity status, and capacity requests in one view</p>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <span style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin-right:4px">Legend</span>
+    <div class="legend-item"><div class="legend-dot" style="background:#f1f5f9;border:1px solid #e2e8f0"></div> My route · no spare listed</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#dcfce7;border:1px solid #bbf7d0"></div> Spare available</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#dbeafe;border:1px solid #bfdbfe"></div> Spare partially booked</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fef3c7;border:1px solid #fde68a"></div> Spare fully booked</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f3e8ff;border:1.5px dashed #d8b4fe"></div> Capacity needed · pending</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#d1fae5;border:1.5px dashed #6ee7b7"></div> Capacity needed · fulfilled</div>
+  </div>
+
+  <div class="grid-wrap">
+    <div class="week-grid">
+
+      <!-- ── Column headers ── -->
+      <div class="gh gh-corner" style="border-right:1px solid #f0ede8"></div>
+
+      <div class="gh gh-day" style="border-right:1px solid #f0ede8">
+        <div class="day-name">Monday</div>
+        <div class="day-date">24 Mar 2026</div>
+        <div class="day-count">3 routes · 1 request</div>
+      </div>
+      <div class="gh gh-day" style="border-right:1px solid #f0ede8">
+        <div class="day-name">Tuesday</div>
+        <div class="day-date">25 Mar 2026</div>
+        <div class="day-count">2 routes</div>
+      </div>
+      <div class="gh gh-day" style="border-right:1px solid #f0ede8">
+        <div class="day-name">Wednesday</div>
+        <div class="day-date">26 Mar 2026</div>
+        <div class="day-count">2 routes · 1 request</div>
+      </div>
+      <div class="gh gh-day" style="border-right:1px solid #f0ede8">
+        <div class="day-name">Thursday</div>
+        <div class="day-date">27 Mar 2026</div>
+        <div class="day-count">2 routes · 1 request</div>
+      </div>
+      <div class="gh gh-day">
+        <div class="day-name">Friday</div>
+        <div class="day-date">28 Mar 2026</div>
+        <div class="day-count">1 route</div>
+      </div>
+
+      <!-- ══════════════════════════════════════════ -->
+      <!-- MORNING ROW                               -->
+      <!-- ══════════════════════════════════════════ -->
+      <div class="slot-label morning"><span>Morning</span></div>
+
+      <!-- Mon Morning -->
+      <div class="cell">
+        <!-- Own route, spare partially booked (2t of 4t taken) -->
+        <div class="chip chip-spare-partial">
+          <div class="chip-route">Jurong → Woodlands</div>
+          <div class="chip-meta">619115 → 737854</div>
+          <div class="chip-footer">
+            <span class="chip-plate">XD3351E · 45G1 · ONE</span>
+            <span class="chip-badge">2t / 4t spare taken</span>
+          </div>
+        </div>
+        <!-- Capacity needed, pending -->
+        <div class="chip chip-need-pending">
+          <div class="chip-route">Need: Jurong → Changi</div>
+          <div class="chip-meta">15t · haulier needed</div>
+          <div class="chip-footer">
+            <span class="chip-plate">SG-0901</span>
+            <span class="chip-badge">Pending match</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tue Morning -->
+      <div class="cell">
+        <!-- Own route, spare fully booked -->
+        <div class="chip chip-spare-full">
+          <div class="chip-route">Jurong → Tampines</div>
+          <div class="chip-meta">619115 → 529433</div>
+          <div class="chip-footer">
+            <span class="chip-plate">XD3351E · 45G1 · ONE</span>
+            <span class="chip-badge">Fully booked · 3t</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wed Morning -->
+      <div class="cell">
+        <!-- Own route, spare free (not booked at all) -->
+        <div class="chip chip-spare-free">
+          <div class="chip-route">Tuas → Yishun</div>
+          <div class="chip-meta">639494 → 768903</div>
+          <div class="chip-footer">
+            <span class="chip-plate">XE1218Y · 45G1 · CC</span>
+            <span class="chip-badge">4t spare · available</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thu Morning -->
+      <div class="cell">
+        <!-- Own route, spare partially booked -->
+        <div class="chip chip-spare-partial">
+          <div class="chip-route">Changi → Jurong</div>
+          <div class="chip-meta">819642 → 619115</div>
+          <div class="chip-footer">
+            <span class="chip-plate">XE1218Y · 45G1 · HL</span>
+            <span class="chip-badge">3t / 5t spare taken</span>
+          </div>
+        </div>
+        <!-- Own route, no spare -->
+        <div class="chip chip-plain">
+          <div class="chip-route">Jurong → Woodlands</div>
+          <div class="chip-meta">619115 → 737854</div>
+          <div class="chip-footer">
+            <span class="chip-plate">XD6566P · 45G1 · ONE</span>
+            <span class="chip-badge" style="background:#f1f5f9;color:#6b7280;border:1px solid #e2e8f0">No spare listed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fri Morning -->
+      <div class="cell">
+        <div class="cell-empty"><span>+ Add route</span></div>
+      </div>
+
+      <!-- ══════════════════════════════════════════ -->
+      <!-- AFTERNOON ROW                             -->
+      <!-- ══════════════════════════════════════════ -->
+      <div class="slot-label afternoon"><span>Afternoon</span></div>
+
+      <!-- Mon Afternoon -->
+      <div class="cell">
+        <!-- Own route, no spare -->
+        <div class="chip chip-plain">
+          <div class="chip-route">Tuas → Changi</div>
+          <div class="chip-meta">639494 → 819642</div>
+          <div class="chip-footer">
+            <span class="chip-plate">XE1218Y · 22G1 · CC</span>
+            <span class="chip-badge" style="background:#f1f5f9;color:#6b7280;border:1px solid #e2e8f0">No spare listed</span>
+          </div>
+        </div>
+        <!-- Own route, no spare -->
+        <div class="chip chip-plain">
+          <div class="chip-route">Pasir Panjang → Tampines</div>
+          <div class="chip-meta">117438 → 529433</div>
+          <div class="chip-footer">
+            <span class="chip-plate">XD6566P · 45G1 · HL</span>
+            <span class="chip-badge" style="background:#f1f5f9;color:#6b7280;border:1px solid #e2e8f0">No spare listed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tue Afternoon -->
+      <div class="cell">
+        <!-- Own route, no spare -->
+        <div class="chip chip-plain">
+          <div class="chip-route">Pasir Panjang → Woodlands</div>
+          <div class="chip-meta">117438 → 737854</div>
+          <div class="chip-footer">
+            <span class="chip-plate">XD6566P · 22G1 · CK</span>
+            <span class="chip-badge" style="background:#f1f5f9;color:#6b7280;border:1px solid #e2e8f0">No spare listed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wed Afternoon -->
+      <div class="cell">
+        <!-- Own route, no spare -->
+        <div class="chip chip-plain">
+          <div class="chip-route">Woodlands → Jurong</div>
+          <div class="chip-meta">737854 → 619115</div>
+          <div class="chip-footer">
+            <span class="chip-plate">XD3351E · 22G1 · PIL</span>
+            <span class="chip-badge" style="background:#f1f5f9;color:#6b7280;border:1px solid #e2e8f0">No spare listed</span>
+          </div>
+        </div>
+        <!-- Capacity needed, fulfilled -->
+        <div class="chip chip-need-done">
+          <div class="chip-route">Need: Tuas → Tampines</div>
+          <div class="chip-meta">20t · Swift Haulage Pte Ltd</div>
+          <div class="chip-footer">
+            <span class="chip-plate">SG-0899</span>
+            <span class="chip-badge">Fulfilled ✓</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thu Afternoon -->
+      <div class="cell">
+        <!-- Capacity needed, pending -->
+        <div class="chip chip-need-pending">
+          <div class="chip-route">Need: Pasir Panjang → Woodlands</div>
+          <div class="chip-meta">10t · haulier needed</div>
+          <div class="chip-footer">
+            <span class="chip-plate">SG-0903</span>
+            <span class="chip-badge">Pending match</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fri Afternoon -->
+      <div class="cell">
+        <!-- Own route, no spare -->
+        <div class="chip chip-plain">
+          <div class="chip-route">Tuas → Changi</div>
+          <div class="chip-meta">639494 → 819642</div>
+          <div class="chip-footer">
+            <span class="chip-plate">XD3351E · 22G1 · CC</span>
+            <span class="chip-badge" style="background:#f1f5f9;color:#6b7280;border:1px solid #e2e8f0">No spare listed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════ -->
+      <!-- EVENING ROW                               -->
+      <!-- ══════════════════════════════════════════ -->
+      <div class="slot-label evening" style="border-bottom:none"><span>Evening</span></div>
+
+      <div class="cell last-row"><div class="cell-empty"><span>+ Add route</span></div></div>
+      <div class="cell last-row"><div class="cell-empty"><span>+ Add route</span></div></div>
+      <div class="cell last-row"><div class="cell-empty"><span>+ Add route</span></div></div>
+      <div class="cell last-row"><div class="cell-empty"><span>+ Add route</span></div></div>
+      <div class="cell last-row" style="border-right:none"><div class="cell-empty"><span>+ Add route</span></div></div>
+
+    </div><!-- end week-grid -->
+  </div><!-- end grid-wrap -->
+
+  <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:16px">Sample only — confirm this view before implementation</p>
+
+</body>
+</html>
