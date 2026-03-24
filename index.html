@@ -1999,7 +1999,7 @@ function renderScheduleTab() {
           <span style="font-size:11px;font-weight:700;color:#374151">${FULL_DAY[d]}</span>
           <span style="font-size:10px;color:#9ca3af">· ${weekDates[i]}</span>
           ${dayRoutes.length > 0 ? `<span style="font-size:9px;color:#bfbfbf">· ${dayRoutes.length} route${dayRoutes.length!==1?'s':''}</span>` : ''}
-          ${!isAdding ? `<button onclick="addingSupplyRoute='${d}_morning';renderScheduleTab()" style="margin-left:auto;font-size:10px;font-weight:600;padding:3px 10px;border-radius:6px;background:#f0f9ff;color:#2563eb;border:1px dashed #93c5fd;cursor:pointer">+ Add route</button>` : ''}
+          ${!isAdding ? `<button onclick="addingSupplyRoute='${d}_morning';renderScheduleTab()" style="margin-left:auto;font-size:10px;font-weight:600;padding:3px 10px;border-radius:6px;background:#2563eb;color:#fff;border:none;cursor:pointer">+ Add route</button>` : ''}
         </div>
         ${rows}
         ${isAdding ? `<div style="padding:12px 16px;background:#f8fbff;border-top:1px solid #e0eeff">${buildAddRouteForm(d, addingSlot)}</div>` : ''}
