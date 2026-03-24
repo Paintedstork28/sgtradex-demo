@@ -1375,8 +1375,9 @@ function _incomingCard(r) {
   };
   const s = statusMap[r.status] || statusMap.pending;
 
+  const pipelineId = `pipeline-inc-${r.id}`;
   const pipeline = (r.status==='active'||r.status==='completed')
-    ? `<div style="margin:12px 0 0">${renderPipeline(r.step||1,'supply',r.id)}</div>` : '';
+    ? `<div id="${pipelineId}" style="margin:12px 0 0"></div>` : '';
 
   let actions = '';
   if (r.status==='pending') {
@@ -1420,7 +1421,7 @@ function _incomingCard(r) {
         <div><span style="color:#9ca3af;display:block;margin-bottom:2px">Tonnage</span>${r.tonnage||''}</div>
         <div><span style="color:#9ca3af;display:block;margin-bottom:2px">Requested</span>${r.date} · ${r.slot||''}</div>
       </div>
-      ${r.cargoRef ? `<p style="font-size:9px;color:#9ca3af;font-family:monospace;margin:8px 0 0;letter-spacing:.02em">${r.cargoRef}</p>` : ''}
+      ${r.cargoRef ? `<p style="font-size:10px;color:#6b7280;font-family:monospace;margin:8px 0 0;letter-spacing:.04em"><span style="color:#9ca3af;font-family:Inter,sans-serif;font-size:9px;margin-right:4px">REF</span>${r.cargoRef}</p>` : ''}
       ${pipeline}${actions}
     </div>
   </div>`;
@@ -1445,6 +1446,11 @@ function renderIncomingRequests() {
       ? `<div class="card" style="text-align:center;padding:40px 20px;color:#9ca3af;font-size:14px">No incoming requests</div>`
       : section('Pending',pending)+section('Active',active)+section('Completed / Declined',rest)}
   </div>`;
+
+  // Render pipelines into their containers after HTML is set
+  [...active, ...rest].forEach(r => {
+    renderPipeline(`pipeline-inc-${r.id}`, r.step||1, r.id);
+  });
   updateIncomingBadge();
 }
 
@@ -1612,9 +1618,9 @@ function renderOutgoingRequests() {
           <div><span style="color:#9ca3af;display:block;margin-bottom:2px">Haulier</span>${r.provider||'—'}</div>
           <div><span style="color:#9ca3af;display:block;margin-bottom:2px">Details</span>${r.detail||''}</div>
         </div>
-        ${r.cargoRef?`<p style="font-size:9px;color:#9ca3af;font-family:monospace;margin:0 0 10px;letter-spacing:.02em">${r.cargoRef}</p>`:''}
+        ${r.cargoRef?`<p style="font-size:10px;color:#6b7280;font-family:monospace;margin:0 0 10px;letter-spacing:.04em"><span style="color:#9ca3af;font-family:Inter,sans-serif;font-size:9px;margin-right:4px">REF</span>${r.cargoRef}</p>`:''}
         ${r.note?`<p style="font-size:11px;color:#6b7280;margin:0 0 12px;font-style:italic">${r.note}</p>`:''}
-        ${renderPipeline(r.step||1,r.id)}
+        <div id="pipeline-out-${r.id}"></div>
       </div>
     </div>`;
   }).join('');
@@ -1629,6 +1635,11 @@ function renderOutgoingRequests() {
       ? `<div class="card" style="text-align:center;padding:40px 20px;color:#9ca3af;font-size:14px">No outgoing requests yet.<br><button class="btn-primary" style="margin-top:14px" onclick="switchTab('tab-new')">Request capacity</button></div>`
       : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${cards}</div>`}
   </div>`;
+
+  // Render pipelines after HTML is set
+  outgoingRequests.forEach(r => {
+    renderPipeline(`pipeline-out-${r.id}`, r.step||1, r.id);
+  });
 }
 
 // ── Part 5b: Demand Form Functions ──────────────────────────────────────────
