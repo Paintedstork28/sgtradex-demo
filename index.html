@@ -668,7 +668,29 @@ const TABS = {
   regulator: [],
 };
 
-const STEPS = ['Matched','Commercials\nAgreed','Picked\nUp','Dropped\nOff','Completed'];
+const STEPS = ['Timeslot\nBooked','Vehicle\nEntered Depot','Port Gate\nEntry','Delivered'];
+
+// Per-request pipeline event data (label + timestamp per step)
+const PIPELINE_EVENTS = {
+  'SG-0888': [
+    {label:'Timeslot booked · CGC1',          ts:'19 Mar · 08:15'},
+    {label:'Vehicle XD3351E\nentered depot',   ts:'19 Mar · 09:47'},
+    {label:'Port gate entry\nPSA Tuas',        ts:null},
+    {label:'Delivered',                         ts:null},
+  ],
+  'SG-0891': [
+    {label:'Timeslot booked · ACS3',           ts:'19 Mar · 10:30'},
+    {label:'Vehicle entered depot',             ts:null},
+    {label:'Port gate entry\nPSA Brani',        ts:null},
+    {label:'Delivered',                         ts:null},
+  ],
+  'SG-0892': [
+    {label:'Timeslot booked · CGC1',           ts:'19 Mar · 11:00'},
+    {label:'Vehicle XE1218Y\nentered depot',   ts:'19 Mar · 12:34'},
+    {label:'Port gate entry\nPSA Tuas',        ts:null},
+    {label:'Delivered',                         ts:null},
+  ],
+};
 const SLOT_KEYS   = ['morning','afternoon','evening'];
 const SLOT_LABELS = { morning:'Morning (8am–12pm)', afternoon:'Afternoon (12pm–4pm)', evening:'Evening (4pm–8pm)' };
 const ALL_SUPPLY_ZONES = ['Jurong','Tuas','Pasir Panjang','Brani','Tanjong Pagar','Woodlands','Yishun','Seletar','Changi','Tampines','Ang Mo Kio','Central'];
@@ -711,16 +733,16 @@ const dropoffZones = ['Woodlands','Yishun','Seletar','Changi','Tampines'];
 
 // ── Supply schedule data ───────────────────────────────────────────────────
 let supplyScheduleRoutes = [
-  {id:'r1',  day:'Mon', slot:'morning',   truck:'SG-101', from:'Jurong',        fromAddr:'31 Jurong Port Road, Singapore 619115',    to:'Woodlands',     toAddr:'21 Woodlands Close, Singapore 737854',   tons:10, additionalTonsNeeded:40},
-  {id:'r2',  day:'Mon', slot:'afternoon', truck:'SG-102', from:'Tuas',          fromAddr:'30 Tuas Ave 1, Singapore 639494',           to:'Changi',        toAddr:'30 Airport Boulevard, Singapore 819642', tons:10, additionalTonsNeeded:30},
-  {id:'r3',  day:'Mon', slot:'afternoon', truck:'SG-103', from:'Pasir Panjang', fromAddr:'12 Pasir Panjang Road, Singapore 117438',   to:'Tampines',      toAddr:'10 Tampines Ave 11, Singapore 529433',   tons:8,  additionalTonsNeeded:25},
-  {id:'r4',  day:'Tue', slot:'morning',   truck:'SG-101', from:'Jurong',        fromAddr:'31 Jurong Port Road, Singapore 619115',     to:'Tampines',      toAddr:'10 Tampines Ave 11, Singapore 529433',   tons:10, additionalTonsNeeded:0},
-  {id:'r5',  day:'Tue', slot:'afternoon', truck:'SG-103', from:'Pasir Panjang', fromAddr:'12 Pasir Panjang Road, Singapore 117438',   to:'Woodlands',     toAddr:'21 Woodlands Close, Singapore 737854',   tons:8,  additionalTonsNeeded:0},
-  {id:'r6',  day:'Wed', slot:'morning',   truck:'SG-102', from:'Tuas',          fromAddr:'30 Tuas Ave 1, Singapore 639494',           to:'Yishun',        toAddr:'18 Yishun Ave 11, Singapore 769131',     tons:10, additionalTonsNeeded:20},
-  {id:'r7',  day:'Wed', slot:'afternoon', truck:'SG-101', from:'Woodlands',     fromAddr:'21 Woodlands Close, Singapore 737854',      to:'Jurong',        toAddr:'31 Jurong Port Road, Singapore 619115',  tons:10, additionalTonsNeeded:0},
-  {id:'r8',  day:'Thu', slot:'morning',   truck:'SG-102', from:'Changi',        fromAddr:'30 Airport Boulevard, Singapore 819642',    to:'Jurong',        toAddr:'31 Jurong Port Road, Singapore 619115',  tons:10, additionalTonsNeeded:0},
-  {id:'r9',  day:'Thu', slot:'morning',   truck:'SG-103', from:'Jurong',        fromAddr:'31 Jurong Port Road, Singapore 619115',     to:'Woodlands',     toAddr:'21 Woodlands Close, Singapore 737854',   tons:8,  additionalTonsNeeded:0},
-  {id:'r10', day:'Fri', slot:'morning',   truck:'SG-101', from:'Tuas',          fromAddr:'30 Tuas Ave 1, Singapore 639494',           to:'Changi',        toAddr:'30 Airport Boulevard, Singapore 819642', tons:10, additionalTonsNeeded:0},
+  {id:'r1',  day:'Mon', slot:'morning',   truck:'XD3351E', containerIso:'45G1', containerOperator:'ONE', from:'Jurong',        fromAddr:'31 Jurong Port Road, Singapore 619115',    to:'Woodlands',     toAddr:'21 Woodlands Close, Singapore 737854',   tons:10, additionalTonsNeeded:40},
+  {id:'r2',  day:'Mon', slot:'afternoon', truck:'XE1218Y', containerIso:'22G1', containerOperator:'CC',  from:'Tuas',          fromAddr:'30 Tuas Ave 1, Singapore 639494',           to:'Changi',        toAddr:'30 Airport Boulevard, Singapore 819642', tons:10, additionalTonsNeeded:30},
+  {id:'r3',  day:'Mon', slot:'afternoon', truck:'XD6566P', containerIso:'45G1', containerOperator:'HL',  from:'Pasir Panjang', fromAddr:'12 Pasir Panjang Road, Singapore 117438',   to:'Tampines',      toAddr:'10 Tampines Ave 11, Singapore 529433',   tons:8,  additionalTonsNeeded:25},
+  {id:'r4',  day:'Tue', slot:'morning',   truck:'XD3351E', containerIso:'45G1', containerOperator:'ONE', from:'Jurong',        fromAddr:'31 Jurong Port Road, Singapore 619115',     to:'Tampines',      toAddr:'10 Tampines Ave 11, Singapore 529433',   tons:10, additionalTonsNeeded:0},
+  {id:'r5',  day:'Tue', slot:'afternoon', truck:'XD6566P', containerIso:'22G1', containerOperator:'CK',  from:'Pasir Panjang', fromAddr:'12 Pasir Panjang Road, Singapore 117438',   to:'Woodlands',     toAddr:'21 Woodlands Close, Singapore 737854',   tons:8,  additionalTonsNeeded:0},
+  {id:'r6',  day:'Wed', slot:'morning',   truck:'XE1218Y', containerIso:'45G1', containerOperator:'CC',  from:'Tuas',          fromAddr:'30 Tuas Ave 1, Singapore 639494',           to:'Yishun',        toAddr:'18 Yishun Ave 11, Singapore 769131',     tons:10, additionalTonsNeeded:20},
+  {id:'r7',  day:'Wed', slot:'afternoon', truck:'XD3351E', containerIso:'22G1', containerOperator:'PIL', from:'Woodlands',     fromAddr:'21 Woodlands Close, Singapore 737854',      to:'Jurong',        toAddr:'31 Jurong Port Road, Singapore 619115',  tons:10, additionalTonsNeeded:0},
+  {id:'r8',  day:'Thu', slot:'morning',   truck:'XE1218Y', containerIso:'45G1', containerOperator:'HL',  from:'Changi',        fromAddr:'30 Airport Boulevard, Singapore 819642',    to:'Jurong',        toAddr:'31 Jurong Port Road, Singapore 619115',  tons:10, additionalTonsNeeded:0},
+  {id:'r9',  day:'Thu', slot:'morning',   truck:'XD6566P', containerIso:'45G1', containerOperator:'ONE', from:'Jurong',        fromAddr:'31 Jurong Port Road, Singapore 619115',     to:'Woodlands',     toAddr:'21 Woodlands Close, Singapore 737854',   tons:8,  additionalTonsNeeded:0},
+  {id:'r10', day:'Fri', slot:'morning',   truck:'XD3351E', containerIso:'22G1', containerOperator:'CC',  from:'Tuas',          fromAddr:'30 Tuas Ave 1, Singapore 639494',           to:'Changi',        toAddr:'30 Airport Boulevard, Singapore 819642', tons:10, additionalTonsNeeded:0},
 ];
 
 let supplySpareCapacity = [
@@ -731,17 +753,17 @@ let supplySpareCapacity = [
 
 // ── Incoming supply requests ───────────────────────────────────────────────
 let supplyRequests = [
-  {id:'SG-0895', route:'Jurong → Changi',        date:'20 Mar', slot:'Morning',   tonnage:'40 tons (4 trucks)', requester:'Cargotec SG Pte Ltd', ago:'8 min ago', status:'pending',   step:null, declineReason:null},
-  {id:'SG-0893', route:'Tuas → Tampines',         date:'20 Mar', slot:'Afternoon', tonnage:'50 tons (5 trucks)', requester:'—',                   ago:'2h ago',     status:'pending',   step:null, declineReason:null},
-  {id:'SG-0888', route:'Pasir Panjang → Yishun', date:'19 Mar', slot:'Morning',   tonnage:'25 tons (3 trucks)', requester:'Fairview Cargo',       ago:'1d ago',     status:'active',    step:2,    declineReason:null},
-  {id:'SG-0882', route:'Jurong → Woodlands',      date:'18 Mar', slot:'Morning',   tonnage:'30 tons (3 trucks)', requester:'Swift Freight SG',     ago:'2d ago',     status:'completed', step:4,    declineReason:null},
-  {id:'SG-0876', route:'Tuas → Changi',           date:'16 Mar', slot:'Afternoon', tonnage:'45 tons (5 trucks)', requester:'GlobeTrans SG',        ago:'4d ago',     status:'declined',  step:null, declineReason:'Route not serviceable by our fleet'},
+  {id:'SG-0895', route:'Jurong → Changi',        date:'20 Mar', slot:'Morning',   tonnage:'40 tons (4 trucks)', requester:'Cargotec SG Pte Ltd', ago:'8 min ago', status:'pending',   step:null, declineReason:null, cargoRef:'CCSU7245309390'},
+  {id:'SG-0893', route:'Tuas → Tampines',         date:'20 Mar', slot:'Afternoon', tonnage:'50 tons (5 trucks)', requester:'—',                   ago:'2h ago',     status:'pending',   step:null, declineReason:null, cargoRef:'ONEYSIND45008900'},
+  {id:'SG-0888', route:'Pasir Panjang → Yishun', date:'19 Mar', slot:'Morning',   tonnage:'25 tons (3 trucks)', requester:'Fairview Cargo',       ago:'1d ago',     status:'active',    step:2,    declineReason:null, cargoRef:'HLCU25505182'},
+  {id:'SG-0882', route:'Jurong → Woodlands',      date:'18 Mar', slot:'Morning',   tonnage:'30 tons (3 trucks)', requester:'Swift Freight SG',     ago:'2d ago',     status:'completed', step:4,    declineReason:null, cargoRef:'ONEYSIND41769500'},
+  {id:'SG-0876', route:'Tuas → Changi',           date:'16 Mar', slot:'Afternoon', tonnage:'45 tons (5 trucks)', requester:'GlobeTrans SG',        ago:'4d ago',     status:'declined',  step:null, declineReason:'Route not serviceable by our fleet', cargoRef:'CCSU7249648260'},
 ];
 
 // ── Outgoing demand requests ───────────────────────────────────────────────
-const outgoingRequests = [
-  {id:'SG-0891', route:'Jurong → Woodlands', detail:'30t · 19 Mar · Morning',   step:1, provider:'Swift Haulage Pte Ltd', statusLabel:'Commercials agreed', statusBg:'#eff6ff', statusText:'#2563eb', statusBorder:'#bfdbfe', note:'Awaiting pickup confirmation'},
-  {id:'SG-0892', route:'Tuas → Tampines',    detail:'50t · 19 Mar · Afternoon', step:2, provider:'Apex Logistics SG',     statusLabel:'En route',           statusBg:'#fefce8', statusText:'#854d0e', statusBorder:'#fde68a', note:'Cargo picked up · En route to Tampines Industrial Ave'},
+let outgoingRequests = [
+  {id:'SG-0891', route:'Jurong → Woodlands', detail:'30t · 19 Mar · Morning',   step:1, provider:'Swift Haulage Pte Ltd', statusLabel:'Commercials agreed', statusBg:'#eff6ff', statusText:'#2563eb', statusBorder:'#bfdbfe', note:'Awaiting pickup confirmation',                      cargoRef:'ONEYSINE22132300'},
+  {id:'SG-0892', route:'Tuas → Tampines',    detail:'50t · 19 Mar · Afternoon', step:2, provider:'Apex Logistics SG',     statusLabel:'En route',           statusBg:'#fefce8', statusText:'#854d0e', statusBorder:'#fde68a', note:'Cargo picked up · En route to Tampines Industrial Ave', cargoRef:'BMOU6083920'},
 ];
 
 // ── Regulator entity data ──────────────────────────────────────────────────
@@ -810,11 +832,12 @@ function shortDate(iso) {
 // ══════════════════════════════════════════════
 //  STATUS PIPELINE RENDERER
 // ══════════════════════════════════════════════
-function renderPipeline(containerId, currentStep) {
+function renderPipeline(containerId, currentStep, reqId) {
   const c = document.getElementById(containerId);
   if (!c) return;
+  const events = (reqId && PIPELINE_EVENTS[reqId]) ? PIPELINE_EVENTS[reqId] : STEPS.map(l=>({label:l,ts:null}));
   let html = '<div style="display:flex;align-items:flex-start;width:100%">';
-  STEPS.forEach((label, i) => {
+  events.forEach((ev, i) => {
     const done   = i < currentStep;
     const active = i === currentStep;
     const dotBg     = done ? '#2563eb' : active ? '#fff' : '#f1f5f9';
@@ -823,11 +846,13 @@ function renderPipeline(containerId, currentStep) {
     const textCol   = done ? '#2563eb' : active ? '#2563eb' : '#9ca3af';
     const fontW     = active ? '700' : done ? '600' : '400';
     const check     = done ? `<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>` : '';
+    const tsHtml    = (done && ev.ts) ? `<span style="font-size:8px;color:#93c5fd;display:block;margin-top:2px;white-space:nowrap">${ev.ts}</span>` : '';
     html += `<div style="display:flex;flex-direction:column;align-items:center;flex:1">
       <div style="width:20px;height:20px;border-radius:50%;background:${dotBg};border:2px solid ${dotBorder};box-shadow:${shadow};display:flex;align-items:center;justify-content:center;z-index:1">${check}</div>
-      <span style="font-size:9px;font-weight:${fontW};color:${textCol};text-align:center;margin-top:5px;white-space:pre-line;line-height:1.2">${label}</span>
+      <span style="font-size:9px;font-weight:${fontW};color:${textCol};text-align:center;margin-top:5px;white-space:pre-line;line-height:1.3">${ev.label}</span>
+      ${tsHtml}
     </div>`;
-    if (i < STEPS.length - 1) {
+    if (i < events.length - 1) {
       const lineColor = i < currentStep ? '#2563eb' : '#e5e7eb';
       html += `<div style="flex:1;height:2px;background:${lineColor};margin-top:10px;margin-left:-2px;margin-right:-2px"></div>`;
     }
@@ -910,7 +935,7 @@ function switchTab(tabId) {
   if (tabId === 'tab-new')      { cnInitRequests(); cnRenderS1(); cnShowStep('s1'); }
   if (tabId === 'tab-incoming')  renderIncomingRequests();
   if (tabId === 'tab-outgoing')  renderOutgoingRequests();
-  if (tabId === 'tab-active')   { renderPipeline('pipeline-0888',2,'supply'); renderPipeline('pipeline-0891',1,'demand'); renderPipeline('pipeline-0892',2,'demand'); }
+  if (tabId === 'tab-active')   { renderPipeline('pipeline-0888',2,'SG-0888'); renderPipeline('pipeline-0891',1,'SG-0891'); renderPipeline('pipeline-0892',2,'SG-0892'); }
   if (tabId === 'tab-billing')  renderBillingTab();
 }
 
@@ -1186,7 +1211,11 @@ function renderScheduleTab() {
       return `<div class="card" style="padding:11px 14px;border-color:${spare?'#bbf7d0':'#e5e7eb'}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div style="flex:1">
-            <p class="section-label" style="margin:0 0 2px">${r.truck}</p>
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">
+              <p class="section-label" style="margin:0">${r.truck}</p>
+              <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:1px 7px;border-radius:10px">${r.containerIso}</span>
+              <span style="font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:1px 7px;border-radius:10px">${r.containerOperator}</span>
+            </div>
             <p style="font-size:13px;font-weight:700;color:#111827;margin:0">${r.from} → ${r.to}</p>
             <p style="font-size:10px;color:#6b7280;margin:2px 0 4px">${r.numTrucks?`${r.numTrucks} trucks × ${r.capTruck}t = `:''}${r.tons}t${spare?` · <span style="color:#16a34a;font-weight:600">${spare.spareTons}t spare offered</span>`:''}</p>
             ${!spare
@@ -1391,6 +1420,7 @@ function _incomingCard(r) {
         <div><span style="color:#9ca3af;display:block;margin-bottom:2px">Tonnage</span>${r.tonnage||''}</div>
         <div><span style="color:#9ca3af;display:block;margin-bottom:2px">Requested</span>${r.date} · ${r.slot||''}</div>
       </div>
+      ${r.cargoRef ? `<p style="font-size:9px;color:#9ca3af;font-family:monospace;margin:8px 0 0;letter-spacing:.02em">${r.cargoRef}</p>` : ''}
       ${pipeline}${actions}
     </div>
   </div>`;
@@ -1582,8 +1612,9 @@ function renderOutgoingRequests() {
           <div><span style="color:#9ca3af;display:block;margin-bottom:2px">Haulier</span>${r.provider||'—'}</div>
           <div><span style="color:#9ca3af;display:block;margin-bottom:2px">Details</span>${r.detail||''}</div>
         </div>
+        ${r.cargoRef?`<p style="font-size:9px;color:#9ca3af;font-family:monospace;margin:0 0 10px;letter-spacing:.02em">${r.cargoRef}</p>`:''}
         ${r.note?`<p style="font-size:11px;color:#6b7280;margin:0 0 12px;font-style:italic">${r.note}</p>`:''}
-        ${renderPipeline(r.step||1,'demand',r.id)}
+        ${renderPipeline(r.step||1,r.id)}
       </div>
     </div>`;
   }).join('');
@@ -2038,6 +2069,28 @@ function cnConfirmAll() {
   const totalCost = Object.values(cnSelections).reduce((sum,s)=>sum+(s.total||0),0);
   const confirmedCount = Object.keys(cnSelections).length;
 
+  // Push confirmed requests into outgoingRequests
+  const today = new Date();
+  const dateLabel = today.getDate() + ' ' + today.toLocaleString('en',{month:'short'});
+  cnRequests.forEach(req => {
+    const sel = cnSelections[req.id];
+    if (!sel) return;
+    const slotLabel = ({morning:'Morning',afternoon:'Afternoon',evening:'Evening'})[req.slot]||req.slot;
+    const newId = 'SG-' + (Math.floor(Math.random()*900)+100);
+    const cargoRef = 'CCSU' + Math.floor(Math.random()*9000000000+1000000000);
+    outgoingRequests.unshift({
+      id: newId,
+      route: req.from + ' → ' + req.to,
+      detail: req.tons + 't · ' + dateLabel + ' · ' + slotLabel,
+      step: 1,
+      provider: sel.name,
+      statusLabel: 'Commercials agreed',
+      statusBg: '#eff6ff', statusText: '#2563eb', statusBorder: '#bfdbfe',
+      note: 'Awaiting pickup confirmation',
+      cargoRef,
+    });
+  });
+
   s4.innerHTML = `<div class="card" style="padding:40px 36px;text-align:center">
     <div style="width:56px;height:56px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
@@ -2061,7 +2114,7 @@ function cnConfirmAll() {
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <button onclick="cnReset()" class="btn-secondary" style="width:100%;padding:12px;border-radius:10px;font-size:13px">New Batch Request</button>
-      <button onclick="switchTab('tab-active')" class="btn-primary" style="width:100%;padding:12px;border-radius:10px;font-size:13px">View Request Status →</button>
+      <button onclick="switchTab('tab-outgoing')" class="btn-primary" style="width:100%;padding:12px;border-radius:10px;font-size:13px">View Outgoing Requests →</button>
     </div>
   </div>`;
 
