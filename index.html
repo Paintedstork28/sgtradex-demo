@@ -1711,6 +1711,7 @@ function cnRenderS1() {
           <p style="font-size:9px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px">Pickup address</p>
           <input id="cn-manual-from-addr" type="text" placeholder="Paste full address…" oninput="cnDetectAddress('cn-manual-from-addr','cn-manual-from-zone','cn-manual-from-pin','cn-manual-from')"
             style="width:100%;font-size:11px;border:1px solid #e5e7eb;border-radius:7px;padding:7px 9px;color:#111827;background:#fff"/>
+          <p style="font-size:9px;color:#9ca3af;margin:5px 0 0">e.g. <span onclick="cnFillManualAddr('cn-manual-from-addr','cn-manual-from-zone','cn-manual-from-pin','cn-manual-from','31 Jurong Port Road, Singapore 619115')" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px">31 Jurong Port Road, Singapore 619115</span> · <span onclick="cnFillManualAddr('cn-manual-from-addr','cn-manual-from-zone','cn-manual-from-pin','cn-manual-from','30 Tuas Ave 1, Singapore 639494')" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px">30 Tuas Ave 1, Singapore 639494</span></p>
           <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
             <div style="flex:1">
               <p style="font-size:9px;color:#9ca3af;margin:0 0 3px">Zone (autofilled)</p>
@@ -1728,6 +1729,7 @@ function cnRenderS1() {
           <p style="font-size:9px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px">Dropoff address</p>
           <input id="cn-manual-to-addr" type="text" placeholder="Paste full address…" oninput="cnDetectAddress('cn-manual-to-addr','cn-manual-to-zone','cn-manual-to-pin','cn-manual-to')"
             style="width:100%;font-size:11px;border:1px solid #e5e7eb;border-radius:7px;padding:7px 9px;color:#111827;background:#fff"/>
+          <p style="font-size:9px;color:#9ca3af;margin:5px 0 0">e.g. <span onclick="cnFillManualAddr('cn-manual-to-addr','cn-manual-to-zone','cn-manual-to-pin','cn-manual-to','21 Woodlands Close, Singapore 737854')" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px">21 Woodlands Close, Singapore 737854</span> · <span onclick="cnFillManualAddr('cn-manual-to-addr','cn-manual-to-zone','cn-manual-to-pin','cn-manual-to','30 Airport Boulevard, Singapore 819642')" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px">30 Airport Boulevard, Singapore 819642</span></p>
           <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
             <div style="flex:1">
               <p style="font-size:9px;color:#9ca3af;margin:0 0 3px">Zone (autofilled)</p>
@@ -1819,6 +1821,12 @@ function cnAddManual() {
   cnManualDay = null;
   cnManualSlot = null;
   cnRenderS1();
+}
+
+function cnFillManualAddr(addrId, zoneContainerId, pinId, hiddenZoneId, addr) {
+  const el = document.getElementById(addrId);
+  if (el) el.value = addr;
+  cnDetectAddress(addrId, zoneContainerId, pinId, hiddenZoneId);
 }
 
 function cnDetectAddress(addrId, zoneContainerId, pinId, hiddenZoneId) {
