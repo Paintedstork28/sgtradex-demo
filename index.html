@@ -1706,25 +1706,45 @@ function cnRenderS1() {
           </div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 100px;gap:12px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div>
-          <p style="font-size:9px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px">Pickup zone</p>
-          <select id="cn-manual-from" style="width:100%;font-size:11px;border:1px solid #e5e7eb;border-radius:7px;padding:7px 9px;background:#fff;color:#111827">
-            <option value="">Select zone…</option>
-            ${ALL_SUPPLY_ZONES.map(z=>`<option value="${z}">${z}</option>`).join('')}
-          </select>
+          <p style="font-size:9px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px">Pickup address</p>
+          <input id="cn-manual-from-addr" type="text" placeholder="Paste full address…" oninput="cnDetectAddress('cn-manual-from-addr','cn-manual-from-zone','cn-manual-from-pin','cn-manual-from')"
+            style="width:100%;font-size:11px;border:1px solid #e5e7eb;border-radius:7px;padding:7px 9px;color:#111827;background:#fff"/>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+            <div style="flex:1">
+              <p style="font-size:9px;color:#9ca3af;margin:0 0 3px">Zone (autofilled)</p>
+              <div id="cn-manual-from-zone" style="min-height:20px"></div>
+            </div>
+            <div>
+              <p style="font-size:9px;color:#9ca3af;margin:0 0 3px">Pincode</p>
+              <input id="cn-manual-from-pin" type="text" readonly placeholder="——"
+                style="width:60px;font-size:11px;font-weight:700;border:1px solid #e5e7eb;border-radius:6px;padding:4px 7px;background:#f9fafb;color:#111827"/>
+            </div>
+          </div>
+          <input type="hidden" id="cn-manual-from"/>
         </div>
         <div>
-          <p style="font-size:9px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px">Dropoff zone</p>
-          <select id="cn-manual-to" style="width:100%;font-size:11px;border:1px solid #e5e7eb;border-radius:7px;padding:7px 9px;background:#fff;color:#111827">
-            <option value="">Select zone…</option>
-            ${ALL_SUPPLY_ZONES.map(z=>`<option value="${z}">${z}</option>`).join('')}
-          </select>
+          <p style="font-size:9px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px">Dropoff address</p>
+          <input id="cn-manual-to-addr" type="text" placeholder="Paste full address…" oninput="cnDetectAddress('cn-manual-to-addr','cn-manual-to-zone','cn-manual-to-pin','cn-manual-to')"
+            style="width:100%;font-size:11px;border:1px solid #e5e7eb;border-radius:7px;padding:7px 9px;color:#111827;background:#fff"/>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+            <div style="flex:1">
+              <p style="font-size:9px;color:#9ca3af;margin:0 0 3px">Zone (autofilled)</p>
+              <div id="cn-manual-to-zone" style="min-height:20px"></div>
+            </div>
+            <div>
+              <p style="font-size:9px;color:#9ca3af;margin:0 0 3px">Pincode</p>
+              <input id="cn-manual-to-pin" type="text" readonly placeholder="——"
+                style="width:60px;font-size:11px;font-weight:700;border:1px solid #e5e7eb;border-radius:6px;padding:4px 7px;background:#f9fafb;color:#111827"/>
+            </div>
+          </div>
+          <input type="hidden" id="cn-manual-to"/>
         </div>
-        <div>
-          <p style="font-size:9px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px">Tons needed</p>
-          <input id="cn-manual-tons" type="number" min="1" max="300" placeholder="e.g. 20" style="width:100%;font-size:12px;font-weight:700;border:1px solid #e5e7eb;border-radius:7px;padding:7px 9px;color:#111827;background:#fff"/>
-        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <p style="font-size:9px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px">Tons needed</p>
+        <input id="cn-manual-tons" type="number" min="1" max="300" placeholder="e.g. 20" style="width:140px;font-size:12px;font-weight:700;border:1px solid #e5e7eb;border-radius:7px;padding:7px 9px;color:#111827;background:#fff"/>
       </div>
       <div style="display:flex;gap:8px">
         <button onclick="cnAddManual()" class="btn-primary" style="padding:8px 18px;font-size:12px">Add Request</button>
@@ -1780,8 +1800,8 @@ function cnAddManual() {
   const toEl   = document.getElementById('cn-manual-to');
   const tonsEl = document.getElementById('cn-manual-tons');
   if (!cnManualDay || !cnManualSlot) { alert('Please select a day and time slot.'); return; }
-  if (!fromEl||!fromEl.value) { alert('Please select a pickup zone.'); return; }
-  if (!toEl||!toEl.value)     { alert('Please select a dropoff zone.'); return; }
+  if (!fromEl||!fromEl.value) { alert('Please paste a pickup address — zone must be detected first.'); return; }
+  if (!toEl||!toEl.value)     { alert('Please paste a dropoff address — zone must be detected first.'); return; }
   if (!tonsEl||!tonsEl.value) { alert('Please enter tons needed.'); return; }
   cnManualCounter++;
   cnRequests.push({
@@ -1799,6 +1819,41 @@ function cnAddManual() {
   cnManualDay = null;
   cnManualSlot = null;
   cnRenderS1();
+}
+
+function cnDetectAddress(addrId, zoneContainerId, pinId, hiddenZoneId) {
+  const addrEl = document.getElementById(addrId);
+  if (!addrEl) return;
+  const val = addrEl.value.trim();
+
+  // Extract 6-digit Singapore postal code
+  const pinMatch = val.match(/\b(\d{6})\b/);
+  const pinEl = document.getElementById(pinId);
+  if (pinEl) pinEl.value = pinMatch ? pinMatch[1] : '';
+
+  // Match zone: check if address contains zone name or matches ZONE_ADDRESSES entry
+  const valLower = val.toLowerCase();
+  let matched = null;
+  for (const [zone, addr] of Object.entries(ZONE_ADDRESSES)) {
+    if (valLower.includes(zone.toLowerCase()) || addr.toLowerCase().includes(valLower.slice(0,12))) {
+      matched = zone; break;
+    }
+  }
+  // Fallback: check zone name keywords in address
+  if (!matched && val.length > 4) {
+    matched = ALL_SUPPLY_ZONES.find(z => valLower.includes(z.toLowerCase())) || null;
+  }
+
+  const zoneEl = document.getElementById(zoneContainerId);
+  const hiddenEl = document.getElementById(hiddenZoneId);
+  if (zoneEl) {
+    zoneEl.innerHTML = matched
+      ? `<span style="font-size:10px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:2px 9px;border-radius:20px;font-weight:600">${matched}</span>`
+      : (val.length > 4 ? `<span style="font-size:10px;color:#dc2626">Zone not recognised</span>` : '');
+  }
+  if (hiddenEl) hiddenEl.value = matched || '';
+  // Highlight input border
+  addrEl.style.borderColor = matched ? '#bbf7d0' : (val.length > 4 ? '#fca5a5' : '#e5e7eb');
 }
 
 function cnRunMatchAll() {
