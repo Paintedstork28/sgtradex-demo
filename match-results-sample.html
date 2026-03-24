@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Match Results — Design Sample</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f5f4f0; margin: 0; padding: 32px; color: #111827; }
+    .card { background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; box-shadow: 0 1px 4px rgba(0,0,0,.06); overflow: hidden; }
+    .col-hdr { font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .06em; }
+    .pill { font-size: 8px; font-weight: 700; padding: 2px 7px; border-radius: 8px; white-space: nowrap; }
+    .row-sel { background: #f5f8ff !important; outline: 2px solid #3b82f6; outline-offset: -2px; }
+    input, select, textarea { font-family: 'Inter', sans-serif; outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,.12); }
+  </style>
+</head>
+<body>
+
+<div style="max-width:1000px;margin:0 auto">
+
+  <div style="margin-bottom:28px">
+    <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">SGTraDEX · Requests Tab</div>
+    <h1 style="font-size:20px;font-weight:800;color:#111827;margin:0 0 4px">Design Sample</h1>
+    <p style="font-size:12px;color:#9ca3af;margin:0">Part 1: New capacity request section with address input · Part 2: Match results table</p>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       PART 1 — New capacity request section
+  ══════════════════════════════════════════ -->
+  <div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Part 1 · New capacity request section (within Requests tab)</div>
+
+  <div class="card" style="margin-bottom:32px">
+
+    <!-- Section header -->
+    <div style="padding:10px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8;display:flex;align-items:center;gap:8px;border-left:3px solid #7c3aed">
+      <span style="font-size:9px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.06em">+ New capacity request</span>
+      <span style="font-size:10px;color:#9ca3af">Log a request, then run an encrypted match to find a haulier</span>
+      <button style="margin-left:auto;font-size:10px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;padding:5px 14px;border-radius:7px;cursor:pointer">+ Add request</button>
+      <!-- Match button: ACTIVE because 2 requests are queued -->
+      <button style="font-size:10px;font-weight:700;color:#fff;background:#7c3aed;border:none;padding:5px 14px;border-radius:7px;cursor:pointer">Run encrypted match →</button>
+    </div>
+
+    <!-- Queued requests (already saved, not yet matched) -->
+    <div style="display:grid;grid-template-columns:90px 90px 1fr 60px 80px 1fr;padding:7px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8">
+      <div class="col-hdr">Request</div>
+      <div class="col-hdr">Slot</div>
+      <div class="col-hdr">Route</div>
+      <div class="col-hdr">Tons</div>
+      <div class="col-hdr">Status</div>
+      <div class="col-hdr">Pickup address</div>
+    </div>
+
+    <!-- Queued row 1 -->
+    <div style="display:grid;grid-template-columns:90px 90px 1fr 60px 80px 1fr;padding:10px 16px;border-bottom:1px solid #f3f4f6;align-items:center;background:#fafbff">
+      <div style="font-family:monospace;font-size:10px;font-weight:700;color:#7c3aed">SG-0901</div>
+      <div><span class="pill" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a">Morning</span></div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#111827">Jurong → Woodlands</div>
+        <div style="font-size:9px;color:#9ca3af">Wed</div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#111827">30t</div>
+      <div><span class="pill" style="background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe">Unmatched</span></div>
+      <div style="font-size:10px;color:#6b7280">1 Jurong Port Rd, S 619096</div>
+    </div>
+
+    <!-- Queued row 2 -->
+    <div style="display:grid;grid-template-columns:90px 90px 1fr 60px 80px 1fr;padding:10px 16px;border-bottom:1px solid #f3f4f6;align-items:center;background:#fafbff">
+      <div style="font-family:monospace;font-size:10px;font-weight:700;color:#7c3aed">SG-0902</div>
+      <div><span class="pill" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">Afternoon</span></div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#111827">Tuas → Changi</div>
+        <div style="font-size:9px;color:#9ca3af">Thu</div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#111827">20t</div>
+      <div><span class="pill" style="background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe">Unmatched</span></div>
+      <div style="font-size:10px;color:#6b7280">50 Tuas South Ave 1, S 637602</div>
+    </div>
+
+    <!-- Add request form (expanded) -->
+    <div style="padding:16px 16px;background:#f5f3ff;border-top:1px solid #ede9fe">
+      <div style="font-size:10px;font-weight:700;color:#7c3aed;margin-bottom:12px">New request details</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 80px 120px;gap:10px;margin-bottom:10px">
+        <!-- Pickup address -->
+        <div>
+          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Pickup address</div>
+          <input placeholder="Paste full address or click sample ↓" style="width:100%;font-size:11px;padding:7px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+          <!-- Clickable sample -->
+          <div onclick="document.querySelectorAll('input')[0].value='1 Jurong Port Road, Jurong, Singapore 619096';document.getElementById('from-zone').style.display='flex'" style="margin-top:5px;font-size:9px;color:#9ca3af;cursor:pointer;display:flex;align-items:center;gap:4px">
+            <span style="padding:2px 8px;border-radius:6px;border:1px dashed #d8b4fe;background:#faf5ff;color:#7c3aed">e.g. 1 Jurong Port Road, Singapore 619096</span>
+            <span style="color:#a78bfa">← click to use</span>
+          </div>
+          <!-- Auto-detected zone chip (shown after paste) -->
+          <div id="from-zone" style="display:none;margin-top:5px;gap:6px;align-items:center">
+            <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;background:#dcfce7;color:#166534;border:1px solid #bbf7d0">Zone: Jurong</span>
+            <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">Postcode: 619096</span>
+          </div>
+        </div>
+
+        <!-- Dropoff address -->
+        <div>
+          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Dropoff address</div>
+          <input placeholder="Paste full address or click sample ↓" style="width:100%;font-size:11px;padding:7px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+          <div onclick="document.querySelectorAll('input')[1].value='Woodlands Checkpoint, 21 Woodlands Crossing, Singapore 738523';document.getElementById('to-zone').style.display='flex'" style="margin-top:5px;font-size:9px;color:#9ca3af;cursor:pointer;display:flex;align-items:center;gap:4px">
+            <span style="padding:2px 8px;border-radius:6px;border:1px dashed #d8b4fe;background:#faf5ff;color:#7c3aed">e.g. 21 Woodlands Crossing, Singapore 738523</span>
+            <span style="color:#a78bfa">← click to use</span>
+          </div>
+          <div id="to-zone" style="display:none;margin-top:5px;gap:6px;align-items:center">
+            <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;background:#dcfce7;color:#166534;border:1px solid #bbf7d0">Zone: Woodlands</span>
+            <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">Postcode: 738523</span>
+          </div>
+        </div>
+
+        <!-- Tons -->
+        <div>
+          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Tons</div>
+          <input type="number" placeholder="e.g. 20" style="width:100%;font-size:11px;padding:7px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+        </div>
+
+        <!-- Day + Slot -->
+        <div>
+          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Day · Slot</div>
+          <div style="display:flex;gap:5px">
+            <select style="flex:1;font-size:11px;padding:7px 6px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+              <option>Mon</option><option>Tue</option><option selected>Wed</option><option>Thu</option><option>Fri</option>
+            </select>
+            <select style="flex:1;font-size:11px;padding:7px 6px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+              <option>Morning</option><option>Afternoon</option><option>Evening</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button style="font-size:10px;font-weight:700;padding:7px 18px;border-radius:7px;border:none;cursor:pointer;background:#7c3aed;color:#fff">Save to queue</button>
+        <button style="font-size:10px;padding:7px 14px;border-radius:7px;cursor:pointer;border:1px solid #ddd6fe;background:#fff;color:#6b7280">Cancel</button>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       PART 2 — Match results: table format
+  ══════════════════════════════════════════ -->
+  <div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Part 2 · Match results — table format (after encrypted match runs)</div>
+
+  <div class="card" style="margin-bottom:8px">
+
+    <!-- Header -->
+    <div style="padding:12px 18px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#111827">Match results</div>
+        <div style="font-size:11px;color:#9ca3af;margin-top:2px">2 requests matched · select 1 haulier per request · confirm to lock in</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="pill" style="background:#dcfce7;color:#166534;border:1px solid #bbf7d0;font-size:9px;padding:3px 10px">2 matched</span>
+        <span class="pill" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;font-size:9px;padding:3px 10px">1 unmatched</span>
+      </div>
+    </div>
+
+    <!-- ── Request 1 ── -->
+    <div style="padding:10px 18px 6px;background:#fafafa;border-bottom:1px solid #f0ede8;display:flex;align-items:center;gap:10px">
+      <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">SG-0901</span>
+      <span style="font-size:11px;font-weight:600;color:#111827">Jurong → Woodlands</span>
+      <span class="pill" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a">Morning</span>
+      <span style="font-size:10px;color:#6b7280">Wed · 30t</span>
+      <span style="font-size:9px;color:#9ca3af;font-style:italic">1 Jurong Port Rd → 21 Woodlands Crossing</span>
+      <span class="pill" style="margin-left:auto;background:#dcfce7;color:#166534;border:1px solid #bbf7d0">3 options</span>
+    </div>
+
+    <!-- Col headers for request 1 -->
+    <div style="display:grid;grid-template-columns:200px 1fr 80px 90px 100px 90px 120px;padding:6px 18px;background:#f9fafb;border-bottom:1px solid #f0ede8">
+      <div class="col-hdr">Haulier</div>
+      <div class="col-hdr">Details</div>
+      <div class="col-hdr">Rate/t</div>
+      <div class="col-hdr">Total cost</div>
+      <div class="col-hdr">vs market</div>
+      <div class="col-hdr">Est. transit</div>
+      <div class="col-hdr" style="text-align:center">Select</div>
+    </div>
+
+    <!-- Option A — selected -->
+    <div id="r1-opt1" onclick="selectRow('r1','r1-opt1')" style="display:grid;grid-template-columns:200px 1fr 80px 90px 100px 90px 120px;padding:10px 18px;border-bottom:1px solid #f3f4f6;align-items:center;cursor:pointer;background:#f5f8ff;outline:2px solid #3b82f6;outline-offset:-2px">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#111827">Swift Haulage Pte Ltd</div>
+        <div style="font-size:9px;color:#9ca3af;margin-top:1px">Capacity confirmed · slot matched</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">Jurong → Woodlands</span>
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">Morning</span>
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">30t cap</span>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#111827">S$18/t</div>
+      <div style="font-size:13px;font-weight:800;color:#111827">S$540</div>
+      <div><span style="font-size:9px;font-weight:700;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:2px 7px;border-radius:8px">−8% market</span></div>
+      <div style="font-size:10px;color:#6b7280">~2h 15m</div>
+      <div style="text-align:center">
+        <div style="width:18px;height:18px;border-radius:50%;border:2px solid #3b82f6;background:#3b82f6;margin:0 auto;display:flex;align-items:center;justify-content:center">
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option B -->
+    <div id="r1-opt2" onclick="selectRow('r1','r1-opt2')" style="display:grid;grid-template-columns:200px 1fr 80px 90px 100px 90px 120px;padding:10px 18px;border-bottom:1px solid #f3f4f6;align-items:center;cursor:pointer" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#111827">Apex Logistics SG</div>
+        <div style="font-size:9px;color:#9ca3af;margin-top:1px">Capacity confirmed · slot matched</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">Jurong → Woodlands</span>
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">Morning</span>
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">35t cap</span>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#111827">S$20/t</div>
+      <div style="font-size:13px;font-weight:800;color:#111827">S$600</div>
+      <div><span style="font-size:9px;font-weight:700;color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb;padding:2px 7px;border-radius:8px">at market</span></div>
+      <div style="font-size:10px;color:#6b7280">~2h 30m</div>
+      <div style="text-align:center">
+        <div style="width:18px;height:18px;border-radius:50%;border:2px solid #d1d5db;margin:0 auto"></div>
+      </div>
+    </div>
+
+    <!-- Option C -->
+    <div id="r1-opt3" onclick="selectRow('r1','r1-opt3')" style="display:grid;grid-template-columns:200px 1fr 80px 90px 100px 90px 120px;padding:10px 18px;border-bottom:1px solid #e5e7eb;align-items:center;cursor:pointer" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#111827">GlobeTrans SG</div>
+        <div style="font-size:9px;color:#9ca3af;margin-top:1px">Capacity confirmed · slot matched</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">Jurong → Woodlands</span>
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">Morning</span>
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">28t cap</span>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#111827">S$22/t</div>
+      <div style="font-size:13px;font-weight:800;color:#111827">S$660</div>
+      <div><span style="font-size:9px;font-weight:700;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;padding:2px 7px;border-radius:8px">+10% market</span></div>
+      <div style="font-size:10px;color:#6b7280">~2h 45m</div>
+      <div style="text-align:center">
+        <div style="width:18px;height:18px;border-radius:50%;border:2px solid #d1d5db;margin:0 auto"></div>
+      </div>
+    </div>
+
+    <!-- ── Request 2 ── -->
+    <div style="padding:10px 18px 6px;background:#fafafa;border-bottom:1px solid #f0ede8;display:flex;align-items:center;gap:10px">
+      <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">SG-0902</span>
+      <span style="font-size:11px;font-weight:600;color:#111827">Tuas → Changi</span>
+      <span class="pill" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">Afternoon</span>
+      <span style="font-size:10px;color:#6b7280">Thu · 20t</span>
+      <span style="font-size:9px;color:#9ca3af;font-style:italic">50 Tuas South Ave 1 → Changi Cargo Terminal</span>
+      <span class="pill" style="margin-left:auto;background:#dcfce7;color:#166534;border:1px solid #bbf7d0">2 options</span>
+    </div>
+
+    <!-- Col headers for request 2 -->
+    <div style="display:grid;grid-template-columns:200px 1fr 80px 90px 100px 90px 120px;padding:6px 18px;background:#f9fafb;border-bottom:1px solid #f0ede8">
+      <div class="col-hdr">Haulier</div>
+      <div class="col-hdr">Details</div>
+      <div class="col-hdr">Rate/t</div>
+      <div class="col-hdr">Total cost</div>
+      <div class="col-hdr">vs market</div>
+      <div class="col-hdr">Est. transit</div>
+      <div class="col-hdr" style="text-align:center">Select</div>
+    </div>
+
+    <!-- Option A -->
+    <div id="r2-opt1" onclick="selectRow('r2','r2-opt1')" style="display:grid;grid-template-columns:200px 1fr 80px 90px 100px 90px 120px;padding:10px 18px;border-bottom:1px solid #f3f4f6;align-items:center;cursor:pointer" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#111827">Pinnacle Transport</div>
+        <div style="font-size:9px;color:#9ca3af;margin-top:1px">Capacity confirmed · slot matched</div>
+      </div>
+      <div style="display:flex;gap:5px">
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">Tuas → Changi</span>
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">Afternoon</span>
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">25t cap</span>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#111827">S$16/t</div>
+      <div style="font-size:13px;font-weight:800;color:#111827">S$320</div>
+      <div><span style="font-size:9px;font-weight:700;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:2px 7px;border-radius:8px">−11% market</span></div>
+      <div style="font-size:10px;color:#6b7280">~3h 00m</div>
+      <div style="text-align:center">
+        <div style="width:18px;height:18px;border-radius:50%;border:2px solid #d1d5db;margin:0 auto"></div>
+      </div>
+    </div>
+
+    <!-- Option B -->
+    <div id="r2-opt2" onclick="selectRow('r2','r2-opt2')" style="display:grid;grid-template-columns:200px 1fr 80px 90px 100px 90px 120px;padding:10px 18px;border-bottom:1px solid #e5e7eb;align-items:center;cursor:pointer" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#111827">Swift Haulage Pte Ltd</div>
+        <div style="font-size:9px;color:#9ca3af;margin-top:1px">Capacity confirmed · slot matched</div>
+      </div>
+      <div style="display:flex;gap:5px">
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">Tuas → Changi</span>
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">Afternoon</span>
+        <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 7px;border-radius:12px">20t cap</span>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#111827">S$19/t</div>
+      <div style="font-size:13px;font-weight:800;color:#111827">S$380</div>
+      <div><span style="font-size:9px;font-weight:700;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;padding:2px 7px;border-radius:8px">+6% market</span></div>
+      <div style="font-size:10px;color:#6b7280">~2h 50m</div>
+      <div style="text-align:center">
+        <div style="width:18px;height:18px;border-radius:50%;border:2px solid #d1d5db;margin:0 auto"></div>
+      </div>
+    </div>
+
+    <!-- ── Request 3 — Unmatched ── -->
+    <div style="padding:10px 18px 6px;background:#fafafa;border-bottom:1px solid #f0ede8;display:flex;align-items:center;gap:10px">
+      <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">SG-0903</span>
+      <span style="font-size:11px;font-weight:600;color:#111827">Pasir Panjang → Yishun</span>
+      <span class="pill" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe">Evening</span>
+      <span style="font-size:10px;color:#6b7280">Fri · 15t</span>
+      <span class="pill" style="margin-left:auto;background:#fef2f2;color:#dc2626;border:1px solid #fecaca">No match</span>
+    </div>
+    <div style="padding:18px;border-bottom:1px solid #e5e7eb;background:#fffafb;display:flex;align-items:center;gap:12px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#374151">No hauliers available for this route and slot</div>
+        <div style="font-size:10px;color:#9ca3af;margin-top:2px">Try a different slot or expand your search. Demand logged.</div>
+      </div>
+    </div>
+
+    <!-- Totals + confirm bar -->
+    <div style="padding:12px 18px;background:#f9fafb;border-top:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;gap:20px;align-items:center">
+        <div>
+          <div style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Selected</div>
+          <div style="font-size:14px;font-weight:800;color:#111827">1 of 2</div>
+        </div>
+        <div style="width:1px;height:28px;background:#e5e7eb"></div>
+        <div>
+          <div style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Total cost</div>
+          <div style="font-size:14px;font-weight:800;color:#111827">S$540</div>
+        </div>
+        <div style="font-size:11px;color:#9ca3af;font-style:italic">Select a haulier for SG-0902 to confirm both</div>
+      </div>
+      <button style="font-size:12px;font-weight:700;padding:10px 24px;border-radius:9px;border:none;cursor:pointer;background:#111827;color:#fff;opacity:.4;pointer-events:none">Confirm 1 selection →</button>
+    </div>
+
+  </div>
+
+  <p style="font-size:10px;color:#9ca3af;margin:6px 0 0">Confirm button activates once all matched requests have a haulier selected. Unmatched requests are excluded.</p>
+
+</div>
+
+<script>
+  // Row selection: per-request radio-style
+  const reqGroups = {
+    r1: ['r1-opt1','r1-opt2','r1-opt3'],
+    r2: ['r2-opt1','r2-opt2'],
+  };
+  const selected = {};
+
+  function selectRow(reqId, rowId) {
+    reqGroups[reqId].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.background = '';
+      el.style.outline = '';
+      // reset radio
+      const radio = el.querySelector('div[style*="border-radius:50%"]');
+      if (radio) { radio.style.background = ''; radio.style.borderColor = '#d1d5db'; radio.innerHTML = ''; }
+    });
+    // Select clicked
+    const sel = document.getElementById(rowId);
+    sel.style.background = '#f5f8ff';
+    sel.style.outline = '2px solid #3b82f6';
+    sel.style.outlineOffset = '-2px';
+    const radio = sel.querySelector('div[style*="border-radius:50%"]');
+    if (radio) {
+      radio.style.background = '#3b82f6';
+      radio.style.borderColor = '#3b82f6';
+      radio.innerHTML = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>';
+    }
+    selected[reqId] = rowId;
+  }
+</script>
+</body>
+</html>

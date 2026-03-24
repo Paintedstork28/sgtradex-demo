@@ -1657,78 +1657,102 @@ function renderRequestsTab() {
   }).join('');
 
   // ── Manual pending rows (awaiting match) ──────
-  const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const DAY_KEYS   = ['Mon','Tue','Wed','Thu','Fri'];
+  const SLOT_KEYS2 = ['morning','afternoon','evening'];
+  const SLOT_LBL2  = {morning:'Morning',afternoon:'Afternoon',evening:'Evening'};
+
   const manualPendingRows = pendingManual.map(r => {
     const slotStyle = SLOT_STYLE[(r.slot||'morning').toLowerCase()] || SLOT_STYLE.morning;
     const slotLabel = SLOT_SHORT[r.slot] || r.slot;
-    return `<div style="display:grid;grid-template-columns:90px 90px 1fr 140px 60px 120px 160px;align-items:center;padding:10px 16px;border-bottom:1px solid #f9fafb;background:#fafbff" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='#fafbff'">
+    const addrHint  = r.pickupAddr ? `<div style="font-size:9px;color:#9ca3af;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.pickupAddr.substring(0,40)}${r.pickupAddr.length>40?'…':''}</div>` : '';
+    return `<div style="display:grid;grid-template-columns:90px 90px 1fr 60px 80px 1fr;align-items:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#fafbff" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='#fafbff'">
       <div style="font-family:monospace;font-size:10px;font-weight:700;color:#7c3aed">${r.id}</div>
       <div><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;${slotStyle}">${slotLabel}</span></div>
       <div>
         <div style="font-size:11px;font-weight:600;color:#111827">${r.from} → ${r.to}</div>
-        <div style="font-size:9px;color:#9ca3af;margin-top:1px">${r.day} · ${r.tons}t</div>
+        <div style="font-size:9px;color:#9ca3af;margin-top:1px">${r.day}</div>
       </div>
-      <div style="font-size:11px;color:#9ca3af;font-style:italic">Awaiting match</div>
       <div style="font-size:11px;font-weight:700;color:#111827">${r.tons}t</div>
       <div><span style="font-size:8px;font-weight:700;padding:2px 7px;border-radius:8px;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe">Unmatched</span></div>
-      <div style="font-size:10px;color:#9ca3af">Run match to assign</div>
+      <div>${addrHint}<div style="font-size:10px;color:#9ca3af;font-style:italic;margin-top:2px">Run match to assign</div></div>
     </div>`;
   }).join('');
 
-  const outgoingRows = (outgoingConfirmedRows + manualPendingRows) ||
-    `<div style="padding:28px;text-align:center;font-size:11px;color:#9ca3af">No outgoing requests — add one below or run encrypted match</div>`;
+  const noManualMsg = pendingManual.length === 0 && !addingNewRequest
+    ? `<div style="padding:24px 16px;text-align:center;font-size:11px;color:#9ca3af">No requests queued — add one to run a match</div>`
+    : '';
 
   // ── Add new request form ───────────────────────
-  const DAY_KEYS   = ['Mon','Tue','Wed','Thu','Fri'];
-  const SLOT_KEYS2 = ['morning','afternoon','evening'];
-  const SLOT_LBL2  = {morning:'Morning',afternoon:'Afternoon',evening:'Evening'};
   const newReqForm = addingNewRequest ? `
     <div style="padding:14px 16px;background:#f5f3ff;border-top:1px solid #ede9fe">
       <div style="font-size:10px;font-weight:700;color:#7c3aed;margin-bottom:10px">New capacity request</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 80px auto;gap:8px;align-items:end">
+      <div style="display:grid;grid-template-columns:1fr 1fr 80px 130px;gap:10px;margin-bottom:10px">
+        <!-- Pickup address -->
         <div>
-          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">From</div>
-          <input id="nr-from" placeholder="e.g. Jurong" style="width:100%;font-size:11px;padding:6px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Pickup address</div>
+          <input id="nr-pickup-addr" oninput="nrDetectZone('pickup')" placeholder="Paste full address" style="width:100%;font-size:11px;padding:6px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+          <div onclick="nrFillSample('pickup','1 Jurong Port Road, Singapore 619096','Jurong','619096')" style="margin-top:4px;font-size:9px;color:#a78bfa;cursor:pointer;display:flex;align-items:center;gap:4px">
+            <span style="padding:2px 8px;border-radius:5px;border:1px dashed #ddd6fe;background:#faf5ff;color:#7c3aed">e.g. 1 Jurong Port Road, S 619096</span>
+            <span>← click to use</span>
+          </div>
+          <div id="nr-pickup-chips" style="display:none;margin-top:4px;gap:5px;align-items:center"></div>
         </div>
+        <!-- Dropoff address -->
         <div>
-          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">To</div>
-          <input id="nr-to" placeholder="e.g. Changi" style="width:100%;font-size:11px;padding:6px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Dropoff address</div>
+          <input id="nr-dropoff-addr" oninput="nrDetectZone('dropoff')" placeholder="Paste full address" style="width:100%;font-size:11px;padding:6px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+          <div onclick="nrFillSample('dropoff','Woodlands Checkpoint, 21 Woodlands Crossing, Singapore 738523','Woodlands','738523')" style="margin-top:4px;font-size:9px;color:#a78bfa;cursor:pointer;display:flex;align-items:center;gap:4px">
+            <span style="padding:2px 8px;border-radius:5px;border:1px dashed #ddd6fe;background:#faf5ff;color:#7c3aed">e.g. 21 Woodlands Crossing, S 738523</span>
+            <span>← click to use</span>
+          </div>
+          <div id="nr-dropoff-chips" style="display:none;margin-top:4px;gap:5px;align-items:center"></div>
         </div>
+        <!-- Tons -->
         <div>
-          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Tons needed</div>
+          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Tons</div>
           <input id="nr-tons" type="number" min="1" max="100" placeholder="e.g. 20" style="width:100%;font-size:11px;padding:6px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
         </div>
+        <!-- Day + Slot -->
         <div>
-          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Day</div>
-          <select id="nr-day" style="width:100%;font-size:11px;padding:6px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
-            ${DAY_KEYS.map(d=>`<option value="${d}">${d}</option>`).join('')}
-          </select>
-        </div>
-        <div>
-          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Slot</div>
-          <select id="nr-slot" style="font-size:11px;padding:6px 10px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
-            ${SLOT_KEYS2.map(k=>`<option value="${k}">${SLOT_LBL2[k]}</option>`).join('')}
-          </select>
+          <div style="font-size:9px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Day · Slot</div>
+          <div style="display:flex;gap:5px">
+            <select id="nr-day" style="flex:1;font-size:11px;padding:6px 6px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+              ${DAY_KEYS.map(d=>`<option value="${d}">${d}</option>`).join('')}
+            </select>
+            <select id="nr-slot" style="flex:1;font-size:11px;padding:6px 6px;border:1px solid #ddd6fe;border-radius:7px;background:#fff">
+              ${SLOT_KEYS2.map(k=>`<option value="${k}">${SLOT_LBL2[k]}</option>`).join('')}
+            </select>
+          </div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button onclick="saveNewCapacityRequest()" style="font-size:10px;font-weight:700;padding:6px 16px;border-radius:7px;border:none;cursor:pointer;background:#7c3aed;color:#fff">Save request</button>
+      <div style="display:flex;gap:8px">
+        <button onclick="saveNewCapacityRequest()" style="font-size:10px;font-weight:700;padding:6px 16px;border-radius:7px;border:none;cursor:pointer;background:#7c3aed;color:#fff">Save to queue</button>
         <button onclick="addingNewRequest=false;renderRequestsTab()" style="font-size:10px;padding:6px 14px;border-radius:7px;cursor:pointer;border:1px solid #ddd6fe;background:#fff;color:#6b7280">Cancel</button>
       </div>
     </div>` : '';
 
+  // ── Match button: active only when requests are queued ──
+  const canRunMatch  = pendingManual.length > 0;
+  const matchBtnStyle = canRunMatch
+    ? 'font-size:10px;font-weight:700;color:#fff;background:#7c3aed;border:none;padding:5px 14px;border-radius:7px;cursor:pointer'
+    : 'font-size:10px;font-weight:700;color:#9ca3af;background:#f3f0fe;border:1px solid #ddd6fe;padding:5px 14px;border-radius:7px;cursor:not-allowed;opacity:.55';
+  const matchBtnClick = canRunMatch
+    ? `onclick="cnInitRequests();cnRenderS1();cnShowStep('s1');switchTab('tab-new')"`
+    : '';
+
+  // ── Confirm section: empty state ──────────────
+  const confirmEmptyMsg = pendingOutgoing.length === 0
+    ? `<div style="padding:24px 16px;text-align:center;font-size:11px;color:#9ca3af">No matches awaiting confirmation</div>`
+    : '';
 
   c.innerHTML = `<div class="page-content">
-    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
-      <div>
-        <h1>Requests</h1>
-        <p>${pendingCount} pending your action · once actioned, updates the Capacity tab</p>
-      </div>
-      <button onclick="addingNewRequest=!addingNewRequest;renderRequestsTab()" style="font-size:11px;font-weight:700;padding:7px 16px;border-radius:8px;border:none;cursor:pointer;background:#7c3aed;color:#fff;white-space:nowrap">+ New request</button>
+    <div class="page-header">
+      <h1>Requests</h1>
+      <p>${pendingCount} pending your action · once actioned, updates the Capacity tab</p>
     </div>
     <div class="card" style="overflow:hidden;padding:0">
 
-      <!-- Incoming section -->
+      <!-- ① Incoming -->
       <div style="padding:10px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8;display:flex;align-items:center;gap:10px;border-left:3px solid #16a34a">
         <span style="font-size:9px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.06em">↓ Incoming</span>
         <span style="font-size:10px;color:#9ca3af">Hauliers requesting to use your spare capacity — accept or decline</span>
@@ -1745,12 +1769,13 @@ function renderRequestsTab() {
       </div>
       ${incomingRows}
 
-      <!-- Outgoing section -->
+      <!-- ② Match found — confirm order -->
       <div style="padding:10px 16px;background:#f9fafb;border-top:1px solid #f0ede8;border-bottom:1px solid #f0ede8;display:flex;align-items:center;gap:10px;border-left:3px solid #2563eb">
-        <span style="font-size:9px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.06em">↑ Outgoing</span>
-        <span style="font-size:10px;color:#9ca3af">Your capacity requests — matched or awaiting match</span>
-        <button onclick="cnInitRequests();cnRenderS1();cnShowStep('s1');switchTab('tab-new')" style="margin-left:auto;font-size:10px;font-weight:700;color:#fff;background:#7c3aed;border:none;padding:5px 14px;border-radius:7px;cursor:pointer">Run encrypted match →</button>
+        <span style="font-size:9px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.06em">✓ Match found — confirm order</span>
+        <span style="font-size:10px;color:#9ca3af">Haulier matched · confirm to lock in the booking</span>
+        <span style="margin-left:auto;font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:2px 8px;border-radius:8px">${pendingOutgoing.length} awaiting confirmation</span>
       </div>
+      ${pendingOutgoing.length > 0 ? `
       <div style="display:grid;grid-template-columns:90px 90px 1fr 140px 60px 120px 160px;padding:7px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8">
         <div class="section-label" style="margin:0">Request</div>
         <div class="section-label" style="margin:0">Slot</div>
@@ -1760,7 +1785,25 @@ function renderRequestsTab() {
         <div class="section-label" style="margin:0">Status</div>
         <div class="section-label" style="margin:0">Action</div>
       </div>
-      ${outgoingRows}
+      ${outgoingConfirmedRows}` : confirmEmptyMsg}
+
+      <!-- ③ New request + encrypted match -->
+      <div style="padding:10px 16px;background:#f9fafb;border-top:1px solid #f0ede8;border-bottom:1px solid #f0ede8;display:flex;align-items:center;gap:8px;border-left:3px solid #7c3aed">
+        <span style="font-size:9px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.06em">+ New capacity request</span>
+        <span style="font-size:10px;color:#9ca3af">Log a request, then run an encrypted match to find a haulier</span>
+        <button onclick="addingNewRequest=!addingNewRequest;renderRequestsTab()" style="margin-left:auto;font-size:10px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;padding:5px 14px;border-radius:7px;cursor:pointer">+ Add request</button>
+        <button ${matchBtnClick} style="${matchBtnStyle}">Run encrypted match →</button>
+      </div>
+      ${pendingManual.length > 0 ? `
+      <div style="display:grid;grid-template-columns:90px 90px 1fr 60px 80px 1fr;padding:7px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8">
+        <div class="section-label" style="margin:0">Request</div>
+        <div class="section-label" style="margin:0">Slot</div>
+        <div class="section-label" style="margin:0">Route</div>
+        <div class="section-label" style="margin:0">Tons</div>
+        <div class="section-label" style="margin:0">Status</div>
+        <div class="section-label" style="margin:0">Note</div>
+      </div>
+      ${manualPendingRows}` : noManualMsg}
       ${newReqForm}
 
     </div>
@@ -1802,15 +1845,79 @@ function cancelOutgoingRequest(reqId) {
   renderRequestsTab();
 }
 
+// Zone keyword map for address detection
+const NR_ZONE_MAP = [
+  {zone:'Jurong',           postRe:/6[12]\d{4}/,  keys:['jurong']},
+  {zone:'Tuas',             postRe:/63[89]\d{4}|6[46]\d{4}/, keys:['tuas']},
+  {zone:'Clementi',         postRe:/12\d{4}/,     keys:['clementi']},
+  {zone:'Pasir Panjang',    postRe:/11\d{4}/,     keys:['pasir panjang','pasirpanjang']},
+  {zone:'Brani / Tg. Pagar',postRe:/09\d{4}/,     keys:['brani','tanjong pagar','tg pagar','harbourfront']},
+  {zone:'Central',          postRe:/0[1-8]\d{4}/, keys:['raffles','shenton','marina','city hall','central']},
+  {zone:'Ang Mo Kio',       postRe:/5[67]\d{4}/,  keys:['ang mo kio','amk']},
+  {zone:'Woodlands',        postRe:/73\d{4}/,      keys:['woodlands']},
+  {zone:'Yishun',           postRe:/76\d{4}/,      keys:['yishun']},
+  {zone:'Seletar',          postRe:/79\d{4}/,      keys:['seletar','yio chu kang']},
+  {zone:'Tampines',         postRe:/52\d{4}/,      keys:['tampines']},
+  {zone:'Changi',           postRe:/49\d{4}|50\d{4}/, keys:['changi']},
+];
+
+function nrParseAddress(addr) {
+  const lower = addr.toLowerCase();
+  const postcodeMatch = addr.match(/\b(\d{6})\b/);
+  const postcode = postcodeMatch ? postcodeMatch[1] : null;
+  // Try zone by keyword first
+  for (const z of NR_ZONE_MAP) {
+    if (z.keys.some(k => lower.includes(k))) return {zone: z.zone, postcode};
+  }
+  // Try zone by postcode
+  if (postcode) {
+    for (const z of NR_ZONE_MAP) {
+      if (z.postRe.test(postcode)) return {zone: z.zone, postcode};
+    }
+  }
+  return {zone: null, postcode};
+}
+
+function nrFillSample(field, addr, zone, postcode) {
+  const inputId = field === 'pickup' ? 'nr-pickup-addr' : 'nr-dropoff-addr';
+  const el = document.getElementById(inputId);
+  if (el) { el.value = addr; nrShowChips(field, zone, postcode); }
+}
+
+function nrDetectZone(field) {
+  const inputId = field === 'pickup' ? 'nr-pickup-addr' : 'nr-dropoff-addr';
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  const {zone, postcode} = nrParseAddress(el.value);
+  if (zone || postcode) nrShowChips(field, zone, postcode);
+}
+
+function nrShowChips(field, zone, postcode) {
+  const chipsId = field === 'pickup' ? 'nr-pickup-chips' : 'nr-dropoff-chips';
+  const chips = document.getElementById(chipsId);
+  if (!chips) return;
+  chips.style.display = 'flex';
+  chips.innerHTML = (zone ? `<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;background:#dcfce7;color:#166534;border:1px solid #bbf7d0">Zone: ${zone}</span>` : '')
+    + (postcode ? `<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">Postcode: ${postcode}</span>` : '');
+}
+
 function saveNewCapacityRequest() {
-  const from = (document.getElementById('nr-from').value || '').trim();
-  const to   = (document.getElementById('nr-to').value   || '').trim();
+  const pickupAddr = (document.getElementById('nr-pickup-addr').value || '').trim();
+  const dropoffAddr = (document.getElementById('nr-dropoff-addr').value || '').trim();
   const tons = parseInt(document.getElementById('nr-tons').value || '0');
   const day  = document.getElementById('nr-day').value;
   const slot = document.getElementById('nr-slot').value;
-  if (!from || !to || !tons) { alert('Please fill in From, To, and Tons.'); return; }
+  if (!pickupAddr || !dropoffAddr || !tons) { alert('Please fill in pickup address, dropoff address, and tons.'); return; }
+  const fromParsed = nrParseAddress(pickupAddr);
+  const toParsed   = nrParseAddress(dropoffAddr);
+  const from = fromParsed.zone || pickupAddr.split(',')[0].trim();
+  const to   = toParsed.zone   || dropoffAddr.split(',')[0].trim();
   const newId = 'SG-' + (Math.floor(Math.random()*900)+900);
-  manualCnRequests.push({id:newId, from, to, tons, day, slot, status:'pending'});
+  manualCnRequests.push({
+    id: newId, from, to, tons, day, slot, status: 'pending',
+    pickupAddr, dropoffAddr,
+    fromPostcode: fromParsed.postcode, toPostcode: toParsed.postcode,
+  });
   addingNewRequest = false;
   renderRequestsTab();
 }
@@ -2618,86 +2725,102 @@ function cnGenerateResults() {
 function cnRenderS3() {
   const s3 = document.getElementById('s3');
   if (!s3) return;
-  const matched   = cnRequests.filter(r => (cnResults[r.id]||[]).length > 0).length;
-  const unmatched = cnRequests.filter(r => (cnResults[r.id]||[]).length === 0).length;
-  const slotLabel = s => ({morning:'Morning',afternoon:'Afternoon',evening:'Evening'}[s]||s);
+  const matched      = cnRequests.filter(r => (cnResults[r.id]||[]).length > 0).length;
+  const unmatched    = cnRequests.filter(r => (cnResults[r.id]||[]).length === 0).length;
+  const slotLbl      = s => ({morning:'Morning',afternoon:'Afternoon',evening:'Evening'}[s]||s);
+  const allSelected  = cnRequests.filter(r=>(cnResults[r.id]||[]).length>0).every(r=>cnSelections[r.id]);
+  const selectedCount= Object.keys(cnSelections).length;
+  const totalCostSel = Object.values(cnSelections).reduce((s,v)=>s+(v.total||0),0);
+
+  const COL = '200px 1fr 72px 90px 100px 80px 60px';
 
   const sections = cnRequests.map(req => {
     const hauliers = cnResults[req.id] || [];
     const sel      = cnSelections[req.id];
 
-    const haulierCards = hauliers.map(h => {
-      const isSel = sel && sel.name === h.name;
+    const colHdrs = `<div style="display:grid;grid-template-columns:${COL};padding:5px 16px;background:#f9fafb;border-bottom:1px solid #f0ede8">
+      <div style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em">Haulier</div>
+      <div style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em">Capacity details</div>
+      <div style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em">Rate/t</div>
+      <div style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em">Total cost</div>
+      <div style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em">vs market</div>
+      <div style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em">Transit</div>
+      <div style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;text-align:center">Select</div>
+    </div>`;
+
+    const haulierRows = hauliers.map(h => {
+      const isSel    = sel && sel.name === h.name;
       const pctColor = h.dir==='below' ? '#16a34a' : h.dir==='above' ? '#dc2626' : '#6b7280';
-      const pctLabel = h.dir==='at' ? 'at market rate' : `${h.pct}% ${h.dir} market`;
-      return `<div class="match-card" onclick="cnSelectHaulierForRequest('${req.id}','${h.name}',${h.total})"
-        style="border-color:${isSel?'#3b82f6':'#e5e7eb'};background:${isSel?'#f5f8ff':'#fff'}">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div><p style="font-size:12px;font-weight:600;color:#111827;margin:0 0 2px">${h.name}</p>
-               <p style="font-size:10px;color:#9ca3af;margin:0">Capacity confirmed · Slot matched</p></div>
-          <div style="text-align:right;flex-shrink:0;margin-left:10px">
-            <p style="font-size:14px;font-weight:800;color:#111827;margin:0">S$${h.total}</p>
-            <p style="font-size:9px;font-weight:600;color:${pctColor};margin:1px 0 0">S$${h.ratePerTon}/t · ${pctLabel}</p>
-          </div>
+      const pctBg    = h.dir==='below' ? 'background:#f0fdf4;border:1px solid #bbf7d0' : h.dir==='above' ? 'background:#fef2f2;border:1px solid #fecaca' : 'background:#f3f4f6;border:1px solid #e5e7eb';
+      const pctLabel = h.dir==='at' ? 'at market' : `${h.pct}% ${h.dir}`;
+      const transitMin = 90 + Math.round(Math.random()*60);
+      const transitH = Math.floor(transitMin/60), transitM = transitMin%60;
+      return `<div onclick="cnSelectHaulierForRequest('${req.id}','${h.name}',${h.total})"
+        style="display:grid;grid-template-columns:${COL};padding:10px 16px;border-bottom:1px solid #f3f4f6;align-items:center;cursor:pointer;
+               ${isSel?'background:#f5f8ff;outline:2px solid #3b82f6;outline-offset:-2px;':''}transition:background .1s"
+        onmouseover="if(!${isSel})this.style.background='#fafafa'" onmouseout="if(!${isSel})this.style.background=''">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#111827">${h.name}</div>
+          <div style="font-size:9px;color:#9ca3af;margin-top:1px">Capacity confirmed · slot matched</div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-          <div style="display:flex;gap:5px">
-            <span style="font-size:10px;background:#f1f5f9;color:#475569;border:1px solid #e5e7eb;padding:2px 8px;border-radius:20px">${req.from} → ${req.to}</span>
-            <span style="font-size:10px;background:#f1f5f9;color:#475569;border:1px solid #e5e7eb;padding:2px 8px;border-radius:20px">${slotLabel(req.slot)}</span>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:1px 6px;border-radius:10px">${req.from} → ${req.to}</span>
+          <span style="font-size:9px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:1px 6px;border-radius:10px">${req.tons}t cap</span>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:#111827">S$${h.ratePerTon}/t</div>
+        <div style="font-size:13px;font-weight:800;color:#111827">S$${h.total}</div>
+        <div><span style="font-size:9px;font-weight:700;color:${pctColor};${pctBg};padding:2px 7px;border-radius:8px">${pctLabel}</span></div>
+        <div style="font-size:10px;color:#6b7280">~${transitH}h ${transitM}m</div>
+        <div style="text-align:center">
+          <div style="width:18px;height:18px;border-radius:50%;border:2px solid ${isSel?'#3b82f6':'#d1d5db'};background:${isSel?'#3b82f6':'transparent'};margin:0 auto;display:flex;align-items:center;justify-content:center">
+            ${isSel?`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`:''}
           </div>
-          <span style="font-size:9px;color:#9ca3af">Market: S$${h.mkt}</span>
         </div>
       </div>`;
     }).join('');
 
-    const unmatchedCard = `<div style="border:1.5px dashed #d1d5db;border-radius:10px;padding:20px;text-align:center;background:#f9fafb">
-      <p style="font-size:12px;font-weight:600;color:#6b7280;margin:0 0 4px">No matches found</p>
-      <p style="font-size:10px;color:#9ca3af;margin:0">No hauliers had available capacity on this route &amp; slot</p>
+    const unmatchedRow = `<div style="padding:16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f3f4f6;background:#fffafb">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#374151">No hauliers available for this route and slot</div>
+        <div style="font-size:10px;color:#9ca3af;margin-top:1px">Try a different slot or expand your search. Demand logged.</div>
+      </div>
     </div>`;
 
-    const selBar = sel
-      ? `<div style="margin-top:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:9px 14px;font-size:12px;color:#2563eb;display:flex;justify-content:space-between;align-items:center">
-           <span>Selected: <strong>${sel.name}</strong></span>
-           <strong style="font-size:13px">S$${sel.total}</strong>
-         </div>` : '';
-
-    return `<div style="margin-bottom:20px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div style="flex:1">
-          <p style="font-size:12px;font-weight:700;color:#111827;margin:0">${req.day} · ${slotLabel(req.slot)} · ${req.from} → ${req.to}</p>
-          <p style="font-size:10px;color:#9ca3af;margin:2px 0 0">${req.tons}t needed${req.manual?'' : ' · My fleet: '+req.myTons+'t'}</p>
-        </div>
-        ${hauliers.length > 0
-          ? `<span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:3px 10px;border-radius:20px">${hauliers.length} match${hauliers.length!==1?'es':''}</span>`
-          : `<span style="font-size:10px;font-weight:700;background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb;padding:3px 10px;border-radius:20px">Unmatched</span>`}
+    return `
+      <!-- Request header -->
+      <div style="padding:9px 16px;background:#fafafa;border-bottom:1px solid #f0ede8;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:10px">
+        <span style="font-family:monospace;font-size:10px;font-weight:700;color:#374151">${req.id}</span>
+        <span style="font-size:11px;font-weight:600;color:#111827">${req.from} → ${req.to}</span>
+        <span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;background:${slotLbl(req.slot)==='Morning'?'#fffbeb;color:#92400e;border:1px solid #fde68a':slotLbl(req.slot)==='Afternoon'?'#eff6ff;color:#2563eb;border:1px solid #bfdbfe':'#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe'}">${slotLbl(req.slot)}</span>
+        <span style="font-size:10px;color:#6b7280">${req.day} · ${req.tons}t</span>
+        ${req.pickupAddr ? `<span style="font-size:9px;color:#9ca3af;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px">${req.pickupAddr.substring(0,50)}${req.pickupAddr.length>50?'…':''}</span>` : ''}
+        <span style="margin-left:auto;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px;${hauliers.length>0?'background:#dcfce7;color:#166534;border:1px solid #bbf7d0':' background:#fef2f2;color:#dc2626;border:1px solid #fecaca'}">${hauliers.length>0?hauliers.length+' option'+(hauliers.length!==1?'s':''):'No match'}</span>
       </div>
-      <div style="display:grid;grid-template-columns:${hauliers.length>=2?'1fr 1fr':'1fr'};gap:10px">
-        ${hauliers.length > 0 ? haulierCards : unmatchedCard}
-      </div>
-      ${selBar}
-    </div>`;
+      ${hauliers.length > 0 ? colHdrs + haulierRows : unmatchedRow}`;
   }).join('');
-
-  const allSelected = cnRequests.filter(r=>(cnResults[r.id]||[]).length>0).every(r=>cnSelections[r.id]);
-  const selectedCount = Object.keys(cnSelections).length;
 
   s3.innerHTML = `<div class="card" style="overflow:hidden">
     <div class="card-header">
       <div>
         <h2 style="font-size:15px;font-weight:700;color:#111827;margin:0 0 2px">Match results</h2>
-        <p style="font-size:11px;color:#9ca3af;margin:0">${matched} matched · ${unmatched} unmatched · Select 1 haulier per request</p>
+        <p style="font-size:11px;color:#9ca3af;margin:0">${matched} request${matched!==1?'s':''} matched · select 1 haulier per request · ${unmatched} unmatched</p>
       </div>
       <div style="display:flex;gap:6px">
         <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;padding:4px 11px;border-radius:20px">${matched} matched</span>
-        ${unmatched > 0 ? `<span style="font-size:10px;font-weight:700;background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb;padding:4px 11px;border-radius:20px">${unmatched} unmatched</span>` : ''}
+        ${unmatched > 0 ? `<span style="font-size:10px;font-weight:700;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:4px 11px;border-radius:20px">${unmatched} unmatched</span>` : ''}
       </div>
     </div>
-    <div style="padding:18px 22px">
-      ${sections}
-    </div>
-    <div style="padding:0 22px 22px">
-      <button onclick="cnConfirmAll()" class="btn-primary" style="width:100%;padding:13px;border-radius:10px;font-size:13px;${allSelected?'':'opacity:.35;pointer-events:none'}">
-        Confirm ${selectedCount} Selection${selectedCount!==1?'s':''} →
+    ${sections}
+    <!-- Totals + confirm bar -->
+    <div style="padding:12px 18px;background:#f9fafb;border-top:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;gap:20px;align-items:center">
+        <div><div style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Selected</div><div style="font-size:14px;font-weight:800;color:#111827">${selectedCount} of ${matched}</div></div>
+        ${totalCostSel>0?`<div style="width:1px;height:28px;background:#e5e7eb"></div><div><div style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Total cost</div><div style="font-size:14px;font-weight:800;color:#111827">S$${totalCostSel}</div></div>`:''}
+        ${!allSelected&&matched>0?`<div style="font-size:11px;color:#9ca3af;font-style:italic">Select a haulier for each matched request to confirm</div>`:''}
+      </div>
+      <button onclick="cnConfirmAll()" class="btn-primary" style="padding:10px 24px;border-radius:9px;font-size:12px;${allSelected?'':'opacity:.35;pointer-events:none'}">
+        Confirm ${selectedCount} selection${selectedCount!==1?'s':''} →
       </button>
     </div>
   </div>`;
