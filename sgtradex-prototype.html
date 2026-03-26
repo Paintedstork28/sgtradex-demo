@@ -9,42 +9,208 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    *{box-sizing:border-box;} body{font-family:'Inter',sans-serif;background:#f0ede8;margin:0;}
-    /* login */
+    /* ── Reset & base ── */
+    *{box-sizing:border-box;} body{font-family:'Inter',sans-serif;margin:0;background:#f0f2f5;}
+    select,input,textarea{outline:none;font-family:'Inter',sans-serif;}
+
+    /* ── Login ── */
     #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0ede8;}
     .role-card{border:2px solid #e5e0d8;border-radius:14px;padding:14px;cursor:pointer;transition:all .15s;background:#fff;}
-    .role-card:hover{border-color:#93c5fd;background:#f5f8ff;}
-    .role-card.sel{border-color:#1d4ed8;background:#eff6ff;}
-    /* portal */
-    #portal-wrap{display:none;flex-direction:column;align-items:center;min-height:100vh;padding:0 0 40px;}
-    /* tab bar */
-    .tab-btn{padding:8px 14px;font-size:12px;font-weight:600;border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;color:#94a3b8;transition:all .15s;white-space:nowrap;}
-    .tab-btn.active{color:#1d4ed8;border-bottom-color:#1d4ed8;}
-    .tab-pane{display:none;width:100%;} .tab-pane.active{display:block;}
-    /* status pipeline */
+    .role-card:hover{border-color:#6ee7b7;background:#f0fdf4;}
+    .role-card.sel{border-color:#10b981;background:#ecfdf5;}
+
+    /* ── Portal shell: sidebar + main ── */
+    #portal-wrap{display:none;height:100vh;overflow:hidden;}
+    .p-shell{display:flex;height:100vh;overflow:hidden;}
+
+    /* ── Sidebar ── */
+    .p-sidebar{width:220px;background:#1b1b2f;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;overflow-x:hidden;}
+    .p-sidebar::-webkit-scrollbar{width:3px;} .p-sidebar::-webkit-scrollbar-thumb{background:#3d3d60;border-radius:4px;}
+    .p-logo{padding:18px 20px 14px;font-size:15px;font-weight:700;color:#fff;border-bottom:1px solid #2d2d50;letter-spacing:.04em;flex-shrink:0;}
+    .p-logo span{color:#10b981;}
+    .p-user{padding:12px 20px;border-bottom:1px solid #2d2d50;display:flex;align-items:center;gap:10px;}
+    .p-avatar{width:30px;height:30px;border-radius:50%;background:#10b981;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+    .p-uname{font-size:12px;color:#e5e7eb;font-weight:600;line-height:1.3;}
+    .p-uemail{font-size:11px;color:#6b7280;}
+    .p-section{padding:14px 20px 5px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#4b5563;font-weight:600;}
+    .p-nav{display:flex;align-items:center;gap:10px;padding:9px 20px;color:#9ca3b4;font-size:13px;cursor:pointer;border:none;background:none;text-align:left;width:100%;position:relative;transition:background .12s,color .12s;}
+    .p-nav:hover{background:rgba(255,255,255,.05);color:#e5e7eb;}
+    .p-nav.active{background:rgba(16,185,129,.12);color:#10b981;}
+    .p-nav.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#10b981;border-radius:0 2px 2px 0;}
+    .p-nav .p-icon{width:18px;text-align:center;font-size:14px;flex-shrink:0;}
+    .p-nav .p-badge{margin-left:auto;background:#10b981;color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;}
+    .p-nav .p-badge.amber{background:#f59e0b;}
+    .p-divider{height:1px;background:#2d2d50;margin:8px 20px;}
+    .p-footer{margin-top:auto;padding:14px 20px;border-top:1px solid #2d2d50;font-size:11px;color:#4b5563;}
+
+    /* ── Main content area ── */
+    .p-main{flex:1;overflow-y:auto;background:#f5f6f8;}
+    .p-page{display:none;padding:28px;max-width:1120px;}
+    .p-page.active{display:block;}
+
+    /* ── Page headers ── */
+    .ph{margin-bottom:22px;} .ph h2{font-size:20px;font-weight:700;color:#1a1a2e;} .ph p{font-size:13px;color:#6b7280;margin-top:4px;}
+
+    /* ── Encrypt / PII banners ── */
+    .enc-banner{display:flex;align-items:center;gap:10px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:9px 16px;font-size:12px;color:#065f46;margin-bottom:20px;}
+    .pii-banner{display:flex;align-items:center;gap:10px;background:#fff5f5;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;margin-bottom:18px;}
+    .pii-banner .pii-title{font-size:12px;font-weight:700;color:#b91c1c;}
+    .pii-banner .pii-sub{font-size:11px;color:#dc2626;margin-top:2px;}
+
+    /* ── Cards ── */
+    .card{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden;margin-bottom:20px;}
+    .card-hd{padding:15px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f3f4f6;}
+    .card-hd h3{font-size:14px;font-weight:700;color:#1a1a2e;margin:0;}
+    .card-hd .right{display:flex;align-items:center;gap:10px;}
+    .card-hd .meta{font-size:12px;color:#9ca3af;}
+    .cnt{background:#f3f4f6;color:#374151;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px;}
+
+    /* ── Tables ── */
+    table{width:100%;border-collapse:collapse;}
+    thead th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#9ca3af;background:#fafafa;border-bottom:1px solid #f3f4f6;}
+    tbody td{padding:12px 16px;border-bottom:1px solid #f9fafb;font-size:13px;vertical-align:middle;}
+    tbody tr:last-child td{border-bottom:none;}
+    tbody tr:hover td{background:#fafafa;}
+    .rt-main{font-weight:600;color:#1a1a2e;font-size:13px;}
+    .rt-sub{font-size:11px;color:#9ca3af;margin-top:2px;}
+    .mono{font-family:monospace;font-size:12px;color:#6b7280;}
+
+    /* ── Badges ── */
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+    .bdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:currentColor;}
+    .b-available{background:#f3f4f6;color:#374151;}
+    .b-broadcast{background:#fef9c3;color:#854d0e;}
+    .b-matched{background:#eff6ff;color:#1d4ed8;}
+    .b-partial{background:#e0f2fe;color:#0369a1;}
+    .b-pending{background:#fef9c3;color:#854d0e;}
+    .b-unfulfilled{background:#fef2f2;color:#991b1b;}
+
+    /* ── Buttons ── */
+    .btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+    .btn-primary{background:#10b981;color:#fff;} .btn-primary:hover{background:#059669;}
+    .btn-secondary{background:#fff;color:#374151;border:1px solid #e5e7eb;} .btn-secondary:hover{background:#f9fafb;}
+    .btn-ghost{background:#f3f4f6;color:#6b7280;border:none;border-radius:7px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;} .btn-ghost:hover{background:#e5e7eb;}
+    .btn-sm{padding:5px 11px;font-size:11px;}
+    .btn-danger{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;}
+
+    /* ── Action bar ── */
+    .action-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+    .action-bar-left{display:flex;align-items:center;gap:10px;}
+    .search-box{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:7px 14px;font-size:13px;outline:none;width:220px;color:#1a1a2e;}
+    .search-box:focus{border-color:#10b981;}
+    .filter-btn{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:7px 14px;font-size:13px;color:#6b7280;cursor:pointer;}
+
+    /* ── Add-row button ── */
+    .add-row-btn{display:flex;align-items:center;gap:8px;width:100%;padding:13px 20px;background:none;border:none;border-top:1px dashed #e5e7eb;color:#10b981;font-size:13px;font-weight:600;cursor:pointer;text-align:left;transition:background .12s;}
+    .add-row-btn:hover{background:#f0fdf4;}
+    .add-row-btn.demand{color:#8b5cf6;} .add-row-btn.demand:hover{background:#f5f3ff;}
+
+    /* ── Inline form ── */
+    .form-wrap{display:none;padding:24px;border-top:2px solid #f0fdf4;background:#f9fafb;}
+    .form-wrap.demand-wrap{border-top-color:#f5f3ff;}
+    .form-wrap.open{display:block;}
+    .form-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+    .form-top h3{font-size:15px;font-weight:700;margin:0;color:#1a1a2e;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .form-section{grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#9ca3af;padding-bottom:8px;border-bottom:1px solid #ebebeb;margin-top:6px;}
+    .form-group{display:flex;flex-direction:column;gap:5px;}
+    .form-group label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#6b7280;}
+    .form-group input,.form-group select,.form-group textarea{background:#fff;border:1px solid #e5e7eb;border-radius:7px;padding:9px 12px;font-size:13.5px;color:#1a1a2e;transition:border-color .15s,box-shadow .15s;}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.08);}
+    .form-group textarea{resize:vertical;min-height:60px;}
+    .zone-tag{display:inline-flex;align-items:center;gap:4px;margin-top:4px;background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:500;}
+    .slot-row{display:flex;gap:8px;flex-wrap:wrap;}
+    .slot-opt{display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid #e5e7eb;border-radius:7px;cursor:pointer;font-size:12.5px;color:#374151;background:#f9fafb;transition:.15s;}
+    .slot-opt.sel{border-color:#10b981;background:#ecfdf5;color:#065f46;}
+    .slot-opt input{accent-color:#10b981;}
+    .tonnage-row{display:flex;align-items:center;gap:8px;}
+    .tonnage-row input{width:65px;}
+    .tonnage-calc{font-size:12px;color:#10b981;font-weight:600;}
+    .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #ebebeb;}
+
+    /* ── Overview calendar ── */
+    .week-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+    .day-col{display:flex;flex-direction:column;gap:7px;}
+    .day-label{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#6b7280;padding-bottom:8px;border-bottom:2px solid #e5e7eb;}
+    .slot-label{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#9ca3af;margin:3px 0 1px;}
+    .ev-card{background:#fff;border-radius:8px;padding:9px 11px;border:1px solid #e5e7eb;font-size:12px;}
+    .ev-card .ev-truck{font-weight:700;color:#1a1a2e;font-size:12px;}
+    .ev-card .ev-route{color:#374151;margin:2px 0;font-size:11.5px;}
+    .ev-card .ev-meta{color:#9ca3af;font-size:11px;}
+    .ev-card.ev-supply{border-left:3px solid #10b981;}
+    .ev-card.ev-matched{border-left:3px solid #3b82f6;}
+    .ev-card.ev-full{border-left:3px solid #fbbf24;}
+    .ev-card.ev-demand{border-left:3px solid #8b5cf6;background:#faf5ff;}
+    .ev-card.ev-unmet{border-left:3px solid #ef4444;background:#fef2f2;}
+    .chip{display:inline-block;margin-top:5px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;}
+    .chip-green{background:#d1fae5;color:#065f46;} .chip-amber{background:#fef3c7;color:#92400e;}
+    .chip-blue{background:#dbeafe;color:#1e40af;} .chip-purple{background:#ede9fe;color:#5b21b6;} .chip-red{background:#fee2e2;color:#991b1b;}
+    .empty-slot{border:1px dashed #e5e7eb;border-radius:7px;padding:9px;font-size:11px;color:#d1d5db;text-align:center;}
+    .legend-row{display:flex;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
+    .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;}
+    .legend-dot{width:10px;height:10px;border-radius:2px;}
+
+    /* ── Match Results ── */
+    .run-match-btn{display:flex;align-items:center;gap:12px;background:#1b1b2f;border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:14px 20px;cursor:pointer;width:100%;margin-bottom:20px;transition:background .15s;}
+    .run-match-btn:hover{background:#252540;}
+    .run-match-btn .rm-icon{font-size:20px;}
+    .run-match-btn .rm-text .rm-title{font-size:14px;font-weight:600;color:#fff;}
+    .run-match-btn .rm-text .rm-sub{font-size:11px;color:#6b7280;margin-top:2px;}
+    .token-card{background:#0d1117;border-radius:10px;padding:14px 18px;margin-bottom:16px;font-family:monospace;font-size:11.5px;color:#8b949e;line-height:1.7;}
+    .token-card .tc-hd{color:#10b981;font-weight:700;margin-bottom:6px;font-size:12px;}
+    .tc-match{color:#58a6ff;} .tc-arrow{color:#f0883e;} .tc-audit{color:#bc8cff;}
+    .section-title{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#6b7280;margin:24px 0 12px;}
+    .section-title:first-child{margin-top:0;}
+    .match-pair-card{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);margin-bottom:14px;overflow:hidden;}
+    .match-pair-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f3f4f6;}
+    .match-pair-side{padding:14px 18px;}
+    .match-pair-side+.match-pair-side{border-left:1px solid #f3f4f6;}
+    .mps-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;}
+    .mps-route{font-weight:700;font-size:13.5px;color:#1a1a2e;}
+    .mps-detail{font-size:12px;color:#6b7280;margin-top:3px;}
+    .match-pair-footer{padding:10px 18px;display:flex;align-items:center;justify-content:space-between;background:#fafafa;}
+    .match-saving{font-size:12px;color:#10b981;font-weight:600;}
+
+    /* ── Route Map ── */
+    .map-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;height:540px;}
+    #route-map-leaflet{border-radius:10px;border:1px solid #e5e7eb;}
+    .map-panel{display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
+    .map-match-card{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e5e7eb;cursor:pointer;transition:box-shadow .15s;}
+    .map-match-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.1);}
+    .map-match-card.focused{outline:2px solid #10b981;}
+    .map-legend-card{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e5e7eb;}
+    .map-legend-card h4{font-size:12px;font-weight:700;margin-bottom:10px;color:#374151;}
+    .ml-row{display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7280;margin-bottom:6px;}
+    .ml-line{width:26px;height:3px;border-radius:2px;flex-shrink:0;}
+    .ml-dash{width:26px;height:0;border-top:2px dashed;flex-shrink:0;}
+    .map-toggle{display:flex;gap:8px;margin-bottom:16px;}
+
+    /* ── Active shipments pipeline ── */
     .status-step{display:flex;flex-direction:column;align-items:center;flex:1;}
     .status-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #e2e8f0;background:#fff;flex-shrink:0;z-index:1;}
-    .status-dot.done{background:#1d4ed8;border-color:#1d4ed8;}
-    .status-dot.current{background:#fff;border-color:#1d4ed8;box-shadow:0 0 0 4px #bfdbfe;}
+    .status-dot.done{background:#10b981;border-color:#10b981;}
+    .status-dot.current{background:#fff;border-color:#10b981;box-shadow:0 0 0 4px #a7f3d0;}
     .status-line{flex:1;height:2px;margin-top:10px;}
-    /* zone pill */
-    .zone-pill{background:#f1f5f9;border:1px solid #e2e8f0;color:#475569;cursor:pointer;transition:all .15s;font-size:11px;padding:5px 12px;border-radius:20px;}
-    .zone-pill.selected{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;font-weight:600;}
-    /* match card */
-    .match-card{border:1px solid #e2e8f0;border-radius:12px;padding:14px;cursor:pointer;transition:all .15s;}
-    .match-card:hover{border-color:#93c5fd;}
-    /* regulator */
+
+    /* ── History ── */
+    .hist-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── Placeholder ── */
+    .placeholder{height:380px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#9ca3af;border:2px dashed #e5e7eb;border-radius:12px;gap:8px;}
+    .placeholder .ph-icon{font-size:32px;} .placeholder p{font-size:13px;}
+
+    /* ── Regulator (unchanged) ── */
     #reg-screen{display:none;width:100vw;height:100vh;flex-direction:row;position:relative;}
     #reg-screen.active{display:flex;}
     #sg-map{flex:1;height:100%;z-index:1;}
-    /* km breakdown panel */
     #km-panel{position:absolute;top:0;right:0;width:360px;height:100%;background:#fff;border-left:1px solid #e5e0d8;z-index:30;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow:hidden;display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(0,0,0,.08);}
     #km-panel.open{transform:translateX(0);}
     #trucks-panel.open{transform:translateX(0);}
     .trip-card{background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;padding:12px 14px;margin-bottom:8px;}
     .trip-row{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;margin-bottom:3px;}
-    .km-link{cursor:pointer;border-bottom:1px dashed #3b82f6;color:#1d4ed8;transition:opacity .1s;}
-    .km-link:hover{opacity:.7;}
+    .km-link{cursor:pointer;border-bottom:1px dashed #3b82f6;color:#1d4ed8;transition:opacity .1s;} .km-link:hover{opacity:.7;}
     #reg-sidebar{width:300px;min-width:300px;height:100vh;overflow-y:auto;background:#fff;border-right:1px solid #e5e0d8;display:flex;flex-direction:column;z-index:10;}
     .zone-row{cursor:pointer;transition:background .12s;border-left:3px solid transparent;}
     .zone-row:hover{background:#f8f7f4;} .zone-row.selected{background:#eff6ff;border-left-color:#1d4ed8;}
@@ -53,18 +219,17 @@
     .util-bar{height:6px;border-radius:3px;background:#e5e0d8;overflow:hidden;}
     .util-fill{height:100%;border-radius:3px;transition:width .4s;}
     .slot-btn{flex:1;padding:6px 0;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;}
-    select,input{outline:none;font-family:'Inter',sans-serif;}
-    select:focus,input:focus{border-color:#3b82f6!important;box-shadow:0 0 0 3px #bfdbfe;}
-    @keyframes spin{to{transform:rotate(360deg);}} .spin{animation:spin 1.2s linear infinite;transform-origin:center;}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} .fade-in{animation:fadeIn .3s ease forwards;}
-    .leaflet-tooltip-plain{background:rgba(255,255,255,.92)!important;border:1px solid #e2e8f0!important;border-radius:6px!important;box-shadow:0 2px 8px rgba(0,0,0,.08)!important;padding:3px 7px!important;font-family:'Inter',sans-serif!important;}
-    .leaflet-tooltip-plain::before{display:none!important;}
-    input[type=password]{letter-spacing:.1em;}
-    /* supply incoming */
     .reason-pill{background:#f1f5f9;border:1px solid #e2e8f0;color:#475569;cursor:pointer;font-size:11px;padding:6px 11px;border-radius:20px;transition:all .12s;display:inline-block;}
     .reason-pill:hover{border-color:#93c5fd;background:#f5f8ff;}
     .reason-pill.sel{background:#fef2f2;border-color:#fca5a5;color:#dc2626;font-weight:600;}
     .req-status-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+    .leaflet-tooltip-plain{background:rgba(255,255,255,.92)!important;border:1px solid #e2e8f0!important;border-radius:6px!important;box-shadow:0 2px 8px rgba(0,0,0,.08)!important;padding:3px 7px!important;font-family:'Inter',sans-serif!important;}
+    .leaflet-tooltip-plain::before{display:none!important;}
+
+    /* ── Animations ── */
+    input[type=password]{letter-spacing:.1em;}
+    @keyframes spin{to{transform:rotate(360deg);}} .spin{animation:spin 1.2s linear infinite;transform-origin:center;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} .fade-in{animation:fadeIn .3s ease forwards;}
     @keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}} .slide-in{animation:slideIn .2s ease forwards;}
   </style>
 </head>
@@ -94,30 +259,18 @@
         <div>
           <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:8px">I am signing in as</label>
           <div style="display:flex;flex-direction:column;gap:7px">
-            <div class="role-card sel" id="role-demand" onclick="selectRole('demand')">
+            <div class="role-card sel" id="role-client" onclick="selectRole('client')">
               <div style="display:flex;align-items:center;gap:10px">
                 <div style="width:34px;height:34px;border-radius:9px;background:#eff6ff;border:1px solid #bfdbfe;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                 </div>
                 <div style="flex:1">
-                  <p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 1px">Demand Partner</p>
-                  <p style="font-size:10px;color:#64748b;margin:0">Freight forwarder or shipper needing trucks</p>
+                  <p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 1px">Client</p>
+                  <p style="font-size:10px;color:#64748b;margin:0">Logistics operator — manage supply, demand &amp; matching</p>
                 </div>
-                <div id="check-demand" style="width:17px;height:17px;border-radius:50%;background:#1d4ed8;border:2px solid #1d4ed8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <div id="check-client" style="width:17px;height:17px;border-radius:50%;background:#1d4ed8;border:2px solid #1d4ed8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
                 </div>
-              </div>
-            </div>
-            <div class="role-card" id="role-supply" onclick="selectRole('supply')">
-              <div style="display:flex;align-items:center;gap:10px">
-                <div style="width:34px;height:34px;border-radius:9px;background:#f0fdf4;border:1px solid #bbf7d0;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                </div>
-                <div style="flex:1">
-                  <p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 1px">Supply Partner (Haulier)</p>
-                  <p style="font-size:10px;color:#64748b;margin:0">Trucking company offering spare capacity</p>
-                </div>
-                <div id="check-supply" style="width:17px;height:17px;border-radius:50%;background:#e2e8f0;border:2px solid #e2e8f0;flex-shrink:0"></div>
               </div>
             </div>
             <div class="role-card" id="role-regulator" onclick="selectRole('regulator')">
@@ -169,52 +322,65 @@
 
 
 <!-- ══════════════════════════════════════════
-     PORTAL (Demand / Supply) — tabbed
+     PORTAL (sidebar layout)
 ══════════════════════════════════════════ -->
-<div id="portal-wrap" style="display:none;flex-direction:column;align-items:center;min-height:100vh;">
+<div id="portal-wrap">
+<div class="p-shell">
 
-  <!-- Top nav bar -->
-  <div id="portal-nav" style="width:100%;background:#fff;border-bottom:1px solid #e5e0d8;position:sticky;top:0;z-index:50">
-    <div style="max-width:480px;margin:0 auto;padding:0 16px">
-      <!-- Logo row -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 10px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:26px;height:26px;border-radius:7px;background:#1d4ed8;display:flex;align-items:center;justify-content:center">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          </div>
-          <span style="font-size:13px;font-weight:700;color:#1e293b">SGTraDEX</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span id="role-badge" style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600"></span>
-          <span id="user-name" style="font-size:11px;color:#64748b"></span>
-          <button onclick="doLogout()" style="font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid #e5e0d8;background:#f8f7f4;color:#64748b;cursor:pointer">Logout</button>
-        </div>
+  <!-- ── Sidebar ── -->
+  <div class="p-sidebar">
+    <div class="p-logo">SG<span>TraDEX</span></div>
+    <div class="p-user">
+      <div class="p-avatar" id="p-avatar-initials">SF</div>
+      <div>
+        <div class="p-uname" id="p-display-name">SwiftFreight</div>
+        <div class="p-uemail" id="p-display-email">ops@swiftfreight.com.sg</div>
       </div>
-      <!-- Tab row -->
-      <div id="tab-bar" style="display:flex;border-top:1px solid #f1f0ec;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none"></div>
+    </div>
+
+    <div class="p-section">Plan</div>
+    <button class="p-nav active" onclick="showPage('page-schedule',this)"><span class="p-icon">📅</span>Schedule</button>
+    <button class="p-nav" onclick="showPage('page-overview',this)"><span class="p-icon">⬜</span>Overview</button>
+
+    <div class="p-divider"></div>
+    <div class="p-section">Manage</div>
+    <button class="p-nav" onclick="showPage('page-manage-supply',this)"><span class="p-icon">🟩</span>Manage Supply</button>
+    <button class="p-nav" onclick="showPage('page-manage-demand',this)"><span class="p-icon">🟣</span>Manage Demand</button>
+    <button class="p-nav" id="nav-match-results" onclick="showPage('page-match-results',this)"><span class="p-icon">🔒</span>Match Results<span class="p-badge" id="match-badge">2</span></button>
+    <button class="p-nav" onclick="showPage('page-route-map',this);initRouteMap()"><span class="p-icon">🗺️</span>Route Map</button>
+
+    <div class="p-divider"></div>
+    <div class="p-section">Track</div>
+    <button class="p-nav" onclick="showPage('page-active',this)"><span class="p-icon">📦</span>Active Shipments<span class="p-badge amber">3</span></button>
+    <button class="p-nav" onclick="showPage('page-history',this)"><span class="p-icon">📜</span>History</button>
+    <button class="p-nav" onclick="showPage('page-billing',this)"><span class="p-icon">💳</span>Billing</button>
+
+    <div class="p-footer">
+      🔒 End-to-end encrypted<br>
+      <button onclick="doLogout()" style="margin-top:8px;font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #3d3d60;background:none;color:#6b7280;cursor:pointer;">Sign out</button>
     </div>
   </div>
 
-  <!-- Tab content -->
-  <div style="width:100%;max-width:480px;padding:20px 16px;flex:1">
+  <!-- ── Main content ── -->
+  <div class="p-main">
+    <div id="page-schedule"      class="p-page active"></div>
+    <div id="page-overview"      class="p-page"></div>
+    <div id="page-manage-supply" class="p-page"></div>
+    <div id="page-manage-demand" class="p-page"></div>
+    <div id="page-match-results" class="p-page"></div>
+    <div id="page-route-map"     class="p-page"></div>
+    <div id="page-active"        class="p-page"></div>
+    <div id="page-history"       class="p-page"></div>
+    <div id="page-billing"       class="p-page"></div>
+  </div>
 
-    <!-- ── TAB: SPARE CAPACITY (supply only) ── -->
-    <div id="tab-spare" class="tab-pane">
-      <div id="spare-capacity-content"></div>
-    </div>
+</div><!-- end p-shell -->
+<!-- legacy ids kept for JS compatibility -->
+<span id="role-badge" style="display:none"></span>
+<span id="user-name" style="display:none"></span>
 
-    <!-- ── TAB: WEEKLY SCHEDULE (demand) ── -->
-    <div id="tab-demand-schedule" class="tab-pane">
-      <div id="demand-schedule-content"></div>
-    </div>
-
-    <!-- ── TAB: HOME / OVERVIEW (demand) ── -->
-    <div id="tab-demand-home" class="tab-pane">
-      <div id="demand-home-content"></div>
-    </div>
-
-    <!-- ── TAB: NEW REQUEST (demand) ── -->
-    <div id="tab-new" class="tab-pane active">
+    <!-- old tab panes removed — content now rendered into p-page divs by JS -->
+    <div id="tab-new" style="display:none">
       <!-- S1 -->
       <div id="s1" style="background:#fff;border-radius:20px;border:1px solid #e5e0d8;overflow:hidden">
         <div style="padding:20px 20px 14px;border-bottom:1px solid #f1f0ec">
@@ -293,7 +459,7 @@
         </div>
         <div style="padding:0 20px 20px">
           <div id="confirm-bar" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:9px 12px;font-size:12px;color:#1d4ed8;margin-bottom:9px">Selected: <strong id="selected-name"></strong></div>
-          <button id="confirm-btn" onclick="confirmMatch()" style="width:100%;padding:12px;border-radius:12px;background:#1d4ed8;color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;opacity:.35;pointer-events:none">Confirm Selection →</button>
+          <button id="confirm-btn" onclick="confirmMatchLegacy()" style="width:100%;padding:12px;border-radius:12px;background:#1d4ed8;color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;opacity:.35;pointer-events:none">Confirm Selection →</button>
         </div>
       </div>
       <!-- S4: confirmed -->
@@ -310,29 +476,15 @@
       </div>
     </div>
 
-    <!-- ── TAB: HOME / OVERVIEW (supply only) ── -->
-    <div id="tab-home" class="tab-pane">
-      <div id="supply-home-content"></div>
-    </div>
-
-    <!-- ── TAB: INCOMING (supply only) ── -->
-    <div id="tab-incoming" class="tab-pane">
-      <div id="incoming-list" style="display:flex;flex-direction:column;gap:10px"></div>
-    </div>
-
-    <!-- ── TAB: SCHEDULE & CAPACITY (supply only) ── -->
-    <div id="tab-schedule" class="tab-pane">
-      <div id="schedule-tab-content"></div>
-    </div>
-
-    <!-- ── TAB: REQUESTS (supply only) ── -->
-    <div id="tab-requests" class="tab-pane">
-      <div id="requests-summary" style="margin-bottom:12px"></div>
-      <div id="requests-list" style="display:flex;flex-direction:column;gap:8px"></div>
-    </div>
-
-    <!-- ── TAB: ACTIVE REQUESTS ── -->
-    <div id="tab-active" class="tab-pane">
+    <!-- ── legacy supply DOM stubs (used by existing JS, hidden) ── -->
+    <div id="tab-home" style="display:none"><div id="supply-home-content"></div></div>
+    <div id="tab-incoming" style="display:none"><div id="incoming-list"></div></div>
+    <div id="tab-schedule" style="display:none"><div id="schedule-tab-content"></div></div>
+    <div id="tab-spare" style="display:none"><div id="spare-capacity-content"></div></div>
+    <div id="tab-requests" style="display:none"><div id="requests-summary"></div><div id="requests-list"></div></div>
+    <div id="tab-demand-schedule" style="display:none"><div id="demand-schedule-content"></div></div>
+    <!-- ── TAB: ACTIVE REQUESTS (legacy pipeline IDs needed by renderPipeline) ── -->
+    <div id="tab-active" style="display:none">
       <div style="display:flex;flex-direction:column;gap:12px">
 
         <!-- Active request 1 — Commercials Agreed (step 2) -->
@@ -380,8 +532,7 @@
       </div>
     </div>
 
-    <!-- ── TAB: HISTORY ── -->
-    <div id="tab-history" class="tab-pane">
+    <div id="tab-history" style="display:none">
       <div style="display:flex;flex-direction:column;gap:8px">
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
@@ -522,15 +673,15 @@
 //  DEMO CREDENTIALS & ROLE CONFIG
 // ══════════════════════════════════════════════
 const CREDS = {
-  demand:    { email:'ops@swiftfreight.com.sg',       pass:'demo123', label:'Demand Partner',  badge:'#eff6ff', badgeText:'#1d4ed8', name:'Swift Freight' },
-  supply:    { email:'dispatch@apexlogistics.com.sg', pass:'demo123', label:'Supply Partner',  badge:'#f0fdf4', badgeText:'#16a34a', name:'Apex Logistics' },
-  regulator: { email:'analyst@lta.gov.sg',            pass:'demo123', label:'Regulator',       badge:'#fffbeb', badgeText:'#92400e', name:'LTA Analyst' },
+  client:    { email:'ops@apexlogistics.com.sg', pass:'demo123', label:'Client', badge:'#eff6ff', badgeText:'#1d4ed8', name:'Apex Logistics SG' },
+  regulator: { email:'analyst@lta.gov.sg',       pass:'demo123', label:'Regulator', badge:'#fffbeb', badgeText:'#92400e', name:'LTA Analyst' },
 };
 
 const TABS = {
   demand:    [{id:'tab-demand-schedule', label:'Current Schedule'}, {id:'tab-new', label:'New Capacity'}, {id:'tab-active', label:'Active (2)'}, {id:'tab-history', label:'History'}],
   supply:    [{id:'tab-schedule', label:'My Schedule'}, {id:'tab-spare', label:'Spare Capacity'}, {id:'tab-incoming', label:'Incoming (2)'}, {id:'tab-requests', label:'Requests'}, {id:'tab-active', label:'Active Jobs'}],
   regulator: [],
+  client:    [],
 };
 
 // ══════════════════════════════════════════════
@@ -568,13 +719,14 @@ function renderPipeline(containerId, currentStep) {
 // ══════════════════════════════════════════════
 //  LOGIN
 // ══════════════════════════════════════════════
-let selectedRole = 'demand';
+let selectedRole = 'client';
 
 function selectRole(role) {
   selectedRole = role;
-  ['demand','supply','regulator'].forEach(r => {
+  ['client','regulator'].forEach(r => {
     const card  = document.getElementById('role-'+r);
     const check = document.getElementById('check-'+r);
+    if (!card || !check) return;
     if (r === role) {
       card.classList.add('sel');
       check.style.cssText = 'width:17px;height:17px;border-radius:50%;background:#1d4ed8;border:2px solid #1d4ed8;display:flex;align-items:center;justify-content:center;flex-shrink:0';
@@ -601,68 +753,1329 @@ function doLogin() {
   setTimeout(() => {
     document.getElementById('login-screen').style.display = 'none';
     if (selectedRole === 'regulator') { showReg(); return; }
-    setupPortal(selectedRole);
-    document.getElementById('portal-wrap').style.display = 'flex';
+    setupPortal('client');
+    document.getElementById('portal-wrap').style.display = 'block';
   }, 800);
+}
+
+// ══════════════════════════════════════════════
+//  PORTAL PAGE RENDERERS
+// ══════════════════════════════════════════════
+
+// ── Helpers ──
+function routeStatus(r) {
+  const spare = supplySpareCapacity.find(s => s.routeId === r.id);
+  if (!spare) return {label:'Available', cls:'b-available'};
+  // check if any demand route shares same day+slot
+  const matched = demandScheduleRoutes.find(d => d.day === r.day && d.slot === r.slot);
+  if (matched) return {label:'Matched', cls:'b-matched'};
+  return {label:'Broadcast', cls:'b-broadcast'};
+}
+function slotShort(slot) {
+  return {morning:'AM', afternoon:'PM', evening:'EVE'}[slot] || slot;
+}
+function dayFull(d) {
+  const map = {Mon:'Mon 31 Mar',Tue:'Tue 1 Apr',Wed:'Wed 2 Apr',Thu:'Thu 3 Apr',Fri:'Fri 4 Apr',Sat:'Sat 5 Apr',Sun:'Sun 6 Apr'};
+  return map[d] || d;
+}
+
+// ── T2a: SCHEDULE ──
+function renderSchedulePage() {
+  const rows = supplyScheduleRoutes.map(r => {
+    const spare = supplySpareCapacity.find(s => s.routeId === r.id);
+    const st = routeStatus(r);
+    const spareCell = spare
+      ? `<span style="font-weight:600;color:#10b981;">${spare.spareTons}t of ${r.tons}t</span>`
+      : `<span style="color:#9ca3af;">—</span>`;
+    const actionBtn = st.label === 'Matched'
+      ? `<button class="btn btn-secondary btn-sm">View</button>`
+      : `<button class="btn btn-secondary btn-sm">Edit</button>`;
+    return `
+      <tr>
+        <td>
+          <div class="rt-main">${dayFull(r.day)}</div>
+          <div class="rt-sub">${SLOT_LABELS[r.slot]}</div>
+        </td>
+        <td>
+          <div class="rt-main">${r.from} → ${r.to}</div>
+          <div class="rt-sub">${r.fromAddr.split(',')[0]}</div>
+        </td>
+        <td><span class="mono">${r.truck}</span></td>
+        <td>${r.tons}t</td>
+        <td>${spareCell}</td>
+        <td><span class="badge ${st.cls}"><span class="bdot"></span>${st.label}</span></td>
+        <td>${actionBtn}</td>
+      </tr>`;
+  }).join('');
+
+  document.getElementById('page-schedule').innerHTML = `
+    <div class="ph">
+      <h2>Schedule</h2>
+      <p>Your current routes for this week. Use Overview for a full calendar picture.</p>
+    </div>
+    <div class="enc-banner">🔒 Route data is encrypted end-to-end. Matching runs on tokens only.</div>
+    <div class="action-bar">
+      <div class="action-bar-left">
+        <input class="search-box" placeholder="Search route, truck ID…" oninput="filterScheduleTable(this.value)">
+        <button class="filter-btn">Filter ▾</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn btn-secondary" onclick="alert('CSV upload: select a file with columns Route, Date, Slot, Truck, Tons. Template available on request.')">⬆ Upload CSV</button>
+        <button class="btn btn-secondary" onclick="alert('ERP Integration: connect your SAP, Oracle TMS or custom ERP via the SGTraDEX API. Contact your account manager to configure.')">⚙ ERP Integration</button>
+        <button class="btn btn-primary" onclick="showPage('page-manage-supply', document.querySelector('[onclick*=page-manage-supply]'))">+ Add Supply Route</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div style="display:flex;align-items:center;">
+          <h3>This Week's Routes</h3><span class="cnt">${supplyScheduleRoutes.length}</span>
+        </div>
+        <span class="meta">31 Mar – 6 Apr 2026</span>
+      </div>
+      <table id="schedule-table">
+        <thead><tr>
+          <th>Day & Slot</th><th>Route</th><th>Truck</th><th>Total Cap.</th><th>Spare</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody id="schedule-tbody">${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function filterScheduleTable(q) {
+  const val = q.toLowerCase();
+  document.querySelectorAll('#schedule-tbody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(val) ? '' : 'none';
+  });
+}
+
+// ── T2b: OVERVIEW ──
+function renderOverviewPage() {
+  const weekDays = ['Mon','Tue','Wed','Thu','Fri'];
+
+  const cols = weekDays.map(day => {
+    const slots = SLOT_KEYS.map(slot => {
+      const supRoutes = supplyScheduleRoutes.filter(r => r.day === day && r.slot === slot);
+      const demRoutes = demandScheduleRoutes.filter(r => r.day === day && r.slot === slot);
+
+      const supCards = supRoutes.map(r => {
+        const spare = supplySpareCapacity.find(s => s.routeId === r.id);
+        const matched = spare && demandScheduleRoutes.find(d => d.day === r.day && d.slot === r.slot);
+        const cls = matched ? 'ev-matched' : spare ? 'ev-supply' : 'ev-supply';
+        const chip = matched
+          ? `<span class="chip chip-blue">Matched</span>`
+          : spare
+            ? `<span class="chip chip-green">${spare.spareTons}t spare</span>`
+            : '';
+        return `<div class="ev-card ${cls}">
+          <div class="ev-truck">${r.truck}</div>
+          <div class="ev-route">${r.from} → ${r.to}</div>
+          <div class="ev-meta">${r.tons}t</div>
+          ${chip}
+        </div>`;
+      }).join('');
+
+      const demCards = demRoutes.map(r => {
+        const matchedSupply = supplyScheduleRoutes.find(s =>
+          s.day === r.day && s.slot === r.slot && supplySpareCapacity.find(sp => sp.routeId === s.id));
+        const cls = matchedSupply ? 'ev-matched' : 'ev-demand';
+        const chip = matchedSupply
+          ? `<span class="chip chip-blue">Matched</span>`
+          : `<span class="chip chip-purple">Pending</span>`;
+        return `<div class="ev-card ${cls}">
+          <div class="ev-truck">${r.truck}</div>
+          <div class="ev-route">${r.from} → ${r.to}</div>
+          <div class="ev-meta">${r.tons}t needed</div>
+          ${chip}
+        </div>`;
+      }).join('');
+
+      const empty = (!supCards && !demCards) ? `<div class="empty-slot">—</div>` : '';
+      return `
+        <div class="slot-label">${{morning:'Morning',afternoon:'Afternoon',evening:'Evening'}[slot]}</div>
+        ${supCards}${demCards}${empty}`;
+    }).join('');
+
+    return `<div class="day-col">
+      <div class="day-label">${dayFull(day)}</div>
+      ${slots}
+    </div>`;
+  }).join('');
+
+  document.getElementById('page-overview').innerHTML = `
+    <div class="ph">
+      <h2>Overview</h2>
+      <p>Everything in one view — supply routes, demand requests, and matched pairs across the week.</p>
+    </div>
+    <div class="legend-row">
+      <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div>Supply · spare available</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div>Matched</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6;"></div>Demand · pending</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div>Demand · unfulfilled</div>
+    </div>
+    <div class="week-grid">${cols}</div>`;
+}
+
+// ── Toggle inline forms ──
+function toggleForm(formId, btnId, labelOpen) {
+  const f = document.getElementById(formId);
+  const b = document.getElementById(btnId);
+  const open = f.classList.toggle('open');
+  if (b) b.textContent = open ? '✕ Close' : labelOpen;
+}
+
+// ── Reverse zone lookup: address typed → zone tag autofills ──
+function matchZoneFromAddress(addr) {
+  if (!addr) return '';
+  const lower = addr.toLowerCase();
+  // Match by postcode (last 6 digits) or zone name substring
+  for (const [zone, fullAddr] of Object.entries(ZONE_ADDRESSES)) {
+    const postcodeMatch = fullAddr.match(/\d{6}/);
+    if (postcodeMatch && lower.includes(postcodeMatch[0])) return zone;
+    if (lower.includes(zone.toLowerCase())) return zone;
+  }
+  return '';
+}
+
+function onAddressInput(prefix, side) {
+  const addrEl = document.getElementById(prefix + '-' + side + '-addr');
+  const tagEl  = document.getElementById(prefix + '-' + side + '-tag');
+  if (!addrEl || !tagEl) return;
+  const zone = matchZoneFromAddress(addrEl.value.trim());
+  if (zone) {
+    addrEl.style.borderColor = '#6ee7b7';
+    tagEl.style.display = 'inline-flex';
+    tagEl.textContent = '✓ ' + zone;
+  } else {
+    addrEl.style.borderColor = '';
+    tagEl.style.display = 'none';
+  }
+}
+
+// ── Add supply entry from form ──
+function addSupplyEntry() {
+  const originAddr = (document.getElementById('ms-origin-addr')?.value || '').trim();
+  const destAddr   = (document.getElementById('ms-dest-addr')?.value || '').trim();
+  if (!originAddr || !destAddr) {
+    alert('Please enter both a pickup and dropoff address.');
+    return;
+  }
+  const dateEl   = document.querySelector('#ms-form input[type=date]');
+  const slotSel  = document.querySelector('#ms-form input[name=ms-slot]:checked');
+  const truckSel = document.querySelector('#ms-form select');
+  const plateEl  = document.getElementById('s-plate') || document.querySelector('#ms-form input[placeholder*="plate" i]');
+
+  const dateVal  = dateEl ? dateEl.value : '';
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const day      = dateVal ? dayNames[new Date(dateVal + 'T00:00:00').getDay()] : 'Mon';
+  const slotLabel = slotSel ? slotSel.parentElement.textContent.trim().toLowerCase() : 'morning';
+  const trucks   = parseInt(document.getElementById('ms-trucks')?.value) || 1;
+  const tons     = parseInt(document.getElementById('ms-tons')?.value) || 10;
+
+  const fromZone = matchZoneFromAddress(originAddr) || originAddr.split(',')[0].trim();
+  const toZone   = matchZoneFromAddress(destAddr)   || destAddr.split(',')[0].trim();
+  const newId    = 'r' + Date.now();
+
+  supplyScheduleRoutes.push({
+    id: newId, day, slot: slotLabel,
+    truck: 'SG-' + String(Math.floor(Math.random()*900)+100),
+    from: fromZone, fromAddr: originAddr,
+    to:   toZone,   toAddr:   destAddr,
+    tons: trucks * tons,
+  });
+
+  // Also add to spare capacity so it shows as broadcast
+  supplySpareCapacity.push({ routeId: newId, spareTons: Math.floor(trucks * tons * 0.3), note: 'Newly added' });
+
+  renderManageSupplyPage();
+  renderOverviewPage();
+  renderActivePage();
+}
+
+// ── Add demand entry from form ──
+function addDemandEntry() {
+  const originAddr = (document.getElementById('md-origin-addr')?.value || '').trim();
+  const destAddr   = (document.getElementById('md-dest-addr')?.value || '').trim();
+  if (!originAddr || !destAddr) {
+    alert('Please enter both a pickup and dropoff address.');
+    return;
+  }
+  const dateEl    = document.querySelector('#md-form input[type=date]');
+  const slotSel   = document.querySelector('#md-form input[name=md-slot]:checked');
+  const weightEl  = document.querySelector('#md-form input[type=number]');
+  const prioSel   = document.querySelector('#md-form select');
+
+  const dateVal   = dateEl ? dateEl.value : '';
+  const dayNames  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const day       = dateVal ? dayNames[new Date(dateVal + 'T00:00:00').getDay()] : 'Mon';
+  const slotLabel = slotSel ? slotSel.parentElement.textContent.trim().toLowerCase() : 'afternoon';
+  const tons      = parseInt(weightEl?.value) || 10;
+
+  const fromZone = matchZoneFromAddress(originAddr) || originAddr.split(',')[0].trim();
+  const toZone   = matchZoneFromAddress(destAddr)   || destAddr.split(',')[0].trim();
+
+  demandScheduleRoutes.push({
+    id: 'd' + Date.now(), day, slot: slotLabel,
+    truck: 'REQ-' + String(Math.floor(Math.random()*9000)+1000),
+    from: fromZone, fromAddr: originAddr,
+    to:   toZone,   toAddr:   destAddr,
+    tons,
+  });
+
+  renderManageDemandPage();
+  renderOverviewPage();
+  renderActivePage();
+}
+
+// ── Supply: trucks × tonnage calc ──
+function calcSupplyTonnage() {
+  const t = parseInt(document.getElementById('ms-trucks').value) || 0;
+  const c = parseInt(document.getElementById('ms-tons').value) || 0;
+  const el = document.getElementById('ms-calc');
+  if (el) el.textContent = (t > 0 && c > 0) ? '= ' + (t * c) + 't total spare' : '';
+}
+
+// ── T3a: MANAGE SUPPLY ──
+function renderManageSupplyPage() {
+  const zones = Object.keys(ZONE_ADDRESSES);
+  const zoneOptions = zones.map(z => `<option value="${z}">${z}</option>`).join('');
+
+  const rows = supplyScheduleRoutes.map(r => {
+    const spare = supplySpareCapacity.find(s => s.routeId === r.id);
+    const isDemandMatch = spare && demandScheduleRoutes.find(d => d.day === r.day && d.slot === r.slot);
+    let badge, spareTxt;
+    if (isDemandMatch) {
+      badge = `<span class="badge b-matched"><span class="dot"></span>Matched</span>`;
+      spareTxt = `<span style="color:#9ca3af;">0t of ${r.tons}t</span>`;
+    } else if (spare) {
+      badge = `<span class="badge b-broadcast"><span class="dot"></span>Broadcast</span>`;
+      spareTxt = `<span style="font-weight:600;color:#10b981;">${spare.spareTons}t of ${r.tons}t</span>`;
+    } else {
+      badge = `<span class="badge b-available"><span class="dot"></span>Available</span>`;
+      spareTxt = `<span style="color:#9ca3af;">—</span>`;
+    }
+    const slotLabel = {morning:'Morning',afternoon:'Afternoon',evening:'Evening'}[r.slot] || r.slot;
+    return `<tr>
+      <td><div style="font-weight:600;font-size:13px;">${dayFull(r.day)}</div><div style="font-size:11px;color:#9ca3af;">${slotLabel}</div></td>
+      <td><div style="font-weight:600;font-size:13px;">${r.from} → ${r.to}</div><div style="font-size:11px;color:#9ca3af;">${r.fromAddr}</div></td>
+      <td><span style="font-family:monospace;font-size:12px;background:#f3f4f6;padding:2px 7px;border-radius:4px;">${r.truck}</span></td>
+      <td>${spareTxt}</td>
+      <td>${badge}</td>
+      <td><button class="btn btn-secondary btn-sm">${isDemandMatch ? 'View' : 'Edit'}</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('page-manage-supply').innerHTML = `
+    <div class="ph">
+      <h2>Manage Supply</h2>
+      <p>Your current supply entries, pulled from the schedule. Add new supply below.</p>
+    </div>
+    <div class="enc-banner">🔒 Supply data is HMAC-blinded before broadcast. Your routes stay private until a match is confirmed.</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid #f3f4f6;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <h3 style="margin:0;font-size:15px;font-weight:700;">Supply Entries</h3>
+          <span style="background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:20px;padding:1px 9px;font-size:11px;font-weight:600;">${supplyScheduleRoutes.length}</span>
+        </div>
+        <span style="font-size:12px;color:#9ca3af;">Auto-filled from schedule</span>
+      </div>
+      <table id="ms-table">
+        <thead><tr>
+          <th>Day &amp; Slot</th><th>Route</th><th>Truck</th><th>Spare Cap.</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <button class="add-row-btn" id="ms-toggle" onclick="toggleForm('ms-form','ms-toggle','＋ Add New Supply Entry')">＋ Add New Supply Entry</button>
+      <div class="form-wrap" id="ms-form">
+        <div class="pii-banner">
+          <span style="font-size:15px;">🔴</span>
+          <div>
+            <div class="pii-title">PII Data — Everything is Encrypted</div>
+            <div class="pii-sub">Addresses, GPS coordinates, truck plates and operator names are HMAC-encrypted before leaving your device. The platform never sees plaintext data.</div>
+          </div>
+        </div>
+        <div class="form-top">
+          <h3>New Supply Entry</h3>
+        </div>
+        <div class="form-grid">
+          <div class="form-section">Route</div>
+          <div class="form-group">
+            <label>Pickup Address</label>
+            <input type="text" id="ms-origin-addr" placeholder="Enter pickup address..." oninput="onAddressInput('ms','origin')">
+            <span class="zone-tag" id="ms-origin-tag" style="display:none;"></span>
+            <div style="font-size:11px;color:#9ca3af;margin-top:4px;line-height:1.6;">
+              <span style="font-weight:600;">Sample addresses to try:</span><br>
+              30 Tuas Ave 1, Singapore 639494<br>
+              31 Jurong Port Road, Singapore 619115<br>
+              12 Pasir Panjang Road, Singapore 117438<br>
+              21 Woodlands Close, Singapore 737854
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Dropoff Address</label>
+            <input type="text" id="ms-dest-addr" placeholder="Enter dropoff address..." oninput="onAddressInput('ms','dest')">
+            <span class="zone-tag" id="ms-dest-tag" style="display:none;"></span>
+            <div style="font-size:11px;color:#9ca3af;margin-top:4px;line-height:1.6;">
+              <span style="font-weight:600;">Sample addresses to try:</span><br>
+              30 Airport Boulevard, Singapore 819642<br>
+              3 Tampines Industrial Avenue 2, Singapore 528763<br>
+              3 Yishun Industrial Street 1, Singapore 768160<br>
+              1 Keppel Distripark, Singapore 099452
+            </div>
+          </div>
+          <div class="form-section">Fleet &amp; Schedule</div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" value="2026-04-07">
+          </div>
+          <div class="form-group">
+            <label>Time Slot</label>
+            <div class="slot-row">
+              <label class="slot-opt sel"><input type="radio" name="ms-slot" checked> Morning</label>
+              <label class="slot-opt"><input type="radio" name="ms-slot"> Afternoon</label>
+              <label class="slot-opt"><input type="radio" name="ms-slot"> Evening</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Truck Type</label>
+            <select><option>10-Wheeler Trailer</option><option>6-Wheeler</option><option>14-Wheeler</option><option>Van</option></select>
+          </div>
+          <div class="form-group">
+            <label>Spare Capacity</label>
+            <div class="tonnage-row">
+              <input type="number" value="2" id="ms-trucks" oninput="calcSupplyTonnage()">
+              <span style="color:#6b7280;font-size:13px;">trucks ×</span>
+              <input type="number" value="15" id="ms-tons" oninput="calcSupplyTonnage()">
+              <span style="color:#6b7280;font-size:13px;">t each</span>
+            </div>
+            <span class="tonnage-calc" id="ms-calc">= 30t total spare</span>
+          </div>
+          <div class="form-group">
+            <label>Truck Plate</label>
+            <input type="text" placeholder="e.g. GBK 4821 T">
+          </div>
+          <div class="form-group">
+            <label>Operator</label>
+            <input type="text" value="Apex Logistics SG">
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Notes (optional)</label>
+            <textarea placeholder="e.g. No hazmat, refrigerated available..."></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" onclick="toggleForm('ms-form','ms-toggle','＋ Add New Supply Entry')">Cancel</button>
+          <button class="btn btn-primary" onclick="addSupplyEntry()">Add Supply Entry →</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── T3b: MANAGE DEMAND ──
+function renderManageDemandPage() {
+  const zones = Object.keys(ZONE_ADDRESSES);
+  const zoneOptions = zones.map(z => `<option value="${z}">${z}</option>`).join('');
+
+  const rows = demandScheduleRoutes.map(r => {
+    const matchedSupply = supplyScheduleRoutes.find(s =>
+      s.day === r.day && s.slot === r.slot && supplySpareCapacity.find(sp => sp.routeId === s.id));
+    let badge;
+    if (matchedSupply) {
+      badge = `<span class="badge b-matched"><span class="dot"></span>Matched</span>`;
+    } else {
+      badge = `<span class="badge b-broadcast"><span class="dot"></span>Broadcast</span>`;
+    }
+    const slotLabel = {morning:'Morning',afternoon:'Afternoon',evening:'Evening'}[r.slot] || r.slot;
+    const reqId = 'REQ-' + (2890 + parseInt(r.id.replace('d',''), 10));
+    return `<tr>
+      <td><div style="font-weight:600;font-size:13px;">${dayFull(r.day)}</div><div style="font-size:11px;color:#9ca3af;">${slotLabel}</div></td>
+      <td><div style="font-weight:600;font-size:13px;">${r.from} → ${r.to}</div><div style="font-size:11px;color:#9ca3af;">${r.fromAddr}</div></td>
+      <td><span style="font-family:monospace;font-size:12px;background:#f3f4f6;padding:2px 7px;border-radius:4px;">${reqId}</span></td>
+      <td>${r.tons}t</td>
+      <td>${badge}</td>
+      <td><button class="btn btn-secondary btn-sm">${matchedSupply ? 'View' : 'Edit'}</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('page-manage-demand').innerHTML = `
+    <div class="ph">
+      <h2>Manage Demand</h2>
+      <p>Your current demand requests and their matching status. Add new requests below.</p>
+    </div>
+    <div class="enc-banner" style="background:#f5f3ff;border-color:#c4b5fd;color:#5b21b6;">🔒 Pickup and dropoff details are encrypted before broadcast. Counterparties only see your data if a match is confirmed.</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid #f3f4f6;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <h3 style="margin:0;font-size:15px;font-weight:700;">Demand Requests</h3>
+          <span style="background:#f5f3ff;color:#5b21b6;border:1px solid #c4b5fd;border-radius:20px;padding:1px 9px;font-size:11px;font-weight:600;">${demandScheduleRoutes.length}</span>
+        </div>
+        <span style="font-size:12px;color:#9ca3af;">This week</span>
+      </div>
+      <table id="md-table">
+        <thead><tr>
+          <th>Day &amp; Slot</th><th>Route</th><th>Ref</th><th>Weight</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <button class="add-row-btn demand" id="md-toggle" onclick="toggleForm('md-form','md-toggle','＋ Add New Demand Request')">＋ Add New Demand Request</button>
+      <div class="form-wrap demand-wrap" id="md-form">
+        <div class="pii-banner">
+          <span style="font-size:15px;">🔴</span>
+          <div>
+            <div class="pii-title">PII Data — Everything is Encrypted</div>
+            <div class="pii-sub">Pickup and dropoff addresses, GPS coordinates and recipient names are HMAC-encrypted before leaving your device. No counterparty sees your data unless a match is confirmed.</div>
+          </div>
+        </div>
+        <div class="form-top">
+          <h3>New Demand Request</h3>
+        </div>
+        <div class="form-grid">
+          <div class="form-section">Route</div>
+          <div class="form-group">
+            <label>Pickup Address</label>
+            <input type="text" id="md-origin-addr" placeholder="Enter pickup address..." oninput="onAddressInput('md','origin')">
+            <span class="zone-tag" id="md-origin-tag" style="display:none;"></span>
+            <div style="font-size:11px;color:#9ca3af;margin-top:4px;line-height:1.6;">
+              <span style="font-weight:600;">Sample addresses to try:</span><br>
+              31 Jurong Port Road, Singapore 619115<br>
+              30 Tuas Ave 1, Singapore 639494<br>
+              3 Tampines Industrial Avenue 2, Singapore 528763<br>
+              21 Woodlands Close, Singapore 737854
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Dropoff Address</label>
+            <input type="text" id="md-dest-addr" placeholder="Enter dropoff address..." oninput="onAddressInput('md','dest')">
+            <span class="zone-tag" id="md-dest-tag" style="display:none;"></span>
+            <div style="font-size:11px;color:#9ca3af;margin-top:4px;line-height:1.6;">
+              <span style="font-weight:600;">Sample addresses to try:</span><br>
+              30 Airport Boulevard, Singapore 819642<br>
+              12 Pasir Panjang Road, Singapore 117438<br>
+              3 Yishun Industrial Street 1, Singapore 768160<br>
+              1 Keppel Distripark, Singapore 099452
+            </div>
+          </div>
+          <div class="form-section">Schedule &amp; Cargo</div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" value="2026-04-07">
+          </div>
+          <div class="form-group">
+            <label>Time Slot</label>
+            <div class="slot-row">
+              <label class="slot-opt"><input type="radio" name="md-slot"> Morning</label>
+              <label class="slot-opt sel"><input type="radio" name="md-slot" checked> Afternoon</label>
+              <label class="slot-opt"><input type="radio" name="md-slot"> Evening</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Weight Required (tonnes)</label>
+            <input type="number" value="10" min="1">
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select><option>Normal</option><option selected>Express</option><option>Economy</option></select>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Cargo Description</label>
+            <textarea placeholder="e.g. Electronics components, palletised, fragile — no stacking"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" onclick="toggleForm('md-form','md-toggle','＋ Add New Demand Request')">Cancel</button>
+          <button class="btn btn-primary" style="background:#8b5cf6;" onclick="addDemandEntry()">Add &amp; Queue for Matching →</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── T4: MATCH RESULTS ──
+function renderMatchResultsPage() {
+  const slotLabel = s => ({morning:'Morning',afternoon:'Afternoon',evening:'Evening'}[s]||s);
+
+  // Deterministic display token from entry metadata
+  function mrTok(prefix, id, day, slot) {
+    let h = 0;
+    for (const c of (prefix+id+day+slot)) h = ((h<<5)-h+c.charCodeAt(0))|0;
+    const hex = Math.abs(h).toString(16).padStart(8,'0');
+    const d = {Mon:'mo',Tue:'tu',Wed:'we',Thu:'th',Fri:'fr'}[day] || day.slice(0,2).toLowerCase();
+    const s = {morning:'am',afternoon:'pm',evening:'ev'}[slot] || slot.slice(0,2);
+    return 'hmac::'+prefix+id.replace(/\D/g,'')+'_'+d+'_'+s+'::'+hex+'…';
+  }
+
+  function statusBadge(status) {
+    const map = {
+      available: '<span class="badge b-available"><span class="dot"></span>Available</span>',
+      new:       '<span class="badge b-available"><span class="dot"></span>New Request</span>',
+      broadcast: '<span class="badge b-broadcast"><span class="dot"></span>Broadcast</span>',
+      pending:   '<span class="badge b-pending"><span class="dot"></span>Awaiting confirmation</span>',
+      confirmed: '<span class="badge b-matched"><span class="dot"></span>Matched · Confirmed</span>',
+      declined:  '<span class="badge b-unfulfilled"><span class="dot"></span>Declined</span>',
+    };
+    return map[status] || map.broadcast;
+  }
+
+  function actionCell(type, id, status) {
+    if (status === 'pending') return `
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <button class="btn btn-primary btn-sm" onclick="confirmMrRow('${type}','${id}',this)">✓ Confirm</button>
+        <button class="btn btn-secondary btn-sm" onclick="declineMrRow('${type}','${id}',this)">✕ Decline</button>
+      </div>`;
+    if (status === 'confirmed') return `<button class="btn btn-secondary btn-sm" onclick="showPage('page-active',null)">View in Active →</button>`;
+    if (status === 'declined')  return `<button class="btn btn-secondary btn-sm">Re-broadcast</button>`;
+    if (status === 'broadcast') return `<button class="btn btn-secondary btn-sm">Withdraw</button>`;
+    return `<span style="font-size:11px;color:#9ca3af;">Runs on next match</span>`;
+  }
+
+  function matchCell(type, id, status) {
+    const m = type === 'supply' ? mrMatchPairs[id] : mrDemandMatch[id];
+    if ((status === 'pending' || status === 'confirmed') && m) {
+      return `<div style="font-weight:600;font-size:12px;color:#1a1a2e;">${m.ref} · ${m.company}</div>
+        <div style="font-size:11px;color:#9ca3af;margin-top:2px;">${m.route} · ${m.tons}t</div>
+        <div style="font-size:11px;color:#10b981;font-weight:600;margin-top:3px;">↓ ${m.kmSaved} km · ~S$${m.costSaved} saved</div>`;
+    }
+    if (status === 'declined') return `<span style="font-size:11px;color:#ef4444;">No match found</span>`;
+    if (status === 'broadcast') return `<span style="font-size:11px;color:#d1d5db;font-style:italic;">— awaiting match</span>`;
+    return `<span style="font-size:11px;color:#d1d5db;font-style:italic;">—</span>`;
+  }
+
+  function rowBg(status) {
+    if (status === 'pending')   return 'background:#fffdf5;';
+    if (status === 'confirmed') return 'background:#f9fefe;';
+    if (status === 'declined')  return 'background:#fef9f9;opacity:.8;';
+    return '';
+  }
+
+  function supplyStatus(r) {
+    if (mrSupplyState[r.id]) return mrSupplyState[r.id];
+    return supplySpareCapacity.find(sp => sp.routeId === r.id) ? 'broadcast' : 'available';
+  }
+  function demandStatus(r) {
+    return mrDemandState[r.id] || 'broadcast';
+  }
+
+  // Counts for run panel subtitle
+  const unbroadcastS = supplyScheduleRoutes.filter(r => !supplySpareCapacity.find(sp => sp.routeId === r.id) && !mrSupplyState[r.id]).length;
+  const pendingTotal = supplyScheduleRoutes.filter(r => supplyStatus(r) === 'pending').length
+                     + demandScheduleRoutes.filter(r => demandStatus(r) === 'pending').length;
+
+  // Supply rows
+  const supplyRows = supplyScheduleRoutes.map(r => {
+    const status = supplyStatus(r);
+    const spare  = supplySpareCapacity.find(sp => sp.routeId === r.id);
+    const capTxt = spare ? spare.spareTons+'t of '+r.tons+'t' : r.tons+'t total';
+    const tok    = spare
+      ? `<span style="font-family:monospace;font-size:10px;color:#58a6ff;background:#0d1117;padding:3px 7px;border-radius:4px;display:inline-block;max-width:155px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${mrTok('S',r.id,r.day,r.slot)}</span>`
+      : `<span style="font-size:11px;color:#d1d5db;font-style:italic;">— not broadcast</span>`;
+    return `<tr id="mr-row-supply-${r.id}" style="${rowBg(status)}">
+      <td><div style="font-weight:600;font-size:13px;">${r.from} → ${r.to}</div><div style="font-size:11px;color:#9ca3af;">${r.truck}</div></td>
+      <td style="font-size:12px;color:#6b7280;white-space:nowrap;">${dayFull(r.day)} · ${slotLabel(r.slot)}</td>
+      <td style="font-weight:600;color:#10b981;font-size:12px;">${capTxt}</td>
+      <td>${tok}</td>
+      <td id="mr-match-supply-${r.id}">${matchCell('supply',r.id,status)}</td>
+      <td id="mr-status-supply-${r.id}">${statusBadge(status)}</td>
+      <td id="mr-action-supply-${r.id}">${actionCell('supply',r.id,status)}</td>
+    </tr>`;
+  }).join('');
+
+  // Demand rows
+  const demandRows = demandScheduleRoutes.map(r => {
+    const status = demandStatus(r);
+    const reqId  = (r.truck && r.truck.startsWith('REQ-')) ? r.truck : 'REQ-'+(2890+parseInt(r.id.replace(/\D/g,''),10));
+    const tok    = `<span style="font-family:monospace;font-size:10px;color:#58a6ff;background:#0d1117;padding:3px 7px;border-radius:4px;display:inline-block;max-width:155px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${mrTok('D',r.id,r.day,r.slot)}</span>`;
+    return `<tr id="mr-row-demand-${r.id}" style="${rowBg(status)}">
+      <td><div style="font-weight:600;font-size:13px;">${r.from} → ${r.to}</div><div style="font-size:11px;color:#9ca3af;">${reqId}</div></td>
+      <td style="font-size:12px;color:#6b7280;white-space:nowrap;">${dayFull(r.day)} · ${slotLabel(r.slot)}</td>
+      <td style="font-weight:600;font-size:12px;">${r.tons}t needed</td>
+      <td>${tok}</td>
+      <td id="mr-match-demand-${r.id}">${matchCell('demand',r.id,status)}</td>
+      <td id="mr-status-demand-${r.id}">${statusBadge(status)}</td>
+      <td id="mr-action-demand-${r.id}">${actionCell('demand',r.id,status)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('page-match-results').innerHTML = `
+    <div class="ph">
+      <h2>Match Results</h2>
+      <p>Review supply and demand entries. Run the encrypted match to broadcast unprocessed entries and find pairs via PSI.</p>
+    </div>
+
+    <button class="run-match-btn" onclick="animateMatch()">
+      <span class="rm-icon">🔒</span>
+      <div class="rm-text">
+        <div class="rm-title">Run Encrypted Match</div>
+        <div class="rm-sub" id="match-sub">${unbroadcastS > 0 ? unbroadcastS+' supply entr'+(unbroadcastS===1?'y':'ies')+' not yet broadcast · ' : 'All entries broadcast · '}${pendingTotal} awaiting confirmation</div>
+      </div>
+      <span style="color:#10b981;font-size:13px;font-weight:700;background:rgba(16,185,129,0.15);padding:6px 14px;border-radius:6px;border:1px solid rgba(16,185,129,0.4);">&#9654; Run now</span>
+    </button>
+
+    <div class="token-card" id="mr-token-log" style="margin-bottom:24px;">
+      <div class="tc-hd">// PSI Protocol Log</div>
+      <div id="mr-log-lines"><div>Waiting to run match...</div></div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;">Supply Requests</span>
+      <span style="background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:600;">${supplyScheduleRoutes.length} entries</span>
+    </div>
+    <div class="card" style="overflow:hidden;margin-bottom:24px;">
+      <table>
+        <thead><tr>
+          <th>Route</th><th>Schedule</th><th>Spare Capacity</th><th>PSI Token</th><th>Matched With</th><th>Status</th><th>Action</th>
+        </tr></thead>
+        <tbody>${supplyRows}</tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;">Demand Requests</span>
+      <span style="background:#f5f3ff;color:#5b21b6;border:1px solid #c4b5fd;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:600;">${demandScheduleRoutes.length} requests</span>
+    </div>
+    <div class="card" style="overflow:hidden;">
+      <table>
+        <thead><tr>
+          <th>Route</th><th>Schedule</th><th>Weight Needed</th><th>PSI Token</th><th>Matched With</th><th>Status</th><th>Action</th>
+        </tr></thead>
+        <tbody>${demandRows}</tbody>
+      </table>
+    </div>`;
+}
+
+function confirmMrRow(type, id, btn) {
+  if (type === 'supply') mrSupplyState[id] = 'confirmed';
+  else mrDemandState[id] = 'confirmed';
+  const row      = document.getElementById('mr-row-'+type+'-'+id);
+  const statusEl = document.getElementById('mr-status-'+type+'-'+id);
+  const actionEl = document.getElementById('mr-action-'+type+'-'+id);
+  if (row)      row.style.cssText = 'background:#f9fefe;';
+  if (statusEl) statusEl.innerHTML = '<span class="badge b-matched"><span class="dot"></span>Matched · Confirmed</span>';
+  if (actionEl) actionEl.innerHTML = `<button class="btn btn-secondary btn-sm" onclick="showPage('page-active',null)">View in Active →</button>`;
+  renderActivePage();
+}
+
+function declineMrRow(type, id, btn) {
+  if (type === 'supply') mrSupplyState[id] = 'declined';
+  else mrDemandState[id] = 'declined';
+  const row      = document.getElementById('mr-row-'+type+'-'+id);
+  const statusEl = document.getElementById('mr-status-'+type+'-'+id);
+  const actionEl = document.getElementById('mr-action-'+type+'-'+id);
+  const matchEl  = document.getElementById('mr-match-'+type+'-'+id);
+  if (row)      { row.style.cssText = 'background:#fef9f9;opacity:.8;'; }
+  if (statusEl) statusEl.innerHTML = '<span class="badge b-unfulfilled"><span class="dot"></span>Declined</span>';
+  if (actionEl) actionEl.innerHTML = '<button class="btn btn-secondary btn-sm">Re-broadcast</button>';
+  if (matchEl)  matchEl.innerHTML  = '<span style="font-size:11px;color:#ef4444;">No match found</span>';
+}
+
+// Keep old names as aliases so any stray call doesn't break
+function confirmMatch(id, btn) { confirmMrRow('supply', id, btn); }
+function declineMatch(id, btn) { declineMrRow('supply', id, btn); }
+
+function animateMatch() {
+  const sub = document.getElementById('match-sub');
+  const log = document.getElementById('mr-log-lines');
+  if (!sub || !log) return;
+  sub.textContent = 'Running encrypted match...';
+  log.innerHTML = '<div style="color:#6b7280;">Applying uniform HMAC layer to all route tokens...</div>';
+
+  const sCount = supplySpareCapacity.length;
+  const dCount = demandScheduleRoutes.length;
+  const steps = [
+    { delay: 400,  html: `<div style="color:#6b7280;">Tokenising ${sCount} supply entries and ${dCount} demand requests...</div>` },
+    { delay: 800,  html: '<div class="tc-match">✓ Token match: supply[SG-102·Changi→Jurong·Thu·AM] ↔ demand[REQ-2896·Thu·AM]</div>' },
+    { delay: 1100, html: '<div class="tc-arrow">→ Decrypting matched pair — queuing for confirmation...</div>' },
+    { delay: 1500, html: `<div>No match: demand[FD-203·Tampines→Jurong·Wed·AM] — no token intersection</div>` },
+    { delay: 1900, html: `<div class="tc-audit">Audit trail: ${sCount+dCount} tokens processed · 1 new match · 1 unfulfilled · platform sees no plaintext</div>` },
+  ];
+  steps.forEach(s => setTimeout(() => { log.innerHTML += s.html; }, s.delay));
+
+  setTimeout(() => {
+    // Surface r8 as a new pending match (Thu morning, Changi→Jurong)
+    if (!mrSupplyState['r8']) {
+      mrSupplyState['r8'] = 'pending';
+      mrMatchPairs['r8']  = { ref:'REQ-2896', company:'Fresh Direct SG', route:'Changi → Jurong', tons:4, kmSaved:28, costSaved:25 };
+    }
+    sub.textContent = '✓ 1 new match found · 1 unfulfilled — see Supply table below';
+    // Update r8 row in-place
+    const row      = document.getElementById('mr-row-supply-r8');
+    const statusEl = document.getElementById('mr-status-supply-r8');
+    const actionEl = document.getElementById('mr-action-supply-r8');
+    const matchEl  = document.getElementById('mr-match-supply-r8');
+    if (row)      { row.style.cssText = 'background:#fffdf5;'; row.style.animation = 'fadeIn .5s ease'; }
+    if (statusEl) statusEl.innerHTML = '<span class="badge b-pending"><span class="dot"></span>Awaiting confirmation</span>';
+    if (actionEl) actionEl.innerHTML = `<div style="display:flex;flex-direction:column;gap:5px;">
+      <button class="btn btn-primary btn-sm" onclick="confirmMrRow('supply','r8',this)">✓ Confirm</button>
+      <button class="btn btn-secondary btn-sm" onclick="declineMrRow('supply','r8',this)">✕ Decline</button>
+    </div>`;
+    if (matchEl)  matchEl.innerHTML  = `<div style="font-weight:600;font-size:12px;color:#1a1a2e;">REQ-2896 · Fresh Direct SG</div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:2px;">Changi → Jurong · 4t</div>
+      <div style="font-size:11px;color:#10b981;font-weight:600;margin-top:3px;">↓ 28 km · ~S$25 saved</div>`;
+    if (row) row.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }, 2200);
+}
+
+// ── T5: ROUTE MAP ──
+function renderRouteMapPage() {
+  document.getElementById('page-route-map').innerHTML = `
+    <div class="ph">
+      <h2>Route Map</h2>
+      <p>Visualise original routes (without matching) vs. optimised matched routes across Singapore logistics zones.</p>
+    </div>
+    <div class="enc-banner">🔒 Routes only appear here for confirmed or in-progress matches. Unmatched routes remain encrypted.</div>
+    <div class="map-toggle">
+      <button class="btn btn-sm" id="rm-tog-both"    onclick="setMapView('both')"     style="background:#1b1b2f;color:#10b981;border:1px solid #10b981;">Both</button>
+      <button class="btn btn-secondary btn-sm" id="rm-tog-orig" onclick="setMapView('original')">Without Matching</button>
+      <button class="btn btn-secondary btn-sm" id="rm-tog-new"  onclick="setMapView('matched')">With Matching</button>
+    </div>
+    <div class="map-layout">
+      <div class="map-panel">
+        <div class="map-legend-card">
+          <h4>Legend</h4>
+          <div class="ml-row"><div class="ml-line" style="background:#ef4444;"></div>Original route (no matching)</div>
+          <div class="ml-row"><div class="ml-line" style="background:#10b981;"></div>New matched route</div>
+          <div class="ml-row"><div class="ml-dash" style="border-color:#9ca3af;"></div>Unmatched demand (own truck)</div>
+        </div>
+        <div class="map-match-card" id="rm-mc1" onclick="rmFocusMatch(1)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.04em;">MATCH-001</span>
+            <span class="badge b-matched"><span class="dot"></span>Matched</span>
+          </div>
+          <div style="font-weight:700;font-size:13px;color:#1a1a2e;margin-bottom:3px;">Tuas → Jurong → Changi</div>
+          <div style="font-size:12px;color:#6b7280;">Mon 31 Mar · Morning</div>
+          <div style="font-size:12px;color:#6b7280;">SG-104 collects FD-201 cargo at Jurong</div>
+          <div style="font-size:11px;color:#ef4444;margin-top:6px;">Before: 2 separate trips · 84 km total</div>
+          <div style="font-size:11px;color:#10b981;font-weight:600;">After: 1 shared trip · 38 km saved</div>
+        </div>
+        <div class="map-match-card" id="rm-mc2" onclick="rmFocusMatch(2)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.04em;">MATCH-002</span>
+            <span class="badge b-matched"><span class="dot"></span>Matched</span>
+          </div>
+          <div style="font-weight:700;font-size:13px;color:#1a1a2e;margin-bottom:3px;">Tuas → Changi</div>
+          <div style="font-size:12px;color:#6b7280;">Fri 4 Apr · Morning</div>
+          <div style="font-size:12px;color:#6b7280;">SG-101 carries FD-201 cargo on same route</div>
+          <div style="font-size:11px;color:#ef4444;margin-top:6px;">Before: 2 separate trips · 44 km total</div>
+          <div style="font-size:11px;color:#10b981;font-weight:600;">After: 1 shared trip · 22 km saved</div>
+        </div>
+        <div class="map-match-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.04em;">REQ-2893</span>
+            <span class="badge b-unfulfilled"><span class="dot"></span>Unmatched</span>
+          </div>
+          <div style="font-weight:700;font-size:13px;color:#1a1a2e;margin-bottom:3px;">Tampines → Jurong</div>
+          <div style="font-size:12px;color:#6b7280;">Wed 2 Apr · Morning · 10t</div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:6px;">Still requires own truck</div>
+        </div>
+      </div>
+      <div id="route-map-leaflet" style="height:540px;"></div>
+    </div>`;
+}
+
+let _rmMap, _rmOriginal, _rmMatched;
+
+function initRouteMap() {
+  if (_rmMap) { _rmMap.invalidateSize(); return; }
+  renderRouteMapPage();
+
+  setTimeout(() => {
+    _rmMap = L.map('route-map-leaflet').setView([1.305, 103.810], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap', maxZoom: 18
+    }).addTo(_rmMap);
+
+    // ── ORIGINAL routes (red) — two separate trucks per match ──
+    _rmOriginal = L.layerGroup([
+      // Match 1: supply truck Tuas→Changi half-empty
+      L.polyline([[1.2900,103.6300],[1.3500,103.9850]],
+        {color:'#ef4444',weight:3,opacity:0.85})
+        .bindPopup('Original: SG-104 Tuas→Changi (spare capacity wasted)'),
+      // Match 1: demand would send own truck Jurong→Changi
+      L.polyline([[1.2966,103.7271],[1.3500,103.9850]],
+        {color:'#ef4444',weight:3,dashArray:'8,5',opacity:0.85})
+        .bindPopup('Original: FD-201 own truck Jurong→Changi'),
+      // Match 2: supply Tuas→Changi again (Fri)
+      L.polyline([[1.2900,103.6300],[1.3500,103.9850]],
+        {color:'#ef4444',weight:3,opacity:0.7})
+        .bindPopup('Original: SG-101 Tuas→Changi (spare capacity wasted)'),
+      // Match 2: demand own truck Jurong→Changi
+      L.polyline([[1.2966,103.7271],[1.3500,103.9850]],
+        {color:'#ef4444',weight:3,dashArray:'8,5',opacity:0.7})
+        .bindPopup('Original: FD-201 own truck Jurong→Changi (Fri)'),
+      // Unmatched demand — Tampines→Jurong (grey dashed)
+      L.polyline([[1.3527,103.9430],[1.2966,103.7271]],
+        {color:'#9ca3af',weight:2,dashArray:'4,8',opacity:0.75})
+        .bindPopup('REQ-2893: Tampines→Jurong (no match, own truck)'),
+    ]);
+
+    // ── MATCHED routes (green) — shared optimised trips ──
+    _rmMatched = L.layerGroup([
+      // Match 1: supply detours via Jurong to collect demand cargo then continues to Changi
+      L.polyline([[1.2900,103.6300],[1.2966,103.7271],[1.3500,103.9850]],
+        {color:'#10b981',weight:4,opacity:0.9})
+        .bindPopup('Matched: SG-104 Tuas→Jurong(pickup)→Changi — 38 km saved'),
+      // Match 2: same route, direct co-load (no detour)
+      L.polyline([[1.2900,103.6300],[1.3500,103.9850]],
+        {color:'#10b981',weight:4,opacity:0.75})
+        .bindPopup('Matched: SG-101 + FD-201 cargo Tuas→Changi — 22 km saved'),
+      // Unmatched still needs own truck (grey dashed)
+      L.polyline([[1.3527,103.9430],[1.2966,103.7271]],
+        {color:'#9ca3af',weight:2,dashArray:'4,8',opacity:0.75})
+        .bindPopup('REQ-2893: Tampines→Jurong (unmatched)'),
+    ]);
+
+    // ── Zone labels ──
+    [
+      {pos:[1.2900,103.6300], name:'Tuas'},
+      {pos:[1.2966,103.7271], name:'Jurong Port'},
+      {pos:[1.3500,103.9850], name:'Changi'},
+      {pos:[1.3527,103.9430], name:'Tampines'},
+      {pos:[1.2758,103.7917], name:'Pasir Panjang'},
+      {pos:[1.3049,103.8380], name:'Woodlands'},
+    ].forEach(z => L.marker(z.pos, {
+      icon: L.divIcon({
+        html: '<div style="background:#1b1b2f;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;white-space:nowrap;">' + z.name + '</div>',
+        className: '', iconAnchor: [0, 0]
+      })
+    }).addTo(_rmMap));
+
+    setMapView('both');
+  }, 80);
+}
+
+function setMapView(mode) {
+  if (!_rmMap) return;
+  ['rm-tog-both','rm-tog-orig','rm-tog-new'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.background = '#fff'; el.style.color = '#374151'; el.style.borderColor = '#e5e7eb';
+  });
+  const activeId = {both:'rm-tog-both', original:'rm-tog-orig', matched:'rm-tog-new'}[mode];
+  const activeEl = document.getElementById(activeId);
+  if (activeEl) { activeEl.style.background = '#1b1b2f'; activeEl.style.color = '#10b981'; activeEl.style.borderColor = '#10b981'; }
+
+  if (mode === 'original') {
+    _rmMap.addLayer(_rmOriginal); _rmMap.removeLayer(_rmMatched);
+  } else if (mode === 'matched') {
+    _rmMap.removeLayer(_rmOriginal); _rmMap.addLayer(_rmMatched);
+  } else {
+    _rmMap.addLayer(_rmOriginal); _rmMap.addLayer(_rmMatched);
+  }
+}
+
+function rmFocusMatch(id) {
+  if (!_rmMap) return;
+  document.querySelectorAll('.map-match-card').forEach(c => c.classList.remove('focused'));
+  const card = document.getElementById('rm-mc' + id);
+  if (card) card.classList.add('focused');
+  if (id === 1) _rmMap.flyTo([1.3200, 103.8075], 12, {duration: 1});
+  if (id === 2) _rmMap.flyTo([1.3200, 103.8075], 12, {duration: 1});
+}
+
+// ── T6a: ACTIVE SHIPMENTS ──
+function renderActivePage() {
+  const slotLabel = s => ({morning:'Morning',afternoon:'Afternoon',evening:'Evening'}[s]||s);
+
+  // ── Status overrides for demo seed data ──
+  // Supply: r1=on-route (MATCH-001), r3=declined, r5=completed, r10=on-route (MATCH-002)
+  const supplyStatusOverride = { r1:'on-route', r3:'declined', r5:'completed', r10:'on-route' };
+  // Demand: d1=on-route (paired with r1), d5=completed, d6=on-route (paired with r10)
+  const demandStatusOverride = { d1:'on-route', d5:'completed', d6:'on-route' };
+
+  function getSupplyStatus(r) {
+    if (supplyStatusOverride[r.id]) return supplyStatusOverride[r.id];
+    const spare = supplySpareCapacity.find(sp => sp.routeId === r.id);
+    if (!spare) return 'broadcast';
+    const hasMatch = !!demandScheduleRoutes.find(d => d.day === r.day && d.slot === r.slot);
+    return hasMatch ? 'matched' : 'broadcast';
+  }
+
+  function getDemandStatus(r) {
+    if (demandStatusOverride[r.id]) return demandStatusOverride[r.id];
+    const hasMatch = !!supplyScheduleRoutes.find(s =>
+      s.day === r.day && s.slot === r.slot && supplySpareCapacity.find(sp => sp.routeId === s.id));
+    return hasMatch ? 'matched' : 'broadcast';
+  }
+
+  function statusBadge(status) {
+    const map = {
+      'broadcast': '<span class="badge b-broadcast"><span class="dot"></span>Broadcast</span>',
+      'matched':   '<span class="badge b-matched"><span class="dot"></span>Matched</span>',
+      'on-route':  '<span style="display:inline-flex;align-items:center;gap:5px;background:#fefce8;color:#854d0e;border:1px solid #fde68a;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;"><span style="width:6px;height:6px;border-radius:50%;background:#ca8a04;display:inline-block;"></span>On-Route</span>',
+      'completed': '<span style="display:inline-flex;align-items:center;gap:5px;background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;"><span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span>Completed</span>',
+      'declined':  '<span style="display:inline-flex;align-items:center;gap:5px;background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;"><span style="width:6px;height:6px;border-radius:50%;background:#ef4444;display:inline-block;"></span>Declined</span>',
+    };
+    return map[status] || map['broadcast'];
+  }
+
+  // ── Pipeline cards for on-route shipments ──
+  const matchedCards = [
+    { id:'SG-0901', route:'Tuas → Jurong → Changi', date:'31 Mar', slot:'Morning',
+      type:'Supply', tonnage:'4t spare · MATCH-001', requester:'Fresh Direct SG', step:1,
+      statusLabel:'Commercially Agreed', statusCls:'background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;',
+      nextMsg:'Commercials confirmed · Pickup scheduled 31 Mar 06:30' },
+    { id:'SG-0902', route:'Tuas → Changi', date:'4 Apr', slot:'Morning',
+      type:'Supply', tonnage:'5t spare · MATCH-002', requester:'Fresh Direct SG', step:2,
+      statusLabel:'En Route', statusCls:'background:#fefce8;color:#854d0e;border:1px solid #fde68a;',
+      nextMsg:'Cargo picked up at Tuas. ETA Changi: 08:45' },
+    ...supplyRequests.filter(r => r.status === 'active').map(r => ({
+      id: r.id, route: r.route, date: r.date, slot: r.slot,
+      type:'Supply', tonnage: r.tonnage, requester: r.requester, step: r.step || 0,
+      statusLabel:'En Route', statusCls:'background:#fefce8;color:#854d0e;border:1px solid #fde68a;',
+      nextMsg:`Cargo in transit · Requester: ${r.requester}`
+    })),
+  ];
+
+  const pipeHtml = matchedCards.map(c => `
+    <div class="card" style="margin-bottom:14px;overflow:hidden;">
+      <div style="padding:14px 20px 12px;background:#fafafa;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:10px;font-weight:700;background:#ecfdf5;color:#065f46;padding:2px 8px;border-radius:20px;border:1px solid #6ee7b7;">Supply</span>
+            <span style="font-size:13px;font-weight:700;color:#1a1a2e;">#${c.id} · ${c.route}</span>
+          </div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:3px;">${c.date} · ${c.slot} · ${c.tonnage} · ${c.requester}</div>
+        </div>
+        <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;${c.statusCls}">${c.statusLabel}</span>
+      </div>
+      <div style="padding:18px 20px;">
+        <div id="pipe-${c.id}"></div>
+        <div style="margin-top:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:9px 12px;font-size:12px;color:#065f46;">
+          <strong>Status:</strong> ${c.nextMsg}
+        </div>
+      </div>
+    </div>`).join('');
+
+  // ── Supply entries table — all entries with computed status ──
+  const supplyRows = supplyScheduleRoutes.map(r => {
+    const spare  = supplySpareCapacity.find(s => s.routeId === r.id);
+    const status = getSupplyStatus(r);
+    const capTxt = spare ? spare.spareTons + 't spare of ' + r.tons + 't' : r.tons + 't total';
+    return `<tr style="${status === 'declined' ? 'opacity:0.6;' : status === 'completed' ? 'background:#f9fafb;' : ''}">
+      <td><div style="font-weight:600;font-size:13px;">${r.from} → ${r.to}</div><div style="font-size:11px;color:#9ca3af;">${r.fromAddr}</div></td>
+      <td><span style="font-family:monospace;font-size:12px;background:#f3f4f6;padding:2px 7px;border-radius:4px;">${r.truck}</span></td>
+      <td style="font-size:12px;">${dayFull(r.day)} · ${slotLabel(r.slot)}</td>
+      <td style="font-weight:600;color:#10b981;">${capTxt}</td>
+      <td>${statusBadge(status)}</td>
+    </tr>`;
+  }).join('');
+
+  // ── Demand entries table — all entries with computed status ──
+  const demandRows = demandScheduleRoutes.map(r => {
+    const reqId  = (r.truck && r.truck.startsWith('REQ-')) ? r.truck : 'REQ-' + (2890 + parseInt(r.id.replace(/\D/g,''), 10));
+    const status = getDemandStatus(r);
+    return `<tr style="${status === 'declined' ? 'opacity:0.6;' : status === 'completed' ? 'background:#f9fafb;' : ''}">
+      <td><div style="font-weight:600;font-size:13px;">${r.from} → ${r.to}</div><div style="font-size:11px;color:#9ca3af;">${r.fromAddr}</div></td>
+      <td><span style="font-family:monospace;font-size:12px;background:#f3f4f6;padding:2px 7px;border-radius:4px;">${reqId}</span></td>
+      <td style="font-size:12px;">${dayFull(r.day)} · ${slotLabel(r.slot)}</td>
+      <td style="font-weight:600;">${r.tons}t needed</td>
+      <td>${statusBadge(status)}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:16px;font-size:12px;">No demand requests yet</td></tr>`;
+
+  // ── Status summary counts ──
+  const supplyStatusCounts = supplyScheduleRoutes.reduce((acc, r) => {
+    acc[getSupplyStatus(r)] = (acc[getSupplyStatus(r)] || 0) + 1; return acc;
+  }, {});
+  const demandStatusCounts = demandScheduleRoutes.reduce((acc, r) => {
+    acc[getDemandStatus(r)] = (acc[getDemandStatus(r)] || 0) + 1; return acc;
+  }, {});
+
+  document.getElementById('page-active').innerHTML = `
+    <div class="ph">
+      <h2>Active Shipments</h2>
+      <p>${supplyScheduleRoutes.length} supply entries · ${demandScheduleRoutes.length} demand requests · ${matchedCards.length} shipments on-route</p>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#6b7280;margin-bottom:12px;">On-Route Shipments — Pipeline</div>
+    ${pipeHtml}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px;">
+      <div class="card">
+        <div style="padding:14px 18px 10px;border-bottom:1px solid #f3f4f6;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <h3 style="margin:0;font-size:14px;font-weight:700;">Supply Entries</h3>
+            <span style="background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:600;">${supplyScheduleRoutes.length}</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${supplyStatusCounts['broadcast']  ? '<span style="font-size:10px;background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;border-radius:12px;padding:1px 7px;font-weight:600;">'+supplyStatusCounts['broadcast']+' Broadcast</span>' : ''}
+            ${supplyStatusCounts['matched']    ? '<span style="font-size:10px;background:#f0fdf4;color:#166534;border:1px solid #86efac;border-radius:12px;padding:1px 7px;font-weight:600;">'+supplyStatusCounts['matched']+' Matched</span>' : ''}
+            ${supplyStatusCounts['on-route']   ? '<span style="font-size:10px;background:#fefce8;color:#854d0e;border:1px solid #fde68a;border-radius:12px;padding:1px 7px;font-weight:600;">'+supplyStatusCounts['on-route']+' On-Route</span>' : ''}
+            ${supplyStatusCounts['completed']  ? '<span style="font-size:10px;background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:12px;padding:1px 7px;font-weight:600;">'+supplyStatusCounts['completed']+' Completed</span>' : ''}
+            ${supplyStatusCounts['declined']   ? '<span style="font-size:10px;background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;border-radius:12px;padding:1px 7px;font-weight:600;">'+supplyStatusCounts['declined']+' Declined</span>' : ''}
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Route</th><th>Truck</th><th>Schedule</th><th>Capacity</th><th>Status</th></tr></thead>
+          <tbody>${supplyRows}</tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div style="padding:14px 18px 10px;border-bottom:1px solid #f3f4f6;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <h3 style="margin:0;font-size:14px;font-weight:700;">Demand Requests</h3>
+            <span style="background:#f5f3ff;color:#5b21b6;border:1px solid #c4b5fd;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:600;">${demandScheduleRoutes.length}</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${demandStatusCounts['broadcast']  ? '<span style="font-size:10px;background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;border-radius:12px;padding:1px 7px;font-weight:600;">'+demandStatusCounts['broadcast']+' Broadcast</span>' : ''}
+            ${demandStatusCounts['matched']    ? '<span style="font-size:10px;background:#f0fdf4;color:#166534;border:1px solid #86efac;border-radius:12px;padding:1px 7px;font-weight:600;">'+demandStatusCounts['matched']+' Matched</span>' : ''}
+            ${demandStatusCounts['on-route']   ? '<span style="font-size:10px;background:#fefce8;color:#854d0e;border:1px solid #fde68a;border-radius:12px;padding:1px 7px;font-weight:600;">'+demandStatusCounts['on-route']+' On-Route</span>' : ''}
+            ${demandStatusCounts['completed']  ? '<span style="font-size:10px;background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:12px;padding:1px 7px;font-weight:600;">'+demandStatusCounts['completed']+' Completed</span>' : ''}
+            ${demandStatusCounts['declined']   ? '<span style="font-size:10px;background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;border-radius:12px;padding:1px 7px;font-weight:600;">'+demandStatusCounts['declined']+' Declined</span>' : ''}
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Route</th><th>Ref</th><th>Schedule</th><th>Weight</th><th>Status</th></tr></thead>
+          <tbody>${demandRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  matchedCards.forEach(c => renderPipeline('pipe-' + c.id, c.step));
+}
+
+// ── T6b: HISTORY ──
+function renderHistoryPage() {
+  const supplyHist = [
+    { id:'SG-0882', type:'Supply', route:'Jurong → Woodlands',    date:'18 Mar', slot:'Morning',   tonnage:'30t (3 trucks)', requester:'Swift Freight SG', status:'completed', kmSaved:24, note:'' },
+    { id:'SG-0876', type:'Supply', route:'Tuas → Changi',          date:'16 Mar', slot:'Afternoon', tonnage:'45t (5 trucks)', requester:'GlobeTrans SG',    status:'declined',  kmSaved:0,  note:'Route not serviceable by our fleet' },
+    { id:'SG-0865', type:'Supply', route:'Pasir Panjang → Changi', date:'12 Mar', slot:'Morning',   tonnage:'20t (2 trucks)', requester:'Apex Freight Co.', status:'completed', kmSaved:18, note:'' },
+    { id:'SG-0854', type:'Supply', route:'Jurong → Tampines',      date:'8 Mar',  slot:'Afternoon', tonnage:'35t (4 trucks)', requester:'Harbor Logistics', status:'completed', kmSaved:31, note:'' },
+    { id:'SG-0841', type:'Supply', route:'Tuas → Woodlands',       date:'4 Mar',  slot:'Morning',   tonnage:'25t (3 trucks)', requester:'Raffles Freight',  status:'declined',  kmSaved:0,  note:'Driver availability issue' },
+  ];
+
+  const demandHist = [
+    { id:'REQ-2891', type:'Demand', route:'Jurong → Brani',         date:'18 Mar', slot:'Morning',   tonnage:'20t', requester:'Fresh Direct SG',  status:'completed', kmSaved:12, note:'' },
+    { id:'REQ-2892', type:'Demand', route:'Keppel → Changi',         date:'16 Mar', slot:'Afternoon', tonnage:'15t', requester:'Fresh Direct SG',  status:'unfulfilled', kmSaved:0, note:'No supply match found' },
+    { id:'REQ-2885', type:'Demand', route:'Tampines → Jurong',       date:'12 Mar', slot:'Morning',   tonnage:'10t', requester:'Fresh Direct SG',  status:'completed', kmSaved:8,  note:'' },
+    { id:'REQ-2878', type:'Demand', route:'Woodlands → Changi',      date:'8 Mar',  slot:'Afternoon', tonnage:'18t', requester:'Fresh Direct SG',  status:'completed', kmSaved:22, note:'' },
+    { id:'REQ-2870', type:'Demand', route:'Jurong → Yishun',         date:'4 Mar',  slot:'Morning',   tonnage:'12t', requester:'Fresh Direct SG',  status:'completed', kmSaved:15, note:'' },
+  ];
+
+  const allItems = [...supplyHist, ...demandHist].sort((a,b) => {
+    const months = {Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+    const parse = d => { const [day,,mon] = d.split(' '); return months[mon]*100+parseInt(day); };
+    return parse(b.date) - parse(a.date);
+  });
+
+  const totalKm = allItems.filter(r => r.status === 'completed').reduce((s,r) => s + r.kmSaved, 0);
+  const totalCompleted = allItems.filter(r => r.status === 'completed').length;
+  const supplyCount  = supplyHist.filter(r => r.status === 'completed').length;
+  const demandCount  = demandHist.filter(r => r.status === 'completed').length;
+
+  const rows = allItems.map(r => {
+    const isSupply    = r.type === 'Supply';
+    const isCompleted = r.status === 'completed';
+    const isDeclined  = r.status === 'declined';
+    const typeBadge = isSupply
+      ? `<span style="font-size:10px;font-weight:700;background:#ecfdf5;color:#065f46;padding:2px 7px;border-radius:20px;border:1px solid #6ee7b7;">Supply</span>`
+      : `<span style="font-size:10px;font-weight:700;background:#f5f3ff;color:#5b21b6;padding:2px 7px;border-radius:20px;border:1px solid #c4b5fd;">Demand</span>`;
+    const statusBadge = isCompleted
+      ? `<span class="hist-badge" style="background:#ecfdf5;color:#065f46;">Completed</span>`
+      : isDeclined
+        ? `<span class="hist-badge" style="background:#fee2e2;color:#991b1b;">Declined</span>`
+        : `<span class="hist-badge" style="background:#fef3c7;color:#92400e;">Unfulfilled</span>`;
+    const kmCell = isCompleted
+      ? `<span style="color:#10b981;font-weight:600;">↓ ${r.kmSaved} km</span>`
+      : `<span style="color:#9ca3af;">—</span>`;
+    return `<tr>
+      <td>${typeBadge}</td>
+      <td><div style="font-weight:600;font-size:13px;">${r.date}</div><div style="font-size:11px;color:#9ca3af;">${r.slot}</div></td>
+      <td><div style="font-weight:600;font-size:13px;">${r.route}</div><div style="font-size:11px;color:#9ca3af;">${r.requester}</div></td>
+      <td><span style="font-family:monospace;font-size:12px;background:#f3f4f6;padding:2px 7px;border-radius:4px;">${r.id}</span></td>
+      <td style="font-size:13px;">${r.tonnage}</td>
+      <td>${kmCell}</td>
+      <td>${statusBadge}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('page-history').innerHTML = `
+    <div class="ph">
+      <h2>History</h2>
+      <p>Completed and declined entries across supply and demand — ${allItems.length} total records.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;">
+      <div class="card" style="padding:16px 18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;">Total Completed</div>
+        <div style="font-size:26px;font-weight:800;color:#1a1a2e;">${totalCompleted}</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;">${supplyCount} supply · ${demandCount} demand</div>
+      </div>
+      <div class="card" style="padding:16px 18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;">km Saved</div>
+        <div style="font-size:26px;font-weight:800;color:#10b981;">${totalKm}</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;">via route matching</div>
+      </div>
+      <div class="card" style="padding:16px 18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;">Est. Cost Saved</div>
+        <div style="font-size:26px;font-weight:800;color:#3b82f6;">S$${Math.round(totalKm * 0.9)}</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;">fuel &amp; tolls</div>
+      </div>
+      <div class="card" style="padding:16px 18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;">CO₂ Avoided</div>
+        <div style="font-size:26px;font-weight:800;color:#059669;">${Math.round(totalKm * 0.21)}kg</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;">est. at 210g/km</div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="padding:14px 20px 12px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:8px;">
+        <h3 style="margin:0;font-size:15px;font-weight:700;">Full Ledger</h3>
+        <span style="background:#f3f4f6;color:#6b7280;border-radius:20px;padding:1px 9px;font-size:11px;font-weight:600;">${allItems.length}</span>
+      </div>
+      <table>
+        <thead><tr><th>Type</th><th>Date</th><th>Route</th><th>Ref</th><th>Tonnage</th><th>km Saved</th><th>Status</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ── T6c: BILLING ──
+function renderBillingPage() {
+  const slotLabel = s => ({morning:'Morning',afternoon:'Afternoon',evening:'Evening'}[s]||s);
+
+  // Per-entry invoicing: each supply entry = S$30 listing + S$60 if matched; each demand = S$20
+  const supplyInvRows = supplyScheduleRoutes.map((r, i) => {
+    const invId = 'INV-S-' + String(i+1).padStart(3,'0');
+    const isMatched = !!supplySpareCapacity.find(sp => sp.routeId === r.id);
+    const matchFeeItem = isMatched ? 60 : 0;
+    const listFee = 30;
+    const total = listFee + matchFeeItem;
+    return `<tr>
+      <td><span style="font-family:monospace;font-size:12px;background:#f3f4f6;padding:2px 7px;border-radius:4px;">${invId}</span></td>
+      <td>Mar 2026</td>
+      <td><span style="font-size:10px;font-weight:700;background:#ecfdf5;color:#065f46;padding:2px 7px;border-radius:20px;border:1px solid #6ee7b7;">Supply</span></td>
+      <td style="font-size:12px;">${r.from} → ${r.to}</td>
+      <td style="font-size:12px;">${dayFull(r.day)} · ${slotLabel(r.slot)}</td>
+      <td style="font-size:12px;">S$${listFee} listing${isMatched ? ' + S$60 match' : ''}</td>
+      <td style="font-weight:700;">S$${total}</td>
+      <td><span style="background:#fefce8;color:#854d0e;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;border:1px solid #fde68a;">Due 1 Apr</span></td>
+      <td><button class="btn btn-secondary btn-sm">PDF</button></td>
+    </tr>`;
+  }).join('');
+
+  const demandInvRows = demandScheduleRoutes.map((r, i) => {
+    const invId = 'INV-D-' + String(i+1).padStart(3,'0');
+    const reqId = (r.truck && r.truck.startsWith('REQ-')) ? r.truck : 'REQ-'+(2890+parseInt(r.id.replace(/\D/g,''),10));
+    const reqFee = 20;
+    return `<tr>
+      <td><span style="font-family:monospace;font-size:12px;background:#f3f4f6;padding:2px 7px;border-radius:4px;">${invId}</span></td>
+      <td>Mar 2026</td>
+      <td><span style="font-size:10px;font-weight:700;background:#f5f3ff;color:#5b21b6;padding:2px 7px;border-radius:20px;border:1px solid #c4b5fd;">Demand</span></td>
+      <td style="font-size:12px;">${r.from} → ${r.to} <span style="color:#9ca3af;">(${reqId})</span></td>
+      <td style="font-size:12px;">${dayFull(r.day)} · ${slotLabel(r.slot)}</td>
+      <td style="font-size:12px;">S$${reqFee} request fee</td>
+      <td style="font-weight:700;">S$${reqFee}</td>
+      <td><span style="background:#fefce8;color:#854d0e;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;border:1px solid #fde68a;">Due 1 Apr</span></td>
+      <td><button class="btn btn-secondary btn-sm">PDF</button></td>
+    </tr>`;
+  }).join('');
+
+  const supplyTotal = supplyScheduleRoutes.reduce((sum, r) => {
+    const isMatched = !!supplySpareCapacity.find(sp => sp.routeId === r.id);
+    return sum + 30 + (isMatched ? 60 : 0);
+  }, 0);
+  const demandTotal = demandScheduleRoutes.length * 20;
+  const monthTotal  = supplyTotal + demandTotal;
+
+  document.getElementById('page-billing').innerHTML = `
+    <div class="ph">
+      <h2>Billing</h2>
+      <p>Invoices and transaction records for SGTraDEX platform usage. Each supply entry and demand request has its own invoice.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;">
+      <div class="card" style="padding:16px 18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;">Current Month</div>
+        <div style="font-size:26px;font-weight:800;color:#1a1a2e;">S\$${monthTotal}</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;">supply + demand invoices</div>
+      </div>
+      <div class="card" style="padding:16px 18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;">Supply Invoices</div>
+        <div style="font-size:26px;font-weight:800;color:#10b981;">${supplyScheduleRoutes.length}</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;">S\$30 listing + S\$60 if matched</div>
+      </div>
+      <div class="card" style="padding:16px 18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;">Demand Invoices</div>
+        <div style="font-size:26px;font-weight:800;color:#8b5cf6;">${demandScheduleRoutes.length}</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;">S\$20 per request</div>
+      </div>
+      <div class="card" style="padding:16px 18px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;">Confirmed Matches</div>
+        <div style="font-size:26px;font-weight:800;color:#3b82f6;">${supplySpareCapacity.length}</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;">S\$60 match fee each</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="padding:14px 20px 12px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between;">
+        <h3 style="margin:0;font-size:15px;font-weight:700;">Invoice History — March 2026</h3>
+        <button class="btn btn-secondary btn-sm">Download All</button>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Invoice</th><th>Period</th><th>Type</th><th>Route / Request</th><th>Schedule</th><th>Fee Breakdown</th><th>Total</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody>
+          ${supplyInvRows || '<tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:16px;font-size:12px;">No supply entries yet</td></tr>'}
+          ${demandInvRows || '<tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:16px;font-size:12px;">No demand requests yet</td></tr>'}
+          <tr style="border-top:2px solid #e5e7eb;background:#f9fafb;">
+            <td colspan="6" style="font-weight:700;font-size:13px;padding:12px 16px;">Month Total</td>
+            <td style="font-weight:800;font-size:14px;color:#1a1a2e;">S\$${monthTotal}</td>
+            <td colspan="2"></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding:14px 20px;background:#fafafa;border-top:1px solid #f3f4f6;display:flex;gap:24px;font-size:12px;color:#6b7280;">
+        <span>Supply listing: S\$30/entry · Match fee: S\$60/confirmed match</span>
+        <span>Demand request: S\$20/request</span>
+        <span>All amounts in SGD</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div style="padding:14px 20px 12px;border-bottom:1px solid #f3f4f6;">
+        <h3 style="margin:0;font-size:15px;font-weight:700;">Prior Months</h3>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Invoice</th><th>Period</th><th>Type</th><th>Route / Request</th><th>Schedule</th><th>Fee Breakdown</th><th>Total</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody>
+          <tr><td><span style="font-family:monospace;font-size:12px;background:#f3f4f6;padding:2px 7px;border-radius:4px;">INV-S-FEB-001</span></td><td>Feb 2026</td><td><span style="font-size:10px;font-weight:700;background:#ecfdf5;color:#065f46;padding:2px 7px;border-radius:20px;border:1px solid #6ee7b7;">Supply</span></td><td style="font-size:12px;">Tuas → Changi</td><td style="font-size:12px;">4 Feb · Morning</td><td style="font-size:12px;">S\$30 listing + S\$60 match</td><td style="font-weight:700;">S\$90</td><td><span style="background:#ecfdf5;color:#065f46;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;border:1px solid #6ee7b7;">Paid</span></td><td><button class="btn btn-secondary btn-sm">PDF</button></td></tr>
+          <tr><td><span style="font-family:monospace;font-size:12px;background:#f3f4f6;padding:2px 7px;border-radius:4px;">INV-D-FEB-001</span></td><td>Feb 2026</td><td><span style="font-size:10px;font-weight:700;background:#f5f3ff;color:#5b21b6;padding:2px 7px;border-radius:20px;border:1px solid #c4b5fd;">Demand</span></td><td style="font-size:12px;">Jurong → Brani <span style="color:#9ca3af;">(REQ-2880)</span></td><td style="font-size:12px;">6 Feb · Morning</td><td style="font-size:12px;">S\$20 request fee</td><td style="font-weight:700;">S\$20</td><td><span style="background:#ecfdf5;color:#065f46;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;border:1px solid #6ee7b7;">Paid</span></td><td><button class="btn btn-secondary btn-sm">PDF</button></td></tr>
+          <tr><td><span style="font-family:monospace;font-size:12px;background:#f3f4f6;padding:2px 7px;border-radius:4px;">INV-S-FEB-002</span></td><td>Feb 2026</td><td><span style="font-size:10px;font-weight:700;background:#ecfdf5;color:#065f46;padding:2px 7px;border-radius:20px;border:1px solid #6ee7b7;">Supply</span></td><td style="font-size:12px;">Pasir Panjang → Changi</td><td style="font-size:12px;">12 Feb · Afternoon</td><td style="font-size:12px;">S\$30 listing</td><td style="font-weight:700;">S\$30</td><td><span style="background:#ecfdf5;color:#065f46;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;border:1px solid #6ee7b7;">Paid</span></td><td><button class="btn btn-secondary btn-sm">PDF</button></td></tr>
+        </tbody>
+      </table>
+    </div>`;
 }
 
 function setupPortal(role) {
   const cfg = CREDS[role];
-  // Role badge
-  document.getElementById('role-badge').textContent = cfg.label;
-  document.getElementById('role-badge').style.cssText = `font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;background:${cfg.badge};color:${cfg.badgeText};border:1px solid ${cfg.badgeText}33`;
-  document.getElementById('user-name').textContent = cfg.name;
-  // Build tab bar
-  const bar = document.getElementById('tab-bar');
-  bar.innerHTML = '';
-  TABS[role].forEach((t, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'tab-btn' + (i===0?' active':'');
-    btn.textContent = t.label;
-    btn.onclick = () => switchTab(t.id);
-    bar.appendChild(btn);
-  });
-  // Show/hide supply-specific card
-  const supplyCard = document.getElementById('supply-active-card');
-  if (supplyCard) supplyCard.style.display = role==='supply' ? 'block' : 'none';
-  // Activate first tab
-  switchTab(TABS[role][0].id);
-  // Render pipelines (demand/shared)
-  renderPipeline('pipeline-0891', 1);
-  renderPipeline('pipeline-0892', 2);
-  renderPipeline('pipeline-0888', 2);
-  // Role-specific init
-  if (role === 'supply') {
-    renderSupplyHome();
-    renderSpareCapacityTab();
-    renderIncoming();
-    renderRequests();
-    updateRequestsBadge();
-  }
-  if (role === 'demand') {
-    renderDemandHome();
-    renderDemandScheduleTab();
-  }
+  // Update sidebar user info
+  const initials = cfg.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('p-avatar-initials').textContent = initials;
+  document.getElementById('p-display-name').textContent = cfg.name;
+  document.getElementById('p-display-email').textContent = cfg.email;
+  // Render all page content
+  renderSchedulePage();
+  renderOverviewPage();
+  renderManageSupplyPage();
+  renderManageDemandPage();
+  renderMatchResultsPage();
+  renderRouteMapPage();
+  renderActivePage();
+  renderHistoryPage();
+  renderBillingPage();
+  // Show schedule by default
+  showPage('page-schedule', document.querySelector('.p-nav'));
 }
 
-function switchTab(tabId) {
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    const role = selectedRole;
-    const tDef = TABS[role].find(t => t.label === b.textContent || t.id === tabId);
-    b.classList.remove('active');
-  });
-  // Match tab button by corresponding tabId
-  const role = selectedRole;
-  TABS[role].forEach((t, i) => {
-    const btns = document.querySelectorAll('.tab-btn');
-    if (btns[i]) btns[i].classList.toggle('active', t.id === tabId);
-  });
-  if (tabId === 'tab-schedule') renderScheduleTab();
-  if (tabId === 'tab-demand-schedule') renderDemandScheduleTab();
-  if (tabId === 'tab-spare') renderSpareCapacityTab();
+// Navigate between sidebar pages
+function showPage(pageId, btn) {
+  document.querySelectorAll('.p-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.p-nav').forEach(b => b.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  if (btn) btn.classList.add('active');
 }
+
+// Legacy switchTab shim — keeps old JS calls working without errors
+function switchTab(tabId) {}
 
 function doLogout() {
   document.getElementById('portal-wrap').style.display = 'none';
@@ -696,113 +2109,7 @@ let decliningId = null;
 // stored chosen reason before confirm
 let chosenReason = {};
 
-function renderProfileSection(editMode) {
-  const sec = document.getElementById('demand-profile-section');
-  if (!sec) return;
-
-  if (editMode) {
-    // ── EDIT FORM ──────────────────────────────────
-    const allZones = [...pickupZones, ...dropoffZones];
-    const p = demandProfile || {};
-    sec.innerHTML = `
-      <div style="background:#fff;border-radius:16px;border:1.5px solid #bfdbfe;padding:16px 18px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">Edit default request settings</p>
-          <button onclick="renderProfileSection(false)" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:12px">
-
-          <div>
-            <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Pickup zone</label>
-            <div id="ep-pickup-pills" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px">
-              ${[...pickupZones,...dropoffZones].map(z => `<span class="zone-pill${p.pickupZone===z?' selected':''}" onclick="epSelectZone(this,'pickup')">${z}</span>`).join('')}
-            </div>
-            <input id="ep-pickup-addr" type="text" value="${p.pickupAddress||''}" placeholder="Exact pickup address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fafaf8"/>
-          </div>
-
-          <div>
-            <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Dropoff zone</label>
-            <div id="ep-dropoff-pills" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px">
-              ${[...pickupZones,...dropoffZones].map(z => `<span class="zone-pill${p.dropoffZone===z?' selected':''}" onclick="epSelectZone(this,'dropoff')">${z}</span>`).join('')}
-            </div>
-            <input id="ep-dropoff-addr" type="text" value="${p.dropoffAddress||''}" placeholder="Exact dropoff address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151;background:#fafaf8"/>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div>
-              <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">Default date</label>
-              <input type="date" id="ep-date" value="${p.date||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/>
-            </div>
-            <div>
-              <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">Time slot</label>
-              <select id="ep-slot" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151">
-                <option ${p.slot==='Morning (8am–12pm)'?'selected':''}>Morning (8am–12pm)</option>
-                <option ${p.slot==='Afternoon (12pm–4pm)'?'selected':''}>Afternoon (12pm–4pm)</option>
-                <option ${p.slot==='Evening (4pm–8pm)'?'selected':''}>Evening (4pm–8pm)</option>
-              </select>
-            </div>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div>
-              <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">No. of trucks</label>
-              <input type="number" id="ep-trucks" min="1" max="50" value="${p.trucks||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/>
-            </div>
-            <div>
-              <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">Tons / truck</label>
-              <input type="number" id="ep-capacity" min="1" max="30" value="${p.capacity||''}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151"/>
-            </div>
-          </div>
-
-          <button onclick="saveDemandProfile()" style="width:100%;padding:11px;border-radius:10px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Save settings</button>
-        </div>
-      </div>`;
-
-  } else {
-    // ── DISPLAY CARD ───────────────────────────────
-    if (!demandProfile) {
-      sec.innerHTML = `
-        <div style="background:#fffbeb;border:1.5px dashed #fde68a;border-radius:14px;padding:16px 18px;text-align:center">
-          <p style="font-size:13px;font-weight:700;color:#92400e;margin:0 0 4px">Set your default request</p>
-          <p style="font-size:11px;color:#a16207;margin:0 0 12px">Save your typical pickup/dropoff, load size, and time slot — pre-fills your next request in one tap.</p>
-          <button onclick="renderProfileSection(true)" style="font-size:12px;font-weight:600;color:#92400e;background:#fef3c7;border:1px solid #fde68a;padding:8px 16px;border-radius:9px;cursor:pointer">Set up now →</button>
-        </div>`;
-      return;
-    }
-    const p = demandProfile;
-    const tons = (p.trucks || 0) * (p.capacity || 0);
-    sec.innerHTML = `
-      <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden">
-        <div style="padding:11px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
-          <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">Default request settings</p>
-          <button onclick="renderProfileSection(true)" style="font-size:10px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;cursor:pointer">Edit</button>
-        </div>
-        <div style="padding:12px 16px;display:flex;flex-direction:column;gap:7px">
-          <div style="display:flex;gap:8px;align-items:flex-start">
-            <div style="flex:1">
-              <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 2px">Pickup</p>
-              <p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 1px">${p.pickupZone}</p>
-              <p style="font-size:10px;color:#64748b;margin:0">${p.pickupAddress}</p>
-            </div>
-            <div style="padding-top:14px;color:#94a3b8;font-size:14px">→</div>
-            <div style="flex:1">
-              <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 2px">Dropoff</p>
-              <p style="font-size:12px;font-weight:600;color:#1e293b;margin:0 0 1px">${p.dropoffZone}</p>
-              <p style="font-size:10px;color:#64748b;margin:0">${p.dropoffAddress}</p>
-            </div>
-          </div>
-          <div style="height:1px;background:#f0ede8"></div>
-          <div style="display:flex;gap:14px;font-size:11px">
-            <span style="color:#64748b">${p.slot.split(' ')[0]}</span>
-            <span style="color:#64748b">${p.trucks} trucks</span>
-            <span style="color:#64748b">${tons > 0 ? tons+'t total' : ''}</span>
-          </div>
-        </div>
-        <div style="padding:0 16px 14px">
-          <button onclick="switchTab('tab-new');showFormStep('s1');applyDemandProfile()" style="width:100%;padding:9px;border-radius:9px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:600;border:1px solid #bfdbfe;cursor:pointer">Use these settings for a new request →</button>
-        </div>
-      </div>`;
-  }
+function renderProfileSection(editMode) { // legacy no-op — called only from stubbed renderDemandHome
 }
 
 function epSelectZone(el, side) {
@@ -837,69 +2144,7 @@ function saveDemandProfile() {
   }
 }
 
-function renderDemandScheduleTab() {
-  const c = document.getElementById('demand-schedule-content');
-  if (!c) return;
-
-  const today = new Date();
-  const todayDayIdx = (today.getDay() + 6) % 7;
-  const todayDayName = DAYS_OF_WEEK[todayDayIdx];
-
-  const dayPills = DAYS_OF_WEEK.map(d => {
-    const count = demandScheduleRoutes.filter(r => r.day === d).length;
-    const isSel = d === selectedDemandDay;
-    const isToday = d === todayDayName;
-    return `<div onclick="selectedDemandDay='${d}';addingDemandRoute=false;renderDemandScheduleTab()" style="min-width:44px;text-align:center;padding:8px 4px;border-radius:10px;cursor:pointer;border:2px solid ${isSel?'#1d4ed8':'transparent'};background:${isSel?'#eff6ff':'transparent'}">
-      <p style="font-size:10px;font-weight:700;color:${isSel?'#1d4ed8':'#64748b'};margin:0 0 2px">${d}${isToday?'*':''}</p>
-      <p style="font-size:13px;font-weight:800;color:${count>0?'#1e293b':'#cbd5e1'};margin:0">${count||'—'}</p>
-    </div>`;
-  }).join('');
-
-  const dayRoutes = demandScheduleRoutes.filter(r => r.day === selectedDemandDay);
-
-  const slotSections = SLOT_KEYS.map(key => {
-    const routes = dayRoutes.filter(r => r.slot === key);
-    if (routes.length === 0 && addingDemandRoute !== (selectedDemandDay+'_'+key)) return `
-      <div style="margin-bottom:10px">
-        <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 5px">${SLOT_LABELS[key]}</p>
-        <button onclick="addingDemandRoute='${selectedDemandDay}_${key}';renderDemandScheduleTab()" style="font-size:10px;color:#1d4ed8;background:#f0f9ff;border:1px dashed #93c5fd;padding:5px 12px;border-radius:8px;cursor:pointer;width:100%">+ Add route</button>
-      </div>`;
-
-    const routeCards = routes.map(r => `
-      <div style="background:#fff;border-radius:10px;border:1px solid #e5e0d8;padding:10px 12px;margin-bottom:6px">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div>
-            <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0 0 2px">${r.truck}</p>
-            <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${r.from} → ${r.to}</p>
-            <p style="font-size:10px;color:#64748b;margin:2px 0 0">${r.tons}t capacity</p>
-          </div>
-          <button onclick="removeDemandRoute('${r.id}')" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕</button>
-        </div>
-      </div>`).join('');
-
-    return `
-      <div style="margin-bottom:12px">
-        <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 7px">${SLOT_LABELS[key]}</p>
-        ${routeCards}
-        ${addingDemandRoute === (selectedDemandDay+'_'+key) ? buildAddRouteForm(selectedDemandDay, key, 'demand') : ''}
-        <button onclick="addingDemandRoute='${selectedDemandDay}_${key}';renderDemandScheduleTab()" style="font-size:10px;color:#1d4ed8;background:#f0f9ff;border:1px dashed #93c5fd;padding:5px 12px;border-radius:8px;cursor:pointer;width:100%">+ Add route</button>
-      </div>`;
-  }).join('');
-
-  const totalTrucks = [...new Set(demandScheduleRoutes.map(r => r.truck))].length;
-  const totalTons   = demandScheduleRoutes.reduce((a, r) => a + r.tons, 0);
-
-  c.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">My schedule</p>
-      <p style="font-size:10px;color:#64748b;margin:0">${totalTrucks} trucks · ${totalTons}t total</p>
-    </div>
-    <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px">${dayPills}</div>
-    <div>${slotSections}</div>
-    <div style="margin-top:8px;background:#fffbeb;border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
-      <p style="font-size:11px;color:#92400e;margin:0">Need capacity beyond your own trucks?</p>
-      <button onclick="switchTab('tab-new')" style="font-size:10px;font-weight:600;color:#92400e;background:#fef3c7;border:1px solid #fde68a;padding:4px 10px;border-radius:8px;cursor:pointer">Request new capacity →</button>
-    </div>`;
+function renderDemandScheduleTab() { // legacy no-op — hidden demand schedule tab (replaced by renderManageDemandPage)
 }
 
 function saveNewDemandRoute(day, slot) {
@@ -930,169 +2175,10 @@ function removeDemandRoute(id) {
   renderDemandScheduleTab();
 }
 
-function renderDemandHome() {
-  const c = document.getElementById('demand-home-content');
-  if (!c) return;
-  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const now    = new Date();
-  const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
-
-  // Active requests data (mirrors what tab-active shows)
-  const activeRequests = [
-    {id:'SG-0891', route:'Jurong → Woodlands',  detail:'Swift Haulage · 30t · 19 Mar · Morning',   step:1, statusLabel:'Commercials agreed', statusBg:'#eff6ff',  statusText:'#1d4ed8', statusBorder:'#bfdbfe', note:'Awaiting pickup confirmation from Swift Haulage Pte Ltd'},
-    {id:'SG-0892', route:'Tuas → Tampines',     detail:'Apex Logistics · 50t · 19 Mar · Afternoon', step:2, statusLabel:'En route',           statusBg:'#fefce8',  statusText:'#854d0e', statusBorder:'#fde68a', note:'Cargo picked up · En route to Tampines Industrial Ave'},
-  ];
-  const completedCount = 4;
-  const unfulfilledCount = 1;
-
-  c.innerHTML = `
-    <!-- Greeting -->
-    <div style="background:#fff;border-radius:20px;border:1px solid #e5e0d8;padding:20px 22px;margin-bottom:14px">
-      <p style="font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase;margin:0 0 3px">${dateStr}</p>
-      <h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0 0 4px">Good morning, Swift Freight</h2>
-      <p style="font-size:12px;color:#64748b;margin:0 0 14px">You have ${activeRequests.length} active shipments in progress.</p>
-      <button onclick="switchTab('tab-new');showFormStep('s1')" style="width:100%;padding:12px;border-radius:12px;background:#1d4ed8;color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer">
-        + New matching request
-      </button>
-    </div>
-
-    <!-- Stats row -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-      <div onclick="switchTab('tab-active')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
-        <p style="font-size:24px;font-weight:800;color:#1d4ed8;margin:0 0 3px">${activeRequests.length}</p>
-        <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Active</p>
-      </div>
-      <div onclick="switchTab('tab-history')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
-        <p style="font-size:24px;font-weight:800;color:#16a34a;margin:0 0 3px">${completedCount}</p>
-        <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Completed</p>
-      </div>
-      <div onclick="switchTab('tab-history')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
-        <p style="font-size:24px;font-weight:800;color:#dc2626;margin:0 0 3px">${unfulfilledCount}</p>
-        <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Unfulfilled</p>
-      </div>
-    </div>
-
-    <!-- Active shipments -->
-    <p style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.1em;margin:0 0 8px">Active shipments</p>
-    ${activeRequests.map((r, idx) => `
-      <div onclick="switchTab('tab-active')" style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:10px;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
-        <div style="padding:12px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 1px">#${r.id} · ${r.route}</p>
-            <p style="font-size:10px;color:#94a3b8;margin:0">${r.detail}</p>
-          </div>
-          <span style="font-size:10px;font-weight:700;background:${r.statusBg};color:${r.statusText};border:1px solid ${r.statusBorder};padding:2px 8px;border-radius:20px;white-space:nowrap">${r.statusLabel}</span>
-        </div>
-        <div style="padding:12px 16px 14px">
-          <div id="dhome-pipeline-${idx}"></div>
-          <p style="font-size:11px;color:#64748b;margin:8px 0 0">${r.note}</p>
-        </div>
-      </div>`).join('')}
-
-    <!-- Default request settings card -->
-    <div id="demand-profile-section" style="margin-top:4px"></div>
-
-    <!-- Privacy note -->
-    <div style="background:#f8f7f4;border-radius:12px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px;margin-top:10px">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      <p style="font-size:11px;color:#94a3b8;margin:0;line-height:1.5">Matching runs on encrypted data. Hauliers see only that a match exists — your cargo details, volumes, and routes are never shared until you confirm.</p>
-    </div>`;
-
-  // Render pipelines + profile section after DOM is ready
-  activeRequests.forEach((r, idx) => {
-    setTimeout(() => renderPipeline('dhome-pipeline-'+idx, r.step), 0);
-  });
-  setTimeout(() => renderProfileSection(false), 0);
+function renderDemandHome() { // legacy no-op — hidden demand home tab (replaced by renderManageDemandPage)
 }
 
-function renderSupplyHome() {
-  const c = document.getElementById('supply-home-content');
-  if (!c) return;
-  const pending   = supplyRequests.filter(r => r.status === 'pending').length;
-  const active    = supplyRequests.filter(r => r.status === 'active').length;
-  const accepted  = supplyRequests.filter(r => r.status === 'accepted').length;
-  const completed = supplyRequests.filter(r => r.status === 'completed').length;
-  const declined  = supplyRequests.filter(r => r.status === 'declined').length;
-  const activeJob = supplyRequests.find(r => r.status === 'active');
-  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const now = new Date();
-  const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
-
-  c.innerHTML = `
-    <!-- Greeting -->
-    <div style="background:#fff;border-radius:20px;border:1px solid #e5e0d8;padding:20px 22px;margin-bottom:14px">
-      <p style="font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase;margin:0 0 3px">${dateStr}</p>
-      <h2 style="font-size:18px;font-weight:800;color:#1e293b;margin:0 0 4px">Good morning, Apex Logistics</h2>
-      <p style="font-size:12px;color:#64748b;margin:0">Here's where things stand today.</p>
-    </div>
-
-    <!-- Action alert — only shown if there are pending requests -->
-    ${pending > 0 ? `
-    <div onclick="switchTab('tab-incoming')" style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:16px;padding:14px 18px;margin-bottom:14px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:background .12s" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffbeb'">
-      <div style="width:38px;height:38px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2.2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      </div>
-      <div style="flex:1">
-        <p style="font-size:13px;font-weight:700;color:#92400e;margin:0 0 2px">${pending} request${pending>1?'s':''} need${pending===1?'s':''} your action</p>
-        <p style="font-size:11px;color:#a16207;margin:0">Tap to review and accept or decline</p>
-      </div>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a16207" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
-    </div>` : `
-    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:16px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px">
-      <div style="width:38px;height:38px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
-      </div>
-      <div>
-        <p style="font-size:13px;font-weight:700;color:#166534;margin:0 0 2px">All requests actioned</p>
-        <p style="font-size:11px;color:#16a34a;margin:0">Nothing pending right now</p>
-      </div>
-    </div>`}
-
-    <!-- Stats row -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-      <div onclick="switchTab('tab-active')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
-        <p style="font-size:24px;font-weight:800;color:#1d4ed8;margin:0 0 3px">${active + accepted}</p>
-        <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Active jobs</p>
-      </div>
-      <div onclick="switchTab('tab-requests')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
-        <p style="font-size:24px;font-weight:800;color:#16a34a;margin:0 0 3px">${completed}</p>
-        <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Completed</p>
-      </div>
-      <div onclick="switchTab('tab-requests')" style="background:#fff;border-radius:14px;border:1px solid #e5e0d8;padding:14px 12px;text-align:center;cursor:pointer;transition:border .12s" onmouseover="this.style.borderColor='#93c5fd'" onmouseout="this.style.borderColor='#e5e0d8'">
-        <p style="font-size:24px;font-weight:800;color:#dc2626;margin:0 0 3px">${declined}</p>
-        <p style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:0">Declined</p>
-      </div>
-    </div>
-
-    <!-- Active job in progress -->
-    ${activeJob ? `
-    <div style="background:#fff;border-radius:16px;border:1px solid #e5e0d8;overflow:hidden;margin-bottom:14px">
-      <div style="padding:12px 16px 10px;background:#f8f7f4;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center">
-        <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0">Current job in progress</p>
-        <span style="font-size:10px;font-weight:700;background:#fefce8;color:#854d0e;border:1px solid #fde68a;padding:2px 8px;border-radius:20px">En route</span>
-      </div>
-      <div style="padding:12px 16px 6px">
-        <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0 0 2px">#${activeJob.id} · ${activeJob.route}</p>
-        <p style="font-size:11px;color:#64748b;margin:0 0 12px">${activeJob.date} · ${activeJob.slot} · ${activeJob.tonnage}</p>
-        <div id="home-pipeline" style="margin-bottom:4px"></div>
-      </div>
-      <div style="padding:6px 16px 14px">
-        <button onclick="switchTab('tab-active')" style="width:100%;padding:9px;border-radius:9px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:600;border:1px solid #bfdbfe;cursor:pointer">View active jobs →</button>
-      </div>
-    </div>` : ''}
-
-    <!-- Privacy note -->
-    <div style="background:#f8f7f4;border-radius:12px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      <p style="font-size:11px;color:#94a3b8;margin:0;line-height:1.5">Your fleet schedule and capacity data are encrypted. Demand partners see only match confirmation — never your routes, customers, or schedule.</p>
-    </div>`;
-
-  // Render pipeline in home view if active job exists
-  if (activeJob) {
-    setTimeout(() => renderPipeline('home-pipeline', activeJob.step || 0), 0);
-  }
+function renderSupplyHome() { // legacy no-op — hidden supply home tab (replaced by renderManageSupplyPage)
 }
 
 // ── SUPPLY SCHEDULE & CAPACITY TAB ───────────────────────────────────────────
@@ -1126,106 +2212,10 @@ function scheduleForDate(iso) {
   return scheduledOverrides[iso] || JSON.parse(JSON.stringify(supplySchedule));
 }
 
-function renderScheduleTab() {
-  const c = document.getElementById('schedule-tab-content');
-  if (!c) return;
-
-  const today = new Date();
-  const todayDayIdx = (today.getDay() + 6) % 7;
-  const todayDayName = DAYS_OF_WEEK[todayDayIdx];
-
-  // Day pills — show count of routes per day
-  const dayPills = DAYS_OF_WEEK.map(d => {
-    const count = supplyScheduleRoutes.filter(r => r.day === d).length;
-    const isSel = d === selectedWeekDay;
-    const isToday = d === todayDayName;
-    return `<div onclick="selectedWeekDay='${d}';addingSupplyRoute=false;renderScheduleTab()" style="min-width:44px;text-align:center;padding:8px 4px;border-radius:10px;cursor:pointer;border:2px solid ${isSel?'#1d4ed8':'transparent'};background:${isSel?'#eff6ff':'transparent'}">
-      <p style="font-size:10px;font-weight:700;color:${isSel?'#1d4ed8':'#64748b'};margin:0 0 2px">${d}${isToday?'*':''}</p>
-      <p style="font-size:13px;font-weight:800;color:${count>0?'#1e293b':'#cbd5e1'};margin:0">${count||'—'}</p>
-    </div>`;
-  }).join('');
-
-  // Routes for selected day grouped by slot
-  const dayRoutes = supplyScheduleRoutes.filter(r => r.day === selectedWeekDay);
-  const spareIds = supplySpareCapacity.map(s => s.routeId);
-
-  const slotSections = SLOT_KEYS.map(key => {
-    const routes = dayRoutes.filter(r => r.slot === key);
-    if (routes.length === 0 && !addingSupplyRoute) return '';
-    const routeCards = routes.map(r => {
-      const spare = supplySpareCapacity.find(s => s.routeId === r.id);
-      return `
-        <div style="background:#fff;border-radius:10px;border:1px solid ${spare?'#bbf7d0':'#e5e0d8'};padding:10px 12px;margin-bottom:6px">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <div>
-              <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0 0 2px">${r.truck}</p>
-              <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${r.from} → ${r.to}</p>
-              <p style="font-size:10px;color:#64748b;margin:2px 0 0">${r.tons}t capacity${spare ? ` · <span style="color:#16a34a;font-weight:600">${spare.spareTons}t spare offered</span>` : ''}</p>
-            </div>
-            <button onclick="removeSupplyRoute('${r.id}')" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0;line-height:1">✕</button>
-          </div>
-        </div>`;
-    }).join('');
-    return `
-      <div style="margin-bottom:12px">
-        <p style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:0 0 7px">${SLOT_LABELS[key]}</p>
-        ${routeCards}
-        ${addingSupplyRoute === (selectedWeekDay+'_'+key) ? buildAddRouteForm(selectedWeekDay, key, 'supply') : ''}
-        <button onclick="addingSupplyRoute='${selectedWeekDay}_${key}';renderScheduleTab()" style="font-size:10px;color:#1d4ed8;background:#f0f9ff;border:1px dashed #93c5fd;padding:5px 12px;border-radius:8px;cursor:pointer;width:100%">+ Add route</button>
-      </div>`;
-  }).join('');
-
-  const totalTrucks = [...new Set(supplyScheduleRoutes.map(r => r.truck))].length;
-  const totalTons = supplyScheduleRoutes.reduce((a,r) => a + r.tons, 0);
-
-  c.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">My schedule</p>
-      <p style="font-size:10px;color:#64748b;margin:0">${totalTrucks} trucks · ${totalTons}t total capacity</p>
-    </div>
-    <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px">${dayPills}</div>
-    <div>
-      ${dayRoutes.length === 0 && !addingSupplyRoute
-        ? `<p style="font-size:12px;color:#94a3b8;text-align:center;padding:20px 0">No routes on ${selectedWeekDay}</p>`
-        : slotSections}
-    </div>
-    ${dayRoutes.length === 0 && !addingSupplyRoute ? `
-      ${SLOT_KEYS.map(key => `<button onclick="addingSupplyRoute='${selectedWeekDay}_${key}';renderScheduleTab()" style="font-size:10px;color:#1d4ed8;background:#f0f9ff;border:1px dashed #93c5fd;padding:5px 12px;border-radius:8px;cursor:pointer;width:100%;margin-bottom:6px">+ Add ${SLOT_LABELS[key]} route</button>`).join('')}
-    ` : ''}
-    <div style="margin-top:8px;background:#f8f7f4;border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
-      <p style="font-size:11px;color:#64748b;margin:0">Have spare capacity on some routes?</p>
-      <button onclick="switchTab('tab-spare')" style="font-size:10px;font-weight:600;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:4px 10px;border-radius:8px;cursor:pointer">Set spare capacity →</button>
-    </div>`;
+function renderScheduleTab() { // legacy no-op — hidden supply schedule tab (replaced by renderSchedulePage)
 }
 
-function buildAddRouteForm(day, slot, side) {
-  const allZones = [...new Set([...pickupZones, ...dropoffZones, ...ALL_SUPPLY_ZONES])];
-  const prefix = side === 'supply' ? 'snr' : 'dnr';
-  const zFrom = allZones.map(z => `<span class="zone-pill" onclick="nrSelectZone(this,'${prefix}-from-pills-${slot}','${prefix}-from-addr-${slot}')">${z}</span>`).join('');
-  const zTo   = allZones.map(z => `<span class="zone-pill" onclick="nrSelectZone(this,'${prefix}-to-pills-${slot}','${prefix}-to-addr-${slot}')">${z}</span>`).join('');
-  const cancelFn = side === 'supply' ? `addingSupplyRoute=false;renderScheduleTab()` : `addingDemandRoute=false;renderDemandScheduleTab()`;
-  const saveFn   = side === 'supply' ? `saveNewRoute('${day}','${slot}')` : `saveNewDemandRoute('${day}','${slot}')`;
-  const truckPlaceholder = side === 'supply' ? 'e.g. SG-104' : 'e.g. FD-204';
-  return `
-    <div style="background:#f0f9ff;border-radius:10px;border:1.5px solid #bfdbfe;padding:12px 14px;margin-bottom:6px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0">Add route · ${SLOT_LABELS[slot]}</p>
-        <button onclick="${cancelFn}" style="font-size:10px;color:#94a3b8;background:none;border:none;cursor:pointer">✕ Cancel</button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">Truck ID</label>
-          <input id="${prefix}-truck-${slot}" type="text" placeholder="${truckPlaceholder}" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px"/></div>
-        <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">From zone</label>
-          <div id="${prefix}-from-pills-${slot}" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">${zFrom}</div>
-          <input id="${prefix}-from-addr-${slot}" type="text" placeholder="From address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;background:#fafaf8"/></div>
-        <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">To zone</label>
-          <div id="${prefix}-to-pills-${slot}" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">${zTo}</div>
-          <input id="${prefix}-to-addr-${slot}" type="text" placeholder="To address" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;background:#fafaf8"/></div>
-        <div><label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px">Capacity (tons)</label>
-          <input id="${prefix}-tons-${slot}" type="number" min="1" max="30" value="10" style="width:80px;font-size:11px;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px"/></div>
-        <button onclick="${saveFn}" style="width:100%;padding:9px;border-radius:9px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Add to schedule</button>
-      </div>
-    </div>`;
+function buildAddRouteForm(day, slot, side) { // legacy no-op — called only from stubbed renderScheduleTab/renderDemandScheduleTab
 }
 
 function nrSelectZone(el, groupId, addrId) {
@@ -1264,84 +2254,7 @@ function removeSupplyRoute(id) {
   renderScheduleTab();
 }
 
-function renderSpareCapacityTab() {
-  const c = document.getElementById('spare-capacity-content');
-  if (!c) return;
-
-  const totalOffered = supplySpareCapacity.reduce((a,s) => {
-    const route = supplyScheduleRoutes.find(r => r.id === s.routeId);
-    return a + (route ? s.spareTons : 0);
-  }, 0);
-
-  const spareCards = supplySpareCapacity.map(s => {
-    const route = supplyScheduleRoutes.find(r => r.id === s.routeId);
-    if (!route) return '';
-    return `
-      <div style="background:#fff;border-radius:12px;border:1px solid #bbf7d0;padding:12px 14px;margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div>
-            <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0 0 2px">${route.truck} · ${route.day} ${SLOT_LABELS[route.slot].split(' ')[0]}</p>
-            <p style="font-size:12px;font-weight:700;color:#1e293b;margin:0">${route.from} → ${route.to}</p>
-            <p style="font-size:10px;color:#64748b;margin:2px 0 0">Full load: ${route.tons}t · ${s.note||''}</p>
-          </div>
-          <div style="text-align:right;flex-shrink:0;margin-left:12px">
-            <p style="font-size:18px;font-weight:800;color:#16a34a;margin:0">${s.spareTons}t</p>
-            <p style="font-size:9px;color:#94a3b8;margin:0">spare offered</p>
-          </div>
-        </div>
-        <div style="margin-top:8px;display:flex;justify-content:flex-end">
-          <button onclick="removeSpare('${s.routeId}')" style="font-size:10px;color:#dc2626;background:none;border:none;cursor:pointer">Remove</button>
-        </div>
-      </div>`;
-  }).join('');
-
-  // Add spare form
-  const availableRoutes = supplyScheduleRoutes.filter(r => !supplySpareCapacity.find(s => s.routeId === r.id));
-  const routeOptions = availableRoutes.map(r =>
-    `<option value="${r.id}">${r.truck} · ${r.from}→${r.to} · ${r.day} ${SLOT_LABELS[r.slot].split(' ')[0]} · ${r.tons}t</option>`
-  ).join('');
-
-  c.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:0">Spare capacity</p>
-      <p style="font-size:10px;color:#16a34a;font-weight:600;margin:0">${totalOffered}t available for matching</p>
-    </div>
-
-    ${supplySpareCapacity.length === 0
-      ? `<div style="background:#f0fdf4;border:1.5px dashed #bbf7d0;border-radius:12px;padding:20px;text-align:center;margin-bottom:12px">
-           <p style="font-size:13px;font-weight:700;color:#166534;margin:0 0 4px">No spare capacity listed yet</p>
-           <p style="font-size:11px;color:#16a34a;margin:0">Add routes from your schedule that have unused capacity</p>
-         </div>`
-      : spareCards}
-
-    ${availableRoutes.length > 0 ? `
-    <div style="background:#fff;border-radius:12px;border:1px solid #e5e0d8;padding:14px 16px">
-      <p style="font-size:11px;font-weight:700;color:#1e293b;margin:0 0 10px">Add spare capacity from your schedule</p>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div>
-          <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Select route</label>
-          <select id="spare-route-sel" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;color:#374151">
-            <option value="">— Pick a route —</option>
-            ${routeOptions}
-          </select>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div>
-            <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Spare tons</label>
-            <input type="number" id="spare-tons" min="1" max="30" value="3" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px"/>
-          </div>
-          <div>
-            <label style="font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Note (optional)</label>
-            <input type="text" id="spare-note" placeholder="e.g. Return leg" style="width:100%;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;background:#fafaf8"/>
-          </div>
-        </div>
-        <button onclick="addSpare()" style="width:100%;padding:10px;border-radius:9px;background:#16a34a;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer">Add spare capacity</button>
-      </div>
-    </div>` : `<p style="font-size:11px;color:#94a3b8;text-align:center;padding:8px 0">All routes have spare capacity listed.</p>`}
-
-    <div style="margin-top:12px;background:#f8f7f4;border-radius:10px;padding:10px 12px">
-      <p style="font-size:10px;color:#64748b;margin:0">These routes are submitted for matching. Demand partners see only that a match exists — not your routes, schedules, or customers.</p>
-    </div>`;
+function renderSpareCapacityTab() { // legacy no-op — hidden spare capacity tab (replaced by renderManageSupplyPage)
 }
 
 function addSpare() {
@@ -1424,101 +2337,22 @@ function saveSupplyProfile() {
 function updateIncomingBadge() {
   const pending = supplyRequests.filter(r => r.status === 'pending').length;
   const btns = document.querySelectorAll('.tab-btn');
-  TABS[selectedRole].forEach((t,i) => {
+  (TABS[selectedRole] || []).forEach((t,i) => {
     if (t.id === 'tab-incoming' && btns[i]) btns[i].textContent = pending > 0 ? `Incoming (${pending})` : 'Incoming';
   });
 }
 
 function updateRequestsBadge() {
   const btns = document.querySelectorAll('.tab-btn');
-  TABS[selectedRole].forEach((t,i) => {
+  (TABS[selectedRole] || []).forEach((t,i) => {
     if (t.id === 'tab-requests' && btns[i]) btns[i].textContent = `Requests (${supplyRequests.length})`;
   });
 }
 
-function renderIncoming() {
-  updateIncomingBadge();
-  const c = document.getElementById('incoming-list');
-  if (!c) return;
-  const pending = supplyRequests.filter(r => r.status === 'pending');
-  if (pending.length === 0) {
-    c.innerHTML = `
-      <div style="text-align:center;padding:44px 20px">
-        <div style="width:44px;height:44px;border-radius:50%;background:#f0fdf4;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
-        </div>
-        <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0 0 5px">All requests actioned</p>
-        <p style="font-size:11px;color:#94a3b8;margin:0 0 14px">No pending requests.</p>
-        <button onclick="goToRequests()" style="font-size:12px;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;padding:8px 16px;border-radius:9px;cursor:pointer">View all requests →</button>
-      </div>`;
-    return;
-  }
-  // Re-render all pending cards from state — no partial DOM patching
-  c.innerHTML = pending.map(r => buildIncomingCard(r)).join('');
+function renderIncoming() { // legacy no-op — hidden incoming requests tab (replaced by renderMatchResultsPage)
 }
 
-function buildIncomingCard(r) {
-  const isNew   = r.ago.includes('min');
-  const border  = isNew ? '#fde68a' : '#e5e0d8';
-  const headerBg= isNew ? '#fffbeb' : '#f8f7f4';
-  const headerBd= isNew ? '#fde68a' : '#f0ede8';
-  const labelCol= isNew ? '#92400e' : '#94a3b8';
-  const subCol  = isNew ? '#78350f' : '#94a3b8';
-  const badgeBg = isNew ? '#fef3c7' : '#f1f5f9';
-  const badgeCol= isNew ? '#92400e' : '#64748b';
-  const badgeBd = isNew ? '#fde68a' : '#e2e8f0';
-  const badgeTxt= isNew ? 'Action needed' : 'Pending';
-  const label   = isNew ? 'New Match Request' : 'Match Request';
-
-  const details = `
-    <div style="padding:12px 16px;display:flex;flex-direction:column;gap:6px">
-      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#64748b">Route</span><strong style="color:#1e293b">${r.route}</strong></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#64748b">Date & Slot</span><strong style="color:#1e293b">${r.date} · ${r.slot}</strong></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#64748b">Tonnage</span><strong style="color:#1e293b">${r.tonnage}</strong></div>
-      ${r.requester !== '—' ? `<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#64748b">Requester</span><strong style="color:#1e293b">${r.requester}</strong></div>` : ''}
-    </div>`;
-
-  let actions;
-  if (decliningId === r.id) {
-    // --- DECLINE REASON PICKER STATE ---
-    const reasonPills = DECLINE_REASONS.map((reason, idx) => {
-      const sel = chosenReason[r.id] === reason;
-      return `<span class="reason-pill${sel?' sel':''}" onclick="pickReason('${r.id}',${idx})" style="margin-bottom:4px">${reason}</span>`;
-    }).join('');
-    const hasReason = !!chosenReason[r.id];
-    actions = `
-      <div style="padding:0 16px 16px">
-        <p style="font-size:11px;font-weight:600;color:#475569;margin:0 0 10px">Select a reason for declining:</p>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">${reasonPills}</div>
-        <div style="display:flex;gap:8px">
-          <button onclick="cancelDecline()" style="flex:1;padding:10px;border-radius:9px;background:#fff;color:#64748b;font-size:12px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer">← Back</button>
-          <button onclick="confirmDecline('${r.id}')" ${hasReason?'':'disabled'}
-            style="flex:2;padding:10px;border-radius:9px;background:#dc2626;color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer;opacity:${hasReason?1:.35};pointer-events:${hasReason?'auto':'none'}">
-            Confirm Decline
-          </button>
-        </div>
-      </div>`;
-  } else {
-    // --- NORMAL BUTTONS STATE ---
-    actions = `
-      <div style="padding:0 16px 14px;display:flex;gap:8px">
-        <button onclick="acceptRequest('${r.id}')" style="flex:1;padding:10px;border-radius:9px;background:#1d4ed8;color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer">Accept</button>
-        <button onclick="startDecline('${r.id}')" style="flex:1;padding:10px;border-radius:9px;background:#fff;color:#64748b;font-size:12px;font-weight:600;border:1px solid #e2e8f0;cursor:pointer">Decline</button>
-      </div>`;
-  }
-
-  return `
-    <div id="icard-${r.id}" class="slide-in" style="background:#fff;border-radius:16px;border:2px solid ${border};transition:border .2s">
-      <div style="padding:13px 16px 10px;background:${headerBg};border-bottom:1px solid ${headerBd};border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <p style="font-size:10px;font-weight:700;color:${labelCol};text-transform:uppercase;letter-spacing:.1em;margin:0 0 1px">${label}</p>
-          <p style="font-size:11px;color:${subCol};margin:0">#${r.id} · Received ${r.ago}</p>
-        </div>
-        <span style="font-size:10px;font-weight:700;background:${badgeBg};color:${badgeCol};border:1px solid ${badgeBd};padding:3px 9px;border-radius:20px">${badgeTxt}</span>
-      </div>
-      ${details}
-      ${actions}
-    </div>`;
+function buildIncomingCard(r) { // legacy no-op — called only from stubbed renderIncoming
 }
 
 function acceptRequest(id) {
@@ -1785,6 +2619,24 @@ let addingSupplyRoute = false;
 let addingDemandRoute = false;
 let addingSpare = false;
 
+// ── Match Results page state ──
+let mrSupplyState = {
+  r1: 'confirmed',
+  r4: 'pending',
+};
+let mrDemandState = {
+  d1: 'confirmed',
+  d3: 'pending',
+};
+let mrMatchPairs = {
+  r1: { ref:'FD-201', company:'Fresh Direct SG', route:'Jurong → Woodlands', tons:4, kmSaved:38, costSaved:34 },
+  r4: { ref:'FD-203', company:'Fresh Direct SG', route:'Jurong → Tampines',  tons:3, kmSaved:22, costSaved:19 },
+};
+let mrDemandMatch = {
+  d1: { ref:'SG-101', company:'Apex Logistics SG', route:'Jurong → Woodlands', tons:'4t spare', kmSaved:38, costSaved:34 },
+  d3: { ref:'SG-101', company:'Apex Logistics SG', route:'Jurong → Tampines',  tons:'3t spare', kmSaved:22, costSaved:19 },
+};
+
 // All registered entities — aggregated schedule data for regulator view
 const ALL_ENTITY_SCHEDULES = [
   {company:'Apex Logistics SG',     trucks:12, totalTons:4620, matchedTons:3240, role:'supply'},
@@ -1852,12 +2704,12 @@ function selectHaulier(el,name){
   const btn=document.getElementById('confirm-btn');
   btn.style.opacity='1'; btn.style.pointerEvents='auto';
 }
-function confirmMatch(){
+function confirmMatchLegacy(){
   document.getElementById('confirmed-haulier').textContent=selectedHaulier;
   showFormStep('s4');
   // Add to active tab badge
   const tabs=document.querySelectorAll('.tab-btn');
-  TABS[selectedRole].forEach((t,i)=>{
+  (TABS[selectedRole] || []).forEach((t,i)=>{
     if(t.id==='tab-active' && tabs[i]) tabs[i].textContent='Active (3)';
   });
 }
@@ -2292,7 +3144,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   buildPills('dropoff-pills', dropoffZones);
   const d=new Date(); d.setDate(d.getDate()+1);
   document.getElementById('delivery-date').value=d.toISOString().split('T')[0];
-  selectRole('demand'); // trigger autofill on load
+  selectRole('client'); // trigger autofill on load
 });
 </script>
 </body>
