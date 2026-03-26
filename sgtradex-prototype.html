@@ -172,18 +172,34 @@
     .match-saving{font-size:12px;color:#10b981;font-weight:600;}
 
     /* ── Route Map ── */
-    .map-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;height:540px;}
-    #route-map-leaflet{border-radius:10px;border:1px solid #e5e7eb;}
-    .map-panel{display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
-    .map-match-card{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e5e7eb;cursor:pointer;transition:box-shadow .15s;}
-    .map-match-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.1);}
-    .map-match-card.focused{outline:2px solid #10b981;}
-    .map-legend-card{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e5e7eb;}
-    .map-legend-card h4{font-size:12px;font-weight:700;margin-bottom:10px;color:#374151;}
-    .ml-row{display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7280;margin-bottom:6px;}
-    .ml-line{width:26px;height:3px;border-radius:2px;flex-shrink:0;}
-    .ml-dash{width:26px;height:0;border-top:2px dashed;flex-shrink:0;}
-    .map-toggle{display:flex;gap:8px;margin-bottom:16px;}
+    .rm-mode-row{display:flex;align-items:center;gap:8px;margin-bottom:20px;}
+    .rm-mode-btn{padding:9px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #e5e7eb;background:#fff;color:#6b7280;transition:all .15s;}
+    .rm-mode-btn.on-without{background:#1b1b2f;color:#fff;border-color:#1b1b2f;}
+    .rm-mode-btn.on-after{background:#ecfdf5;color:#059669;border-color:#6ee7b7;}
+    .rm-mode-hint{font-size:12px;color:#9ca3af;margin-left:6px;}
+    .rm-layout{display:grid;grid-template-columns:290px 1fr;gap:16px;align-items:start;}
+    #rm-map{border-radius:12px;border:1px solid #e5e7eb;height:500px;}
+    .rm-legend{background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:13px 15px;margin-bottom:12px;}
+    .rm-legend-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;margin:0 0 10px;}
+    .rm-leg{display:flex;align-items:center;gap:9px;font-size:12px;color:#374151;margin-bottom:7px;}
+    .rm-leg:last-child{margin-bottom:0;}
+    .rm-leg-solid{width:22px;height:4px;border-radius:2px;flex-shrink:0;}
+    .rm-leg-circle{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    .rm-route-card{background:#fff;border-radius:10px;border:1px solid #e5e7eb;overflow:hidden;margin-bottom:10px;}
+    .rm-route-card-hd{padding:10px 13px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:8px;}
+    .rm-route-card-hd .rmdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+    .rm-route-card-hd .rmlabel{font-size:12px;font-weight:700;color:#1a1a2e;flex:1;}
+    .rm-route-card-hd .rmtag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+    .rm-route-card-body{padding:10px 13px;}
+    .rm-route-row{font-size:11px;color:#6b7280;margin-bottom:3px;}
+    .rm-route-row:last-child{margin-bottom:0;}
+    .rm-route-row strong{color:#374151;}
+    .rm-util-wrap{margin-top:8px;}
+    .rm-util-label{display:flex;justify-content:space-between;font-size:10px;color:#9ca3af;margin-bottom:3px;}
+    .rm-util-track{height:6px;background:#f3f4f6;border-radius:3px;overflow:hidden;position:relative;}
+    .rm-util-before{height:100%;border-radius:3px;background:#d1d5db;position:absolute;left:0;top:0;}
+    .rm-util-after{height:100%;border-radius:3px;background:#10b981;position:absolute;left:0;top:0;}
+    .rm-util-delta{font-size:11px;font-weight:700;color:#059669;margin-top:4px;}
 
     /* ── Active shipments pipeline ── */
     .status-step{display:flex;flex-direction:column;align-items:center;flex:1;}
@@ -1513,160 +1529,263 @@ function animateMatch() {
 }
 
 // ── T5: ROUTE MAP ──
+const RM_SUPPLY = [
+  {
+    id:'SG-104', from:'Tuas', to:'Changi',
+    day:'Mon 31 Mar', slot:'Morning',
+    cap:30, ownLoad:15, spareLabel:'15t spare',
+    latlngs:[[1.2900,103.6300],[1.3500,103.9850]],
+    matchedLatlngs:[[1.2900,103.6300],[1.2966,103.7271],[1.3500,103.9850]],
+    matchedLoad:23, matchId:'MATCH-001',
+    pickupAt:[1.2966,103.7271],
+    demandId:'FD-201', demandFrom:'Jurong Port', demandTo:'Changi', demandTons:'8t', kmSaved:38,
+  },
+  {
+    id:'SG-101', from:'Tuas', to:'Changi',
+    day:'Fri 4 Apr', slot:'Morning',
+    cap:40, ownLoad:20, spareLabel:'20t spare',
+    latlngs:[[1.2900,103.6330],[1.3500,103.9880]],
+    matchedLatlngs:[[1.2900,103.6330],[1.2996,103.7271],[1.3500,103.9880]],
+    matchedLoad:32, matchId:'MATCH-002',
+    pickupAt:[1.2996,103.7271],
+    demandId:'FD-201', demandFrom:'Jurong Port', demandTo:'Changi', demandTons:'12t', kmSaved:22,
+  },
+];
+const RM_UNMATCHED = {
+  id:'FD-309', from:'Tampines', to:'Jurong Port',
+  day:'Wed 2 Apr', tons:'10t',
+  latlngs:[[1.3527,103.9430],[1.2966,103.7271]],
+  reason:'No supply truck with spare capacity on this route',
+};
+const RM_ZONES = [
+  {pos:[1.2900,103.6300], name:'Tuas'},
+  {pos:[1.2966,103.7271], name:'Jurong Port'},
+  {pos:[1.3500,103.9850], name:'Changi'},
+  {pos:[1.3527,103.9430], name:'Tampines'},
+];
+
+let _rmMap, _rmLayers = {}, _rmInitDone = false;
+
+function rmPct(load, cap){ return Math.round(load/cap*100); }
+function rmMid(a, b){ return [(a[0]+b[0])/2, (a[1]+b[1])/2]; }
+function rmZoneIcon(name){
+  return L.divIcon({
+    html:`<div style="background:#1b1b2f;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;white-space:nowrap;">${name}</div>`,
+    className:'', iconAnchor:[0,0]
+  });
+}
+
 function renderRouteMapPage() {
   document.getElementById('page-route-map').innerHTML = `
     <div class="ph">
       <h2>Route Map</h2>
-      <p>Visualise original routes (without matching) vs. optimised matched routes across Singapore logistics zones.</p>
+      <p>Compare supply and demand routes before and after matching.</p>
     </div>
     <div class="enc-banner">🔒 Routes only appear here for confirmed or in-progress matches. Unmatched routes remain encrypted.</div>
-    <div class="map-toggle">
-      <button class="btn btn-sm" id="rm-tog-both"    onclick="setMapView('both')"     style="background:#1b1b2f;color:#10b981;border:1px solid #10b981;">Both</button>
-      <button class="btn btn-secondary btn-sm" id="rm-tog-orig" onclick="setMapView('original')">Without Matching</button>
-      <button class="btn btn-secondary btn-sm" id="rm-tog-new"  onclick="setMapView('matched')">With Matching</button>
+    <div class="rm-mode-row">
+      <button class="rm-mode-btn on-without" id="rm-btn-without" onclick="rmSetMode('without')">Without Matching</button>
+      <button class="rm-mode-btn" id="rm-btn-after" onclick="rmSetMode('after')">After Matching</button>
+      <span class="rm-mode-hint" id="rm-mode-hint">Supply trucks carry spare capacity. Demand sends separate trucks.</span>
     </div>
-    <div class="map-layout">
-      <div class="map-panel">
-        <div class="map-legend-card">
-          <h4>Legend</h4>
-          <div class="ml-row"><div class="ml-line" style="background:#ef4444;"></div>Original route (no matching)</div>
-          <div class="ml-row"><div class="ml-line" style="background:#10b981;"></div>New matched route</div>
-          <div class="ml-row"><div class="ml-dash" style="border-color:#9ca3af;"></div>Unmatched demand (own truck)</div>
-        </div>
-        <div class="map-match-card" id="rm-mc1" onclick="rmFocusMatch(1)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <span style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.04em;">MATCH-001</span>
-            <span class="badge b-matched"><span class="dot"></span>Matched</span>
-          </div>
-          <div style="font-weight:700;font-size:13px;color:#1a1a2e;margin-bottom:3px;">Tuas → Jurong → Changi</div>
-          <div style="font-size:12px;color:#6b7280;">Mon 31 Mar · Morning</div>
-          <div style="font-size:12px;color:#6b7280;">SG-104 collects FD-201 cargo at Jurong</div>
-          <div style="font-size:11px;color:#ef4444;margin-top:6px;">Before: 2 separate trips · 84 km total</div>
-          <div style="font-size:11px;color:#10b981;font-weight:600;">After: 1 shared trip · 38 km saved</div>
-        </div>
-        <div class="map-match-card" id="rm-mc2" onclick="rmFocusMatch(2)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <span style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.04em;">MATCH-002</span>
-            <span class="badge b-matched"><span class="dot"></span>Matched</span>
-          </div>
-          <div style="font-weight:700;font-size:13px;color:#1a1a2e;margin-bottom:3px;">Tuas → Changi</div>
-          <div style="font-size:12px;color:#6b7280;">Fri 4 Apr · Morning</div>
-          <div style="font-size:12px;color:#6b7280;">SG-101 carries FD-201 cargo on same route</div>
-          <div style="font-size:11px;color:#ef4444;margin-top:6px;">Before: 2 separate trips · 44 km total</div>
-          <div style="font-size:11px;color:#10b981;font-weight:600;">After: 1 shared trip · 22 km saved</div>
-        </div>
-        <div class="map-match-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <span style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.04em;">REQ-2893</span>
-            <span class="badge b-unfulfilled"><span class="dot"></span>Unmatched</span>
-          </div>
-          <div style="font-weight:700;font-size:13px;color:#1a1a2e;margin-bottom:3px;">Tampines → Jurong</div>
-          <div style="font-size:12px;color:#6b7280;">Wed 2 Apr · Morning · 10t</div>
-          <div style="font-size:11px;color:#9ca3af;margin-top:6px;">Still requires own truck</div>
-        </div>
-      </div>
-      <div id="route-map-leaflet" style="height:540px;"></div>
+    <div class="rm-layout">
+      <div id="rm-left-panel"></div>
+      <div id="rm-map"></div>
     </div>`;
 }
 
-let _rmMap, _rmOriginal, _rmMatched;
-
 function initRouteMap() {
-  if (_rmMap) { _rmMap.invalidateSize(); return; }
+  if (_rmInitDone) { if (_rmMap) _rmMap.invalidateSize(); return; }
   renderRouteMapPage();
-
   setTimeout(() => {
-    _rmMap = L.map('route-map-leaflet').setView([1.305, 103.810], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap', maxZoom: 18
-    }).addTo(_rmMap);
-
-    // ── ORIGINAL routes (red) — two separate trucks per match ──
-    _rmOriginal = L.layerGroup([
-      // Match 1: supply truck Tuas→Changi half-empty
-      L.polyline([[1.2900,103.6300],[1.3500,103.9850]],
-        {color:'#ef4444',weight:3,opacity:0.85})
-        .bindPopup('Original: SG-104 Tuas→Changi (spare capacity wasted)'),
-      // Match 1: demand would send own truck Jurong→Changi
-      L.polyline([[1.2966,103.7271],[1.3500,103.9850]],
-        {color:'#ef4444',weight:3,dashArray:'8,5',opacity:0.85})
-        .bindPopup('Original: FD-201 own truck Jurong→Changi'),
-      // Match 2: supply Tuas→Changi again (Fri)
-      L.polyline([[1.2900,103.6300],[1.3500,103.9850]],
-        {color:'#ef4444',weight:3,opacity:0.7})
-        .bindPopup('Original: SG-101 Tuas→Changi (spare capacity wasted)'),
-      // Match 2: demand own truck Jurong→Changi
-      L.polyline([[1.2966,103.7271],[1.3500,103.9850]],
-        {color:'#ef4444',weight:3,dashArray:'8,5',opacity:0.7})
-        .bindPopup('Original: FD-201 own truck Jurong→Changi (Fri)'),
-      // Unmatched demand — Tampines→Jurong (grey dashed)
-      L.polyline([[1.3527,103.9430],[1.2966,103.7271]],
-        {color:'#9ca3af',weight:2,dashArray:'4,8',opacity:0.75})
-        .bindPopup('REQ-2893: Tampines→Jurong (no match, own truck)'),
-    ]);
-
-    // ── MATCHED routes (green) — shared optimised trips ──
-    _rmMatched = L.layerGroup([
-      // Match 1: supply detours via Jurong to collect demand cargo then continues to Changi
-      L.polyline([[1.2900,103.6300],[1.2966,103.7271],[1.3500,103.9850]],
-        {color:'#10b981',weight:4,opacity:0.9})
-        .bindPopup('Matched: SG-104 Tuas→Jurong(pickup)→Changi — 38 km saved'),
-      // Match 2: same route, direct co-load (no detour)
-      L.polyline([[1.2900,103.6300],[1.3500,103.9850]],
-        {color:'#10b981',weight:4,opacity:0.75})
-        .bindPopup('Matched: SG-101 + FD-201 cargo Tuas→Changi — 22 km saved'),
-      // Unmatched still needs own truck (grey dashed)
-      L.polyline([[1.3527,103.9430],[1.2966,103.7271]],
-        {color:'#9ca3af',weight:2,dashArray:'4,8',opacity:0.75})
-        .bindPopup('REQ-2893: Tampines→Jurong (unmatched)'),
-    ]);
-
-    // ── Zone labels ──
-    [
-      {pos:[1.2900,103.6300], name:'Tuas'},
-      {pos:[1.2966,103.7271], name:'Jurong Port'},
-      {pos:[1.3500,103.9850], name:'Changi'},
-      {pos:[1.3527,103.9430], name:'Tampines'},
-      {pos:[1.2758,103.7917], name:'Pasir Panjang'},
-      {pos:[1.3049,103.8380], name:'Woodlands'},
-    ].forEach(z => L.marker(z.pos, {
-      icon: L.divIcon({
-        html: '<div style="background:#1b1b2f;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;white-space:nowrap;">' + z.name + '</div>',
-        className: '', iconAnchor: [0, 0]
-      })
-    }).addTo(_rmMap));
-
-    setMapView('both');
+    _rmMap = L.map('rm-map').setView([1.315, 103.810], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {attribution:'© OpenStreetMap', maxZoom:18}).addTo(_rmMap);
+    RM_ZONES.forEach(z => L.marker(z.pos, {icon:rmZoneIcon(z.name)}).addTo(_rmMap));
+    rmBuildLayers();
+    rmSetMode('without');
+    _rmInitDone = true;
   }, 80);
 }
 
-function setMapView(mode) {
-  if (!_rmMap) return;
-  ['rm-tog-both','rm-tog-orig','rm-tog-new'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.style.background = '#fff'; el.style.color = '#374151'; el.style.borderColor = '#e5e7eb';
+function rmBuildLayers() {
+  const withoutItems = [];
+  RM_SUPPLY.forEach(s => {
+    withoutItems.push(
+      L.polyline(s.latlngs, {color:'#1a1a2e', weight:5, opacity:0.85})
+        .bindTooltip(`<strong>${s.id}</strong> — Supply<br>${s.from} → ${s.to} · ${s.day}<br>${s.cap}t capacity · ${s.ownLoad}t loaded · <strong>${s.spareLabel} wasted</strong><br>Utilisation: <strong>${rmPct(s.ownLoad,s.cap)}%</strong>`,
+          {className:'leaflet-tooltip-plain', sticky:true})
+    );
+    withoutItems.push(L.circleMarker(s.latlngs[0], {radius:6, color:'#1a1a2e', fillColor:'#fff', fillOpacity:1, weight:2.5}));
+    withoutItems.push(L.circleMarker(s.latlngs[s.latlngs.length-1], {radius:6, color:'#1a1a2e', fillColor:'#1a1a2e', fillOpacity:1, weight:2}));
+    const dLine = [s.pickupAt, s.latlngs[s.latlngs.length-1]];
+    withoutItems.push(
+      L.polyline(dLine, {color:'#ef4444', weight:4, dashArray:'9 5', opacity:0.9})
+        .bindTooltip(`<strong>${s.demandId}</strong> — Demand<br>${s.demandFrom} → ${s.demandTo} · ${s.demandTons}<br>No match — sending own truck`,
+          {className:'leaflet-tooltip-plain', sticky:true})
+    );
+    withoutItems.push(L.circleMarker(s.pickupAt, {radius:6, color:'#ef4444', fillColor:'#ef4444', fillOpacity:1, weight:2}));
+    withoutItems.push(L.circleMarker(s.latlngs[s.latlngs.length-1], {radius:6, color:'#ef4444', fillColor:'#fff', fillOpacity:1, weight:2.5}));
   });
-  const activeId = {both:'rm-tog-both', original:'rm-tog-orig', matched:'rm-tog-new'}[mode];
-  const activeEl = document.getElementById(activeId);
-  if (activeEl) { activeEl.style.background = '#1b1b2f'; activeEl.style.color = '#10b981'; activeEl.style.borderColor = '#10b981'; }
+  withoutItems.push(
+    L.polyline(RM_UNMATCHED.latlngs, {color:'#ef4444', weight:4, dashArray:'9 5', opacity:0.85})
+      .bindTooltip(`<strong>${RM_UNMATCHED.id}</strong> — Demand<br>${RM_UNMATCHED.from} → ${RM_UNMATCHED.to} · ${RM_UNMATCHED.tons}<br>No match — sending own truck`,
+        {className:'leaflet-tooltip-plain', sticky:true})
+  );
+  withoutItems.push(L.circleMarker(RM_UNMATCHED.latlngs[0], {radius:6, color:'#ef4444', fillColor:'#ef4444', fillOpacity:1, weight:2}));
+  withoutItems.push(L.circleMarker(RM_UNMATCHED.latlngs[RM_UNMATCHED.latlngs.length-1], {radius:6, color:'#ef4444', fillColor:'#fff', fillOpacity:1, weight:2.5}));
+  _rmLayers.without = L.layerGroup(withoutItems);
 
-  if (mode === 'original') {
-    _rmMap.addLayer(_rmOriginal); _rmMap.removeLayer(_rmMatched);
-  } else if (mode === 'matched') {
-    _rmMap.removeLayer(_rmOriginal); _rmMap.addLayer(_rmMatched);
-  } else {
-    _rmMap.addLayer(_rmOriginal); _rmMap.addLayer(_rmMatched);
-  }
+  const afterItems = [];
+  RM_SUPPLY.forEach(s => {
+    const bPct = rmPct(s.ownLoad, s.cap), aPct = rmPct(s.matchedLoad, s.cap);
+    afterItems.push(
+      L.polyline(s.matchedLatlngs, {color:'#1a1a2e', weight:5, opacity:0.85})
+        .bindTooltip(`<strong>${s.id}</strong> — Supply<br>${s.from} → ${s.to} · ${s.day}<br>Utilisation: <strong style="color:#059669;">${bPct}% → ${aPct}%</strong>`,
+          {className:'leaflet-tooltip-plain', sticky:true})
+    );
+    afterItems.push(L.circleMarker(s.matchedLatlngs[0], {radius:6, color:'#1a1a2e', fillColor:'#fff', fillOpacity:1, weight:2.5}));
+    afterItems.push(L.circleMarker(s.matchedLatlngs[s.matchedLatlngs.length-1], {radius:6, color:'#1a1a2e', fillColor:'#1a1a2e', fillOpacity:1, weight:2}));
+    const dSeg = [s.pickupAt, s.matchedLatlngs[s.matchedLatlngs.length-1]];
+    afterItems.push(
+      L.polyline(dSeg, {color:'#2563eb', weight:5, opacity:0.9})
+        .bindTooltip(`<strong>✓ ${s.demandId} — Matched</strong><br>${s.demandFrom} → ${s.demandTo} · ${s.demandTons}<br>Riding ${s.id} · no separate truck · <strong style="color:#059669;">${s.kmSaved} km saved</strong>`,
+          {className:'leaflet-tooltip-plain', sticky:true})
+    );
+    afterItems.push(
+      L.circleMarker(s.pickupAt, {radius:9, color:'#2563eb', fillColor:'#eff6ff', fillOpacity:1, weight:2.5})
+        .bindTooltip(`<strong>Pickup point</strong><br>${s.demandId} · ${s.demandTons} loaded onto ${s.id} here`,
+          {className:'leaflet-tooltip-plain', sticky:true})
+    );
+    afterItems.push(L.marker(rmMid(s.pickupAt, s.matchedLatlngs[s.matchedLatlngs.length-1]), {
+      icon: L.divIcon({
+        html:`<div style="background:#2563eb;color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 6px rgba(37,99,235,.3);">✓ ${s.demandId} matched · −${s.kmSaved} km</div>`,
+        className:'', iconAnchor:[50,0]
+      })
+    }));
+    afterItems.push(L.marker(rmMid(s.matchedLatlngs[0], s.pickupAt), {
+      icon: L.divIcon({
+        html:`<div style="background:#1a1a2e;color:#10b981;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;border:1px solid #10b981;">${s.id} · ${bPct}%→${aPct}%</div>`,
+        className:'', iconAnchor:[40,14]
+      })
+    }));
+  });
+  afterItems.push(
+    L.polyline(RM_UNMATCHED.latlngs, {color:'#ef4444', weight:4, dashArray:'9 5', opacity:0.85})
+      .bindTooltip(`<strong>${RM_UNMATCHED.id}</strong> — Unmatched<br>${RM_UNMATCHED.from} → ${RM_UNMATCHED.to} · ${RM_UNMATCHED.tons}<br>${RM_UNMATCHED.reason}`,
+        {className:'leaflet-tooltip-plain', sticky:true})
+  );
+  afterItems.push(L.circleMarker(RM_UNMATCHED.latlngs[0], {radius:6, color:'#ef4444', fillColor:'#ef4444', fillOpacity:1, weight:2}));
+  afterItems.push(L.circleMarker(RM_UNMATCHED.latlngs[RM_UNMATCHED.latlngs.length-1], {radius:6, color:'#ef4444', fillColor:'#fff', fillOpacity:1, weight:2.5}));
+  _rmLayers.after = L.layerGroup(afterItems);
 }
 
-function rmFocusMatch(id) {
-  if (!_rmMap) return;
-  document.querySelectorAll('.map-match-card').forEach(c => c.classList.remove('focused'));
-  const card = document.getElementById('rm-mc' + id);
-  if (card) card.classList.add('focused');
-  if (id === 1) _rmMap.flyTo([1.3200, 103.8075], 12, {duration: 1});
-  if (id === 2) _rmMap.flyTo([1.3200, 103.8075], 12, {duration: 1});
+function rmSetMode(mode) {
+  const btnW = document.getElementById('rm-btn-without');
+  const btnA = document.getElementById('rm-btn-after');
+  const hint = document.getElementById('rm-mode-hint');
+  if (btnW) btnW.className = 'rm-mode-btn' + (mode==='without' ? ' on-without' : '');
+  if (btnA) btnA.className = 'rm-mode-btn' + (mode==='after'   ? ' on-after'   : '');
+  if (hint) hint.textContent = mode === 'without'
+    ? 'Supply trucks carry spare capacity. Demand sends separate trucks.'
+    : 'Demand cargo rides supply trucks. Unmatched demand still needs its own truck.';
+  Object.values(_rmLayers).forEach(l => { if (_rmMap) _rmMap.removeLayer(l); });
+  if (_rmMap && _rmLayers[mode]) _rmLayers[mode].addTo(_rmMap);
+  const panel = document.getElementById('rm-left-panel');
+  if (panel) panel.innerHTML = mode === 'without' ? rmPanelWithout() : rmPanelAfter();
+}
+
+function rmPanelWithout() {
+  return `
+    <div class="rm-legend">
+      <div class="rm-legend-title">Legend — without matching</div>
+      <div class="rm-leg"><div class="rm-leg-solid" style="background:#1a1a2e;"></div>Supply route — truck going A to B</div>
+      <div class="rm-leg"><div style="width:22px;border-top:3px dashed #ef4444;flex-shrink:0;"></div>Demand route — cargo needing its own truck</div>
+    </div>
+    ${RM_SUPPLY.map(s => `
+      <div class="rm-route-card">
+        <div class="rm-route-card-hd">
+          <div class="rmdot" style="background:#1a1a2e;"></div>
+          <span class="rmlabel">${s.id} — Supply</span>
+          <span class="rmtag" style="background:#f3f4f6;color:#374151;">${rmPct(s.ownLoad,s.cap)}% utilised</span>
+        </div>
+        <div class="rm-route-card-body">
+          <div class="rm-route-row"><strong>${s.from} → ${s.to}</strong> · ${s.day}</div>
+          <div class="rm-route-row">${s.cap}t capacity · ${s.ownLoad}t loaded · <strong style="color:#dc2626;">${s.spareLabel} wasted</strong></div>
+        </div>
+      </div>
+      <div class="rm-route-card" style="border-color:#fca5a5;">
+        <div class="rm-route-card-hd" style="background:#fef2f2;">
+          <div class="rmdot" style="background:#ef4444;"></div>
+          <span class="rmlabel">${s.demandId} — Demand</span>
+          <span class="rmtag" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;">Own truck</span>
+        </div>
+        <div class="rm-route-card-body">
+          <div class="rm-route-row"><strong>${s.demandFrom} → ${s.demandTo}</strong> · ${s.demandTons}</div>
+          <div class="rm-route-row" style="color:#dc2626;">No match — sending a separate truck</div>
+        </div>
+      </div>
+    `).join('')}
+    <div style="background:#fef2f2;border-radius:10px;border:1px solid #fca5a5;padding:11px 13px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+        <span style="font-size:10px;font-weight:700;color:#991b1b;">${RM_UNMATCHED.id} — Demand</span>
+        <span style="font-size:10px;font-weight:700;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;padding:2px 8px;border-radius:20px;">Own truck</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:#374151;">${RM_UNMATCHED.from} → ${RM_UNMATCHED.to}</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;">${RM_UNMATCHED.day} · ${RM_UNMATCHED.tons}</div>
+    </div>`;
+}
+
+function rmPanelAfter() {
+  return `
+    <div class="rm-legend">
+      <div class="rm-legend-title">Legend — after matching</div>
+      <div class="rm-leg"><div class="rm-leg-solid" style="background:#1a1a2e;"></div>Supply route — same truck, unchanged</div>
+      <div class="rm-leg"><div class="rm-leg-solid" style="background:#2563eb;"></div>Demand — matched, riding supply truck</div>
+      <div class="rm-leg"><div class="rm-leg-circle" style="border:2.5px solid #2563eb;background:#eff6ff;width:12px;height:12px;"></div>Pickup point — where cargo is loaded</div>
+      <div class="rm-leg"><div style="width:22px;border-top:3px dashed #ef4444;flex-shrink:0;"></div>Demand — unmatched, still own truck</div>
+    </div>
+    ${RM_SUPPLY.map(s => {
+      const b = rmPct(s.ownLoad,s.cap), a = rmPct(s.matchedLoad,s.cap);
+      return `
+      <div class="rm-route-card">
+        <div class="rm-route-card-hd">
+          <div class="rmdot" style="background:#1a1a2e;"></div>
+          <span class="rmlabel">${s.id} — Supply</span>
+          <span class="rmtag" style="background:#ecfdf5;color:#059669;">${a}% utilised</span>
+        </div>
+        <div class="rm-route-card-body">
+          <div class="rm-route-row"><strong>${s.from} → ${s.to}</strong> · ${s.day}</div>
+          <div class="rm-util-wrap">
+            <div class="rm-util-label"><span>Utilisation</span><span style="color:#059669;font-weight:700;">${b}% → ${a}%</span></div>
+            <div class="rm-util-track">
+              <div class="rm-util-before" style="width:${b}%;"></div>
+              <div class="rm-util-after" style="width:${a}%;"></div>
+            </div>
+            <div class="rm-util-delta">+${a-b}pp · ${s.cap-s.matchedLoad}t spare remaining</div>
+          </div>
+        </div>
+      </div>
+      <div class="rm-route-card" style="border-color:#bfdbfe;">
+        <div class="rm-route-card-hd" style="background:#eff6ff;">
+          <div class="rmdot" style="background:#2563eb;"></div>
+          <span class="rmlabel">${s.demandId} — Demand</span>
+          <span class="rmtag" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;">✓ Matched</span>
+        </div>
+        <div class="rm-route-card-body">
+          <div class="rm-route-row"><strong>${s.demandFrom} → ${s.demandTo}</strong> · ${s.demandTons}</div>
+          <div class="rm-route-row" style="color:#1d4ed8;font-weight:600;">Riding ${s.id} · no separate truck · <strong>${s.kmSaved} km saved</strong></div>
+        </div>
+      </div>`;
+    }).join('')}
+    <div style="background:#fef2f2;border-radius:10px;border:1px solid #fca5a5;padding:11px 13px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+        <span style="font-size:10px;font-weight:700;color:#991b1b;">${RM_UNMATCHED.id} — Unmatched</span>
+        <span style="font-size:10px;font-weight:700;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;padding:2px 8px;border-radius:20px;">Own truck required</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:#374151;">${RM_UNMATCHED.from} → ${RM_UNMATCHED.to}</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;">${RM_UNMATCHED.day} · ${RM_UNMATCHED.tons}</div>
+      <div style="font-size:11px;color:#dc2626;margin-top:4px;">${RM_UNMATCHED.reason}</div>
+    </div>`;
 }
 
 // ── T6a: ACTIVE SHIPMENTS ──
