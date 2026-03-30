@@ -967,8 +967,15 @@ function onAddressInput(prefix, side) {
   }
 }
 
+// ── Remove a spare capacity entry by routeId (Withdraw from broadcast) ──
+function removeSpareById(routeId) {
+  supplySpareCapacity = supplySpareCapacity.filter(s => s.routeId !== routeId);
+  renderManageSupplyPage();
+  renderOverviewPage();
+}
+
 // ── Add supply entry from form ──
-function addSupplyEntry() {
+function addSupplyEntry(andBroadcast) {
   const originAddr = (document.getElementById('ms-origin-addr')?.value || '').trim();
   const destAddr   = (document.getElementById('ms-dest-addr')?.value || '').trim();
   if (!originAddr || !destAddr) {
@@ -999,8 +1006,11 @@ function addSupplyEntry() {
     tons: trucks * tons,
   });
 
-  // Also add to spare capacity so it shows as broadcast
-  supplySpareCapacity.push({ routeId: newId, spareTons: Math.floor(trucks * tons * 0.3), note: 'Newly added' });
+  supplyShareState[newId] = true;
+
+  if (andBroadcast) {
+    supplySpareCapacity.push({ routeId: newId, spareTons: Math.floor(trucks * tons * 0.3), note: 'Newly added' });
+  }
 
   renderManageSupplyPage();
   renderOverviewPage();
@@ -1018,7 +1028,6 @@ function addDemandEntry() {
   const dateEl    = document.querySelector('#md-form input[type=date]');
   const slotSel   = document.querySelector('#md-form input[name=md-slot]:checked');
   const weightEl  = document.querySelector('#md-form input[type=number]');
-  const prioSel   = document.querySelector('#md-form select');
 
   const dateVal   = dateEl ? dateEl.value : '';
   const dayNames  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -1026,15 +1035,17 @@ function addDemandEntry() {
   const slotLabel = slotSel ? slotSel.parentElement.textContent.trim().toLowerCase() : 'afternoon';
   const tons      = parseInt(weightEl?.value) || 10;
 
-  const fromZone = matchZoneFromAddress(originAddr) || originAddr.split(',')[0].trim();
-  const toZone   = matchZoneFromAddress(destAddr)   || destAddr.split(',')[0].trim();
+  const fromZone  = matchZoneFromAddress(originAddr) || originAddr.split(',')[0].trim();
+  const toZone    = matchZoneFromAddress(destAddr)   || destAddr.split(',')[0].trim();
+  const recipient = (document.getElementById('md-recipient')?.value || '').trim();
+  const receiver  = (document.getElementById('md-receiver')?.value || '').trim();
 
   demandScheduleRoutes.push({
     id: 'd' + Date.now(), day, slot: slotLabel,
     truck: 'REQ-' + String(Math.floor(Math.random()*9000)+1000),
     from: fromZone, fromAddr: originAddr,
     to:   toZone,   toAddr:   destAddr,
-    tons,
+    tons, recipient, receiver,
   });
 
   renderManageDemandPage();
@@ -1050,42 +1061,83 @@ function calcSupplyTonnage() {
   if (el) el.textContent = (t > 0 && c > 0) ? '= ' + (t * c) + 't total spare' : '';
 }
 
+// ── Supply: toggle whether a route is shared ──
+function toggleSupplyShare(id) {
+  supplyShareState[id] = !supplyShareState[id];
+  renderManageSupplyPage();
+}
+
+// ── Supply: encrypt & broadcast a single entry ──
+function broadcastSupplyEntry(id) {
+  if (!supplySpareCapacity.find(s => s.routeId === id)) {
+    const r = supplyScheduleRoutes.find(r => r.id === id);
+    const spare = Math.floor((r ? r.tons : 10) * 0.3);
+    supplySpareCapacity.push({ routeId: id, spareTons: spare, note: 'Manually broadcast' });
+  }
+  supplyShareState[id] = true;
+  renderManageSupplyPage();
+  renderOverviewPage();
+}
+
 // ── T3a: MANAGE SUPPLY ──
 function renderManageSupplyPage() {
-  const zones = Object.keys(ZONE_ADDRESSES);
-  const zoneOptions = zones.map(z => `<option value="${z}">${z}</option>`).join('');
-
   const rows = supplyScheduleRoutes.map(r => {
-    const spare = supplySpareCapacity.find(s => s.routeId === r.id);
-    const isDemandMatch = spare && demandScheduleRoutes.find(d => d.day === r.day && d.slot === r.slot);
+    const spare   = supplySpareCapacity.find(s => s.routeId === r.id);
+    const sharing = supplyShareState[r.id] !== false; // default true
+    const isBroadcast = !!spare;
+    const isMatched   = isBroadcast && !!mrSupplyState[r.id] && (mrSupplyState[r.id] === 'confirmed');
+
     let badge, spareTxt;
-    if (isDemandMatch) {
-      badge = `<span class="badge b-matched"><span class="dot"></span>Matched</span>`;
-      spareTxt = `<span style="color:#9ca3af;">0t of ${r.tons}t</span>`;
-    } else if (spare) {
-      badge = `<span class="badge b-broadcast"><span class="dot"></span>Broadcast</span>`;
+    if (isMatched) {
+      badge    = `<span class="badge b-matched"><span class="dot"></span>Matched</span>`;
+      spareTxt = `<span style="color:#9ca3af;">—</span>`;
+    } else if (isBroadcast && sharing) {
+      badge    = `<span class="badge b-broadcast"><span class="dot"></span>Broadcasted</span>`;
       spareTxt = `<span style="font-weight:600;color:#10b981;">${spare.spareTons}t of ${r.tons}t</span>`;
+    } else if (!sharing) {
+      badge    = `<span class="badge" style="background:#fef2f2;color:#991b1b;"><span class="dot" style="background:#dc2626;"></span>Not sharing</span>`;
+      spareTxt = `<span style="color:#9ca3af;">—</span>`;
     } else {
-      badge = `<span class="badge b-available"><span class="dot"></span>Available</span>`;
+      badge    = `<span class="badge b-available"><span class="dot"></span>Available</span>`;
       spareTxt = `<span style="color:#9ca3af;">—</span>`;
     }
+
     const slotLabel = {morning:'Morning',afternoon:'Afternoon',evening:'Evening'}[r.slot] || r.slot;
-    return `<tr>
+
+    // Share toggle
+    const toggleHtml = `
+      <div style="display:flex;align-items:center;gap:7px;cursor:pointer;" onclick="toggleSupplyShare('${r.id}')">
+        <div style="width:34px;height:18px;border-radius:9px;background:${sharing ? '#10b981' : '#d1d5db'};position:relative;transition:background .2s;flex-shrink:0;">
+          <div style="width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:2px;left:${sharing ? '18px' : '2px'};transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);"></div>
+        </div>
+        <span style="font-size:12px;color:${sharing ? '#065f46' : '#9ca3af'};">${sharing ? 'Sharing' : 'Off'}</span>
+      </div>`;
+
+    // Action buttons
+    let actionHtml = `<button class="btn btn-secondary btn-sm">Edit</button>`;
+    if (sharing && !isBroadcast) {
+      actionHtml += `<br><button class="btn btn-sm" style="margin-top:5px;background:#1b1b2f;color:#10b981;border:1px solid rgba(16,185,129,.35);font-size:11px;" onclick="broadcastSupplyEntry('${r.id}')">🔒 Encrypt &amp; Broadcast</button>`;
+    } else if (isBroadcast && sharing && !isMatched) {
+      actionHtml += `<br><button class="btn btn-secondary btn-sm" style="margin-top:5px;font-size:11px;" onclick="removeSpareById('${r.id}')">Withdraw</button>`;
+    }
+
+    return `<tr style="${!sharing ? 'opacity:.6;' : ''}">
       <td><div style="font-weight:600;font-size:13px;">${dayFull(r.day)}</div><div style="font-size:11px;color:#9ca3af;">${slotLabel}</div></td>
       <td><div style="font-weight:600;font-size:13px;">${r.from} → ${r.to}</div><div style="font-size:11px;color:#9ca3af;">${r.fromAddr}</div></td>
       <td><span style="font-family:monospace;font-size:12px;background:#f3f4f6;padding:2px 7px;border-radius:4px;">${r.truck}</span></td>
       <td>${spareTxt}</td>
+      <td>${toggleHtml}</td>
       <td>${badge}</td>
-      <td><button class="btn btn-secondary btn-sm">${isDemandMatch ? 'View' : 'Edit'}</button></td>
+      <td>${actionHtml}</td>
     </tr>`;
   }).join('');
 
   document.getElementById('page-manage-supply').innerHTML = `
     <div class="ph">
       <h2>Manage Supply</h2>
-      <p>Your current supply entries, pulled from the schedule. Add new supply below.</p>
+      <p>Your capacity entries, auto-filled from the schedule. Choose what to share, then broadcast.</p>
     </div>
-    <div class="enc-banner">🔒 Supply data is HMAC-blinded before broadcast. Your routes stay private until a match is confirmed.</div>
+    <div class="enc-banner">🔒 Supply data is HMAC-blinded before broadcast. Your routes stay private — counterparties only see a token, never plaintext.</div>
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid #f3f4f6;">
         <div style="display:flex;align-items:center;gap:8px;">
@@ -1096,7 +1148,7 @@ function renderManageSupplyPage() {
       </div>
       <table id="ms-table">
         <thead><tr>
-          <th>Day &amp; Slot</th><th>Route</th><th>Truck</th><th>Spare Cap.</th><th>Status</th><th></th>
+          <th>Day &amp; Slot</th><th>Route</th><th>Truck</th><th>Spare Cap.</th><th>Share?</th><th>Status</th><th>Actions</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -1180,7 +1232,8 @@ function renderManageSupplyPage() {
         </div>
         <div class="form-actions">
           <button class="btn btn-secondary" onclick="toggleForm('ms-form','ms-toggle','＋ Add New Supply Entry')">Cancel</button>
-          <button class="btn btn-primary" onclick="addSupplyEntry()">Add Supply Entry →</button>
+          <button class="btn btn-primary" onclick="addSupplyEntry()">Add Entry</button>
+          <button class="btn" style="background:#1b1b2f;color:#10b981;border:1px solid rgba(16,185,129,.35);" onclick="addSupplyEntry(true)">🔒 Add &amp; Encrypt · Broadcast</button>
         </div>
       </div>
     </div>`;
@@ -1188,36 +1241,28 @@ function renderManageSupplyPage() {
 
 // ── T3b: MANAGE DEMAND ──
 function renderManageDemandPage() {
-  const zones = Object.keys(ZONE_ADDRESSES);
-  const zoneOptions = zones.map(z => `<option value="${z}">${z}</option>`).join('');
-
   const rows = demandScheduleRoutes.map(r => {
-    const matchedSupply = supplyScheduleRoutes.find(s =>
-      s.day === r.day && s.slot === r.slot && supplySpareCapacity.find(sp => sp.routeId === s.id));
-    let badge;
-    if (matchedSupply) {
-      badge = `<span class="badge b-matched"><span class="dot"></span>Matched</span>`;
-    } else {
-      badge = `<span class="badge b-broadcast"><span class="dot"></span>Broadcast</span>`;
-    }
+    const isMatched = mrDemandState[r.id] === 'confirmed';
+    const badge = isMatched
+      ? `<span class="badge b-matched"><span class="dot"></span>Matched</span>`
+      : `<span class="badge b-broadcast"><span class="dot"></span>Broadcast</span>`;
     const slotLabel = {morning:'Morning',afternoon:'Afternoon',evening:'Evening'}[r.slot] || r.slot;
-    const reqId = 'REQ-' + (2890 + parseInt(r.id.replace('d',''), 10));
     return `<tr>
       <td><div style="font-weight:600;font-size:13px;">${dayFull(r.day)}</div><div style="font-size:11px;color:#9ca3af;">${slotLabel}</div></td>
       <td><div style="font-weight:600;font-size:13px;">${r.from} → ${r.to}</div><div style="font-size:11px;color:#9ca3af;">${r.fromAddr}</div></td>
-      <td><span style="font-family:monospace;font-size:12px;background:#f3f4f6;padding:2px 7px;border-radius:4px;">${reqId}</span></td>
-      <td>${r.tons}t</td>
+      <td><div style="font-size:12px;font-weight:600;">${r.recipient || '—'}</div><div style="font-size:11px;color:#9ca3af;">${r.receiver || ''}</div></td>
+      <td style="font-weight:600;color:#5b21b6;">${r.tons}t</td>
       <td>${badge}</td>
-      <td><button class="btn btn-secondary btn-sm">${matchedSupply ? 'View' : 'Edit'}</button></td>
+      <td><button class="btn btn-secondary btn-sm">Edit</button></td>
     </tr>`;
   }).join('');
 
   document.getElementById('page-manage-demand').innerHTML = `
     <div class="ph">
       <h2>Manage Demand</h2>
-      <p>Your current demand requests and their matching status. Add new requests below.</p>
+      <p>Your current freight requests. Add new requests below, then proceed to run an encrypted match.</p>
     </div>
-    <div class="enc-banner" style="background:#f5f3ff;border-color:#c4b5fd;color:#5b21b6;">🔒 Pickup and dropoff details are encrypted before broadcast. Counterparties only see your data if a match is confirmed.</div>
+    <div class="enc-banner" style="background:#f5f3ff;border-color:#c4b5fd;color:#5b21b6;">🔒 Pickup, dropoff, and recipient details are HMAC-encrypted before broadcast. Counterparties only see your data if a match is confirmed.</div>
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid #f3f4f6;">
         <div style="display:flex;align-items:center;gap:8px;">
@@ -1228,7 +1273,7 @@ function renderManageDemandPage() {
       </div>
       <table id="md-table">
         <thead><tr>
-          <th>Day &amp; Slot</th><th>Route</th><th>Ref</th><th>Weight</th><th>Status</th><th></th>
+          <th>Day &amp; Slot</th><th>Route</th><th>Recipient</th><th>Weight</th><th>Status</th><th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -1238,7 +1283,7 @@ function renderManageDemandPage() {
           <span style="font-size:15px;">🔴</span>
           <div>
             <div class="pii-title">PII Data — Everything is Encrypted</div>
-            <div class="pii-sub">Pickup and dropoff addresses, GPS coordinates and recipient names are HMAC-encrypted before leaving your device. No counterparty sees your data unless a match is confirmed.</div>
+            <div class="pii-sub">Pickup/dropoff addresses, GPS coordinates, and recipient names are HMAC-encrypted before leaving your device. No counterparty sees your data unless a match is confirmed.</div>
           </div>
         </div>
         <div class="form-top">
@@ -1270,6 +1315,29 @@ function renderManageDemandPage() {
               1 Keppel Distripark, Singapore 099452
             </div>
           </div>
+          <div class="form-section" style="color:#7c3aed;border-bottom-color:#ede9fe;">Recipient / Receiver</div>
+          <div class="form-group">
+            <label>Recipient Name <span style="font-weight:400;color:#9ca3af;text-transform:none;letter-spacing:0;font-size:10px;">(end customer receiving the goods)</span></label>
+            <input type="text" id="md-recipient" placeholder="Enter company or customer name...">
+            <div style="font-size:11px;color:#9ca3af;margin-top:4px;line-height:1.6;">
+              <span style="font-weight:600;">Sample recipients:</span><br>
+              Flextronics International Ltd<br>
+              Olam International Pte Ltd<br>
+              DB Schenker Singapore<br>
+              Zuellig Pharma Pte Ltd
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Receiver Contact <span style="font-weight:400;color:#9ca3af;text-transform:none;letter-spacing:0;font-size:10px;">(optional)</span></label>
+            <input type="text" id="md-receiver" placeholder="e.g. Warehouse Ops, +65 9123 4567">
+            <div style="font-size:11px;color:#9ca3af;margin-top:4px;line-height:1.6;">
+              <span style="font-weight:600;">Sample contacts:</span><br>
+              Inbound Logistics Team<br>
+              Warehouse — Gate 3<br>
+              Supply Chain Ops, +65 6234 5678<br>
+              Distribution Centre Manager
+            </div>
+          </div>
           <div class="form-section">Schedule &amp; Cargo</div>
           <div class="form-group">
             <label>Date</label>
@@ -1298,9 +1366,16 @@ function renderManageDemandPage() {
         </div>
         <div class="form-actions">
           <button class="btn btn-secondary" onclick="toggleForm('md-form','md-toggle','＋ Add New Demand Request')">Cancel</button>
-          <button class="btn btn-primary" style="background:#8b5cf6;" onclick="addDemandEntry()">Add &amp; Queue for Matching →</button>
+          <button class="btn btn-primary" style="background:#8b5cf6;" onclick="addDemandEntry()">Add Request</button>
         </div>
       </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:14px 20px;margin-top:8px;">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#5b21b6;">Ready to find available capacity?</div>
+        <div style="font-size:12px;color:#7c3aed;margin-top:2px;">Run an encrypted match against all broadcast supply — no raw data is shared.</div>
+      </div>
+      <button class="btn" style="background:#8b5cf6;color:#fff;font-size:13px;font-weight:700;" onclick="showPage('page-match-results',null)">Proceed to Matching →</button>
     </div>`;
 }
 
@@ -1308,7 +1383,6 @@ function renderManageDemandPage() {
 function renderMatchResultsPage() {
   const slotLabel = s => ({morning:'Morning',afternoon:'Afternoon',evening:'Evening'}[s]||s);
 
-  // Deterministic display token from entry metadata
   function mrTok(prefix, id, day, slot) {
     let h = 0;
     for (const c of (prefix+id+day+slot)) h = ((h<<5)-h+c.charCodeAt(0))|0;
@@ -1318,214 +1392,222 @@ function renderMatchResultsPage() {
     return 'hmac::'+prefix+id.replace(/\D/g,'')+'_'+d+'_'+s+'::'+hex+'…';
   }
 
-  function statusBadge(status) {
-    const map = {
-      available: '<span class="badge b-available"><span class="dot"></span>Available</span>',
-      new:       '<span class="badge b-available"><span class="dot"></span>New Request</span>',
-      broadcast: '<span class="badge b-broadcast"><span class="dot"></span>Broadcast</span>',
-      pending:   '<span class="badge b-pending"><span class="dot"></span>Awaiting confirmation</span>',
-      confirmed: '<span class="badge b-matched"><span class="dot"></span>Matched · Confirmed</span>',
-      declined:  '<span class="badge b-unfulfilled"><span class="dot"></span>Declined</span>',
-    };
-    return map[status] || map.broadcast;
-  }
-
-  function actionCell(type, id, status) {
-    if (status === 'pending') return `
-      <div style="display:flex;flex-direction:column;gap:5px;">
-        <button class="btn btn-primary btn-sm" onclick="confirmMrRow('${type}','${id}',this)">✓ Confirm</button>
-        <button class="btn btn-secondary btn-sm" onclick="declineMrRow('${type}','${id}',this)">✕ Decline</button>
-      </div>`;
-    if (status === 'confirmed') return `<button class="btn btn-secondary btn-sm" onclick="showPage('page-active',null)">View in Active →</button>`;
-    if (status === 'declined')  return `<button class="btn btn-secondary btn-sm">Re-broadcast</button>`;
-    if (status === 'broadcast') return `<button class="btn btn-secondary btn-sm">Withdraw</button>`;
-    return `<span style="font-size:11px;color:#9ca3af;">Runs on next match</span>`;
-  }
-
-  function matchCell(type, id, status) {
-    const m = type === 'supply' ? mrMatchPairs[id] : mrDemandMatch[id];
-    if ((status === 'pending' || status === 'confirmed') && m) {
-      return `<div style="font-weight:600;font-size:12px;color:#1a1a2e;">${m.ref} · ${m.company}</div>
-        <div style="font-size:11px;color:#9ca3af;margin-top:2px;">${m.route} · ${m.tons}t</div>
-        <div style="font-size:11px;color:#10b981;font-weight:600;margin-top:3px;">↓ ${m.kmSaved} km · ~S$${m.costSaved} saved</div>`;
-    }
-    if (status === 'declined') return `<span style="font-size:11px;color:#ef4444;">No match found</span>`;
-    if (status === 'broadcast') return `<span style="font-size:11px;color:#d1d5db;font-style:italic;">— awaiting match</span>`;
-    return `<span style="font-size:11px;color:#d1d5db;font-style:italic;">—</span>`;
-  }
-
-  function rowBg(status) {
-    if (status === 'pending')   return 'background:#fffdf5;';
-    if (status === 'confirmed') return 'background:#f9fefe;';
-    if (status === 'declined')  return 'background:#fef9f9;opacity:.8;';
-    return '';
-  }
-
+  function demandStatus(r) { return mrDemandState[r.id] || 'broadcast'; }
   function supplyStatus(r) {
     if (mrSupplyState[r.id]) return mrSupplyState[r.id];
     return supplySpareCapacity.find(sp => sp.routeId === r.id) ? 'broadcast' : 'available';
   }
-  function demandStatus(r) {
-    return mrDemandState[r.id] || 'broadcast';
+
+  function demandStatusBadge(status) {
+    if (status === 'pending')   return `<span class="badge b-pending"><span class="dot"></span>Awaiting confirmation</span>`;
+    if (status === 'confirmed') return `<span class="badge b-matched"><span class="dot"></span>Matched · Confirmed</span>`;
+    if (status === 'declined')  return `<span class="badge b-unfulfilled"><span class="dot"></span>Declined</span>`;
+    return `<span class="badge b-broadcast"><span class="dot"></span>Broadcast</span>`;
   }
 
-  // Counts for run panel subtitle
-  const unbroadcastS = supplyScheduleRoutes.filter(r => !supplySpareCapacity.find(sp => sp.routeId === r.id) && !mrSupplyState[r.id]).length;
-  const pendingTotal = supplyScheduleRoutes.filter(r => supplyStatus(r) === 'pending').length
-                     + demandScheduleRoutes.filter(r => demandStatus(r) === 'pending').length;
+  function supplyStatusBadge(status) {
+    if (status === 'confirmed') return `<span class="badge b-matched"><span class="dot"></span>Matched</span>`;
+    if (status === 'broadcast') return `<span class="badge b-broadcast"><span class="dot"></span>Broadcasted</span>`;
+    return `<span class="badge b-available"><span class="dot"></span>Available</span>`;
+  }
 
-  // Supply rows
-  const supplyRows = supplyScheduleRoutes.map(r => {
+  function demandMatchCell(id, status) {
+    const m = mrDemandMatch[id];
+    if ((status === 'pending' || status === 'confirmed') && m) {
+      return `<div style="font-weight:600;font-size:12px;color:#1a1a2e;">${m.ref} · ${m.company}</div>
+        <div style="font-size:11px;color:#9ca3af;margin-top:2px;">${m.route} · ${m.tons}</div>
+        <div style="font-size:11px;color:#10b981;font-weight:600;margin-top:3px;">↓ ${m.kmSaved} km · ~S$${m.costSaved} saved</div>`;
+    }
+    if (status === 'declined') return `<span style="font-size:11px;color:#ef4444;">No match found</span>`;
+    return `<span style="font-size:11px;color:#d1d5db;font-style:italic;">— awaiting match</span>`;
+  }
+
+  function demandActionCell(id, status) {
+    if (status === 'pending') return `
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <button class="btn btn-primary btn-sm" style="background:#8b5cf6;" onclick="confirmMrRow('demand','${id}',this)">✓ Confirm</button>
+        <button class="btn btn-secondary btn-sm" onclick="declineMrRow('demand','${id}',this)">✕ Decline</button>
+      </div>`;
+    if (status === 'confirmed') return `<button class="btn btn-secondary btn-sm" onclick="showPage('page-active',null)">View in Active →</button>`;
+    if (status === 'declined')  return `<button class="btn btn-secondary btn-sm">Re-broadcast</button>`;
+    return `<span style="font-size:11px;color:#9ca3af;">Runs on next match</span>`;
+  }
+
+  function demandRowBg(status) {
+    if (status === 'pending')   return 'background:#faf5ff;';
+    if (status === 'confirmed') return 'background:#f5f3ff;';
+    if (status === 'declined')  return 'background:#fef9f9;opacity:.8;';
+    return '';
+  }
+
+  const pendingDemand = demandScheduleRoutes.filter(r => demandStatus(r) === 'pending').length;
+
+  // Demand rows — primary section
+  const demandRows = demandScheduleRoutes.map(r => {
+    const status = demandStatus(r);
+    const tok = `<span style="font-family:monospace;font-size:10px;color:#58a6ff;background:#0d1117;padding:3px 7px;border-radius:4px;display:inline-block;max-width:155px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${mrTok('D',r.id,r.day,r.slot)}</span>`;
+    return `<tr id="mr-row-demand-${r.id}" style="${demandRowBg(status)}">
+      <td><div style="font-weight:600;font-size:13px;">${r.from} → ${r.to}</div><div style="font-size:11px;color:#9ca3af;">${r.fromAddr}</div></td>
+      <td style="font-size:12px;color:#6b7280;white-space:nowrap;">${dayFull(r.day)} · ${slotLabel(r.slot)}</td>
+      <td><div style="font-size:12px;font-weight:600;">${r.recipient || '—'}</div><div style="font-size:11px;color:#9ca3af;">${r.receiver || ''}</div></td>
+      <td style="font-weight:600;font-size:12px;color:#5b21b6;">${r.tons}t</td>
+      <td>${tok}</td>
+      <td id="mr-match-demand-${r.id}">${demandMatchCell(r.id,status)}</td>
+      <td id="mr-status-demand-${r.id}">${demandStatusBadge(status)}</td>
+      <td id="mr-action-demand-${r.id}">${demandActionCell(r.id,status)}</td>
+    </tr>`;
+  }).join('');
+
+  // Supply rows — reference only, no action column
+  const broadcastSupply = supplyScheduleRoutes.filter(r => supplySpareCapacity.find(sp => sp.routeId === r.id));
+  const supplyRows = broadcastSupply.map(r => {
     const status = supplyStatus(r);
     const spare  = supplySpareCapacity.find(sp => sp.routeId === r.id);
     const capTxt = spare ? spare.spareTons+'t of '+r.tons+'t' : r.tons+'t total';
-    const tok    = spare
-      ? `<span style="font-family:monospace;font-size:10px;color:#58a6ff;background:#0d1117;padding:3px 7px;border-radius:4px;display:inline-block;max-width:155px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${mrTok('S',r.id,r.day,r.slot)}</span>`
-      : `<span style="font-size:11px;color:#d1d5db;font-style:italic;">— not broadcast</span>`;
-    return `<tr id="mr-row-supply-${r.id}" style="${rowBg(status)}">
+    const tok    = `<span style="font-family:monospace;font-size:10px;color:#58a6ff;background:#0d1117;padding:3px 7px;border-radius:4px;display:inline-block;max-width:155px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${mrTok('S',r.id,r.day,r.slot)}</span>`;
+    return `<tr id="mr-row-supply-${r.id}">
       <td><div style="font-weight:600;font-size:13px;">${r.from} → ${r.to}</div><div style="font-size:11px;color:#9ca3af;">${r.truck}</div></td>
       <td style="font-size:12px;color:#6b7280;white-space:nowrap;">${dayFull(r.day)} · ${slotLabel(r.slot)}</td>
       <td style="font-weight:600;color:#10b981;font-size:12px;">${capTxt}</td>
       <td>${tok}</td>
-      <td id="mr-match-supply-${r.id}">${matchCell('supply',r.id,status)}</td>
-      <td id="mr-status-supply-${r.id}">${statusBadge(status)}</td>
-      <td id="mr-action-supply-${r.id}">${actionCell('supply',r.id,status)}</td>
-    </tr>`;
-  }).join('');
-
-  // Demand rows
-  const demandRows = demandScheduleRoutes.map(r => {
-    const status = demandStatus(r);
-    const reqId  = (r.truck && r.truck.startsWith('REQ-')) ? r.truck : 'REQ-'+(2890+parseInt(r.id.replace(/\D/g,''),10));
-    const tok    = `<span style="font-family:monospace;font-size:10px;color:#58a6ff;background:#0d1117;padding:3px 7px;border-radius:4px;display:inline-block;max-width:155px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${mrTok('D',r.id,r.day,r.slot)}</span>`;
-    return `<tr id="mr-row-demand-${r.id}" style="${rowBg(status)}">
-      <td><div style="font-weight:600;font-size:13px;">${r.from} → ${r.to}</div><div style="font-size:11px;color:#9ca3af;">${reqId}</div></td>
-      <td style="font-size:12px;color:#6b7280;white-space:nowrap;">${dayFull(r.day)} · ${slotLabel(r.slot)}</td>
-      <td style="font-weight:600;font-size:12px;">${r.tons}t needed</td>
-      <td>${tok}</td>
-      <td id="mr-match-demand-${r.id}">${matchCell('demand',r.id,status)}</td>
-      <td id="mr-status-demand-${r.id}">${statusBadge(status)}</td>
-      <td id="mr-action-demand-${r.id}">${actionCell('demand',r.id,status)}</td>
+      <td id="mr-status-supply-${r.id}">${supplyStatusBadge(status)}</td>
     </tr>`;
   }).join('');
 
   document.getElementById('page-match-results').innerHTML = `
     <div class="ph">
       <h2>Match Results</h2>
-      <p>Review supply and demand entries. Run the encrypted match to broadcast unprocessed entries and find pairs via PSI.</p>
+      <p>Run an encrypted match on your demand requests. Supply has already been broadcast — its status is shown below for reference.</p>
     </div>
+
+    <!-- ── DEMAND — primary, owns the match action ── -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;">Your Demand Requests</span>
+      <span style="background:#f5f3ff;color:#5b21b6;border:1px solid #c4b5fd;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:600;">${demandScheduleRoutes.length} requests</span>
+    </div>
+    <div class="enc-banner" style="background:#f5f3ff;border-color:#c4b5fd;color:#5b21b6;">🔒 Your demand details are HMAC-encrypted into tokens. The match runs only against supply tokens already in the pool — no plaintext is shared during matching.</div>
 
     <button class="run-match-btn" onclick="animateMatch()">
       <span class="rm-icon">🔒</span>
       <div class="rm-text">
-        <div class="rm-title">Run Encrypted Match</div>
-        <div class="rm-sub" id="match-sub">${unbroadcastS > 0 ? unbroadcastS+' supply entr'+(unbroadcastS===1?'y':'ies')+' not yet broadcast · ' : 'All entries broadcast · '}${pendingTotal} awaiting confirmation</div>
+        <div class="rm-title">Encrypt &amp; Match — All Demand</div>
+        <div class="rm-sub" id="match-sub">${pendingDemand > 0 ? pendingDemand+' match'+(pendingDemand===1?'':'es')+' awaiting confirmation' : 'Runs a private set intersection against all broadcast supply tokens'}</div>
       </div>
-      <span style="color:#10b981;font-size:13px;font-weight:700;background:rgba(16,185,129,0.15);padding:6px 14px;border-radius:6px;border:1px solid rgba(16,185,129,0.4);">&#9654; Run now</span>
+      <span style="color:#8b5cf6;font-size:13px;font-weight:700;background:rgba(139,92,246,0.15);padding:6px 14px;border-radius:6px;border:1px solid rgba(139,92,246,0.4);">&#9654; Run now</span>
     </button>
 
-    <div class="token-card" id="mr-token-log" style="margin-bottom:24px;">
+    <div class="token-card" id="mr-token-log" style="margin-bottom:20px;">
       <div class="tc-hd">// PSI Protocol Log</div>
       <div id="mr-log-lines"><div>Waiting to run match...</div></div>
     </div>
 
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-      <span style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;">Supply Requests</span>
-      <span style="background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:600;">${supplyScheduleRoutes.length} entries</span>
-    </div>
-    <div class="card" style="overflow:hidden;margin-bottom:24px;">
+    <div class="card" style="overflow:hidden;margin-bottom:32px;">
       <table>
         <thead><tr>
-          <th>Route</th><th>Schedule</th><th>Spare Capacity</th><th>PSI Token</th><th>Matched With</th><th>Status</th><th>Action</th>
-        </tr></thead>
-        <tbody>${supplyRows}</tbody>
-      </table>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-      <span style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;">Demand Requests</span>
-      <span style="background:#f5f3ff;color:#5b21b6;border:1px solid #c4b5fd;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:600;">${demandScheduleRoutes.length} requests</span>
-    </div>
-    <div class="card" style="overflow:hidden;">
-      <table>
-        <thead><tr>
-          <th>Route</th><th>Schedule</th><th>Weight Needed</th><th>PSI Token</th><th>Matched With</th><th>Status</th><th>Action</th>
+          <th>Route</th><th>Schedule</th><th>Recipient</th><th>Weight</th><th>PSI Token</th><th>Matched With</th><th>Status</th><th>Action</th>
         </tr></thead>
         <tbody>${demandRows}</tbody>
       </table>
+    </div>
+
+    <!-- ── SUPPLY — read-only reference ── -->
+    <div style="height:1px;background:#e5e7eb;margin-bottom:24px;"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <span style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;">Broadcast Supply — Status Reference</span>
+      <span style="background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:600;">${broadcastSupply.length} entries</span>
+      <span style="margin-left:auto;font-size:11px;color:#9ca3af;font-style:italic;">Already broadcast · no action needed here</span>
+    </div>
+    <div class="enc-banner">Supply was broadcast separately via Manage Supply. This view shows its current status — it updates when your demand query finds an intersection.</div>
+    <div class="card" style="overflow:hidden;">
+      <table>
+        <thead><tr>
+          <th>Route</th><th>Schedule</th><th>Spare Capacity</th><th>PSI Token</th><th>Status</th>
+        </tr></thead>
+        <tbody>${supplyRows}</tbody>
+      </table>
+      <div style="padding:10px 16px;font-size:11px;color:#9ca3af;background:#fafafa;border-top:1px solid #f3f4f6;">To manage or withdraw supply entries, go to <strong style="color:#374151;">Manage Supply</strong>.</div>
     </div>`;
 }
 
 function confirmMrRow(type, id, btn) {
-  if (type === 'supply') mrSupplyState[id] = 'confirmed';
-  else mrDemandState[id] = 'confirmed';
-  const row      = document.getElementById('mr-row-'+type+'-'+id);
-  const statusEl = document.getElementById('mr-status-'+type+'-'+id);
-  const actionEl = document.getElementById('mr-action-'+type+'-'+id);
-  if (row)      row.style.cssText = 'background:#f9fefe;';
+  // Only demand rows have confirm/decline — supply status updates automatically
+  mrDemandState[id] = 'confirmed';
+  const row      = document.getElementById('mr-row-demand-'+id);
+  const statusEl = document.getElementById('mr-status-demand-'+id);
+  const actionEl = document.getElementById('mr-action-demand-'+id);
+  if (row)      row.style.cssText = 'background:#f5f3ff;';
   if (statusEl) statusEl.innerHTML = '<span class="badge b-matched"><span class="dot"></span>Matched · Confirmed</span>';
   if (actionEl) actionEl.innerHTML = `<button class="btn btn-secondary btn-sm" onclick="showPage('page-active',null)">View in Active →</button>`;
   renderActivePage();
+  renderManageDemandPage();
 }
 
 function declineMrRow(type, id, btn) {
-  if (type === 'supply') mrSupplyState[id] = 'declined';
-  else mrDemandState[id] = 'declined';
-  const row      = document.getElementById('mr-row-'+type+'-'+id);
-  const statusEl = document.getElementById('mr-status-'+type+'-'+id);
-  const actionEl = document.getElementById('mr-action-'+type+'-'+id);
-  const matchEl  = document.getElementById('mr-match-'+type+'-'+id);
-  if (row)      { row.style.cssText = 'background:#fef9f9;opacity:.8;'; }
+  mrDemandState[id] = 'declined';
+  const row      = document.getElementById('mr-row-demand-'+id);
+  const statusEl = document.getElementById('mr-status-demand-'+id);
+  const actionEl = document.getElementById('mr-action-demand-'+id);
+  const matchEl  = document.getElementById('mr-match-demand-'+id);
+  if (row)      row.style.cssText = 'background:#fef9f9;opacity:.8;';
   if (statusEl) statusEl.innerHTML = '<span class="badge b-unfulfilled"><span class="dot"></span>Declined</span>';
   if (actionEl) actionEl.innerHTML = '<button class="btn btn-secondary btn-sm">Re-broadcast</button>';
   if (matchEl)  matchEl.innerHTML  = '<span style="font-size:11px;color:#ef4444;">No match found</span>';
+  renderManageDemandPage();
 }
 
-// Keep old names as aliases so any stray call doesn't break
-function confirmMatch(id, btn) { confirmMrRow('supply', id, btn); }
-function declineMatch(id, btn) { declineMrRow('supply', id, btn); }
+// Legacy aliases — keep so any stray calls in other parts of the file don't break
+function confirmMatch(id, btn) { confirmMrRow('demand', id, btn); }
+function declineMatch(id, btn) { declineMrRow('demand', id, btn); }
 
 function animateMatch() {
   const sub = document.getElementById('match-sub');
   const log = document.getElementById('mr-log-lines');
   if (!sub || !log) return;
   sub.textContent = 'Running encrypted match...';
-  log.innerHTML = '<div style="color:#6b7280;">Applying uniform HMAC layer to all route tokens...</div>';
+  log.innerHTML = '<div style="color:#6b7280;">Encrypting demand entries into HMAC tokens...</div>';
 
   const sCount = supplySpareCapacity.length;
   const dCount = demandScheduleRoutes.length;
   const steps = [
-    { delay: 400,  html: `<div style="color:#6b7280;">Tokenising ${sCount} supply entries and ${dCount} demand requests...</div>` },
-    { delay: 800,  html: '<div class="tc-match">✓ Token match: supply[SG-102·Changi→Jurong·Thu·AM] ↔ demand[REQ-2896·Thu·AM]</div>' },
-    { delay: 1100, html: '<div class="tc-arrow">→ Decrypting matched pair — queuing for confirmation...</div>' },
-    { delay: 1500, html: `<div>No match: demand[FD-203·Tampines→Jurong·Wed·AM] — no token intersection</div>` },
-    { delay: 1900, html: `<div class="tc-audit">Audit trail: ${sCount+dCount} tokens processed · 1 new match · 1 unfulfilled · platform sees no plaintext</div>` },
+    { delay: 500,  html: `<div style="color:#6b7280;">Comparing ${dCount} demand tokens against ${sCount} broadcast supply tokens via PSI...</div>` },
+    { delay: 1000, html: '<div class="tc-match">✓ Token intersection: demand[D·Mon·AM] ↔ supply[S·Mon·AM] — Jurong→Woodlands</div>' },
+    { delay: 1400, html: '<div class="tc-arrow">→ Decrypting matched pair — queuing for confirmation...</div>' },
+    { delay: 1800, html: `<div>No intersection: demand[D·Wed·AM·Tampines→Jurong] — no matching broadcast token in pool</div>` },
+    { delay: 2200, html: `<div class="tc-audit">Audit: ${dCount} demand tokens processed · 1 new match · 1 unmatched · platform never saw plaintext</div>` },
   ];
   steps.forEach(s => setTimeout(() => { log.innerHTML += s.html; }, s.delay));
 
   setTimeout(() => {
-    // Surface r8 as a new pending match (Thu morning, Changi→Jurong)
-    if (!mrSupplyState['r8']) {
-      mrSupplyState['r8'] = 'pending';
-      mrMatchPairs['r8']  = { ref:'REQ-2896', company:'Fresh Direct SG', route:'Changi → Jurong', tons:4, kmSaved:28, costSaved:25 };
+    // Surface d3 as a pending demand match (Mon morning, matches r1)
+    if (!mrDemandState['d3'] || mrDemandState['d3'] === 'broadcast') {
+      mrDemandState['d3'] = 'pending';
+      mrDemandMatch['d3'] = { ref:'SG-102', company:'Apex Logistics SG', route:'Jurong → Woodlands', tons:'5t spare', kmSaved:28, costSaved:25 };
+      // Also mark the matched supply entry as Matched
+      mrSupplyState['r8'] = 'confirmed';
     }
-    sub.textContent = '✓ 1 new match found · 1 unfulfilled — see Supply table below';
-    // Update r8 row in-place
-    const row      = document.getElementById('mr-row-supply-r8');
-    const statusEl = document.getElementById('mr-status-supply-r8');
-    const actionEl = document.getElementById('mr-action-supply-r8');
-    const matchEl  = document.getElementById('mr-match-supply-r8');
-    if (row)      { row.style.cssText = 'background:#fffdf5;'; row.style.animation = 'fadeIn .5s ease'; }
-    if (statusEl) statusEl.innerHTML = '<span class="badge b-pending"><span class="dot"></span>Awaiting confirmation</span>';
-    if (actionEl) actionEl.innerHTML = `<div style="display:flex;flex-direction:column;gap:5px;">
-      <button class="btn btn-primary btn-sm" onclick="confirmMrRow('supply','r8',this)">✓ Confirm</button>
-      <button class="btn btn-secondary btn-sm" onclick="declineMrRow('supply','r8',this)">✕ Decline</button>
+    sub.textContent = '✓ 1 new match found — confirm or decline below';
+
+    // Update demand d3 row in-place
+    const dRow      = document.getElementById('mr-row-demand-d3');
+    const dStatusEl = document.getElementById('mr-status-demand-d3');
+    const dActionEl = document.getElementById('mr-action-demand-d3');
+    const dMatchEl  = document.getElementById('mr-match-demand-d3');
+    if (dRow)      { dRow.style.cssText = 'background:#faf5ff;'; }
+    if (dStatusEl) dStatusEl.innerHTML = '<span class="badge b-pending"><span class="dot"></span>Awaiting confirmation</span>';
+    if (dActionEl) dActionEl.innerHTML = `<div style="display:flex;flex-direction:column;gap:5px;">
+      <button class="btn btn-primary btn-sm" style="background:#8b5cf6;" onclick="confirmMrRow('demand','d3',this)">✓ Confirm</button>
+      <button class="btn btn-secondary btn-sm" onclick="declineMrRow('demand','d3',this)">✕ Decline</button>
     </div>`;
-    if (matchEl)  matchEl.innerHTML  = `<div style="font-weight:600;font-size:12px;color:#1a1a2e;">REQ-2896 · Fresh Direct SG</div>
-      <div style="font-size:11px;color:#9ca3af;margin-top:2px;">Changi → Jurong · 4t</div>
+    if (dMatchEl)  dMatchEl.innerHTML  = `<div style="font-weight:600;font-size:12px;color:#1a1a2e;">SG-102 · Apex Logistics SG</div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:2px;">Jurong → Woodlands · 5t spare</div>
       <div style="font-size:11px;color:#10b981;font-weight:600;margin-top:3px;">↓ 28 km · ~S$25 saved</div>`;
-    if (row) row.scrollIntoView({ behavior:'smooth', block:'nearest' });
-  }, 2200);
+
+    // Update matched supply row (r8) status in-place — no action column, just status
+    const sStatusEl = document.getElementById('mr-status-supply-r8');
+    if (sStatusEl) sStatusEl.innerHTML = '<span class="badge b-matched"><span class="dot"></span>Matched</span>';
+
+    if (dRow) dRow.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }, 2500);
 }
 
 // ── T5: ROUTE MAP ──
@@ -2737,6 +2819,9 @@ let demandScheduleRoutes = [
 let addingSupplyRoute = false;
 let addingDemandRoute = false;
 let addingSpare = false;
+
+// ── Supply sharing state (true = include in broadcast) ──
+let supplyShareState = { r1:true, r4:true, r8:true };
 
 // ── Match Results page state ──
 let mrSupplyState = {

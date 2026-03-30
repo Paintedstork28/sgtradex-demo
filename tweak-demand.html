@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SGTraDEX — Demand Tweak Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;} body{font-family:'Inter',sans-serif;margin:0;background:#f5f6f8;}
+    select,input,textarea{outline:none;font-family:'Inter',sans-serif;}
+
+    .page{max-width:1100px;margin:0 auto;padding:32px 24px;}
+    .ph{margin-bottom:20px;}
+    .ph h2{font-size:20px;font-weight:700;color:#1a1a2e;margin:0 0 4px;}
+    .ph p{font-size:13px;color:#6b7280;margin:0;}
+
+    .enc-banner-purple{display:flex;align-items:center;gap:10px;background:#f5f3ff;border:1px solid #c4b5fd;border-radius:8px;padding:9px 16px;font-size:12px;color:#5b21b6;margin-bottom:16px;}
+    .enc-banner-green{display:flex;align-items:center;gap:10px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:9px 16px;font-size:12px;color:#065f46;margin-bottom:14px;}
+    .pii-banner{display:flex;align-items:center;gap:10px;background:#fff5f5;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;margin-bottom:18px;}
+    .pii-title{font-size:12px;font-weight:700;color:#b91c1c;}
+    .pii-sub{font-size:11px;color:#dc2626;margin-top:2px;}
+
+    .card{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden;margin-bottom:20px;}
+    table{width:100%;border-collapse:collapse;}
+    thead th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#9ca3af;background:#fafafa;border-bottom:1px solid #f3f4f6;}
+    tbody td{padding:12px 16px;border-bottom:1px solid #f9fafb;font-size:13px;vertical-align:middle;}
+    tbody tr:last-child td{border-bottom:none;}
+    tbody tr:hover td{background:#fafafa;}
+
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+    .bdot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+    .b-broadcast{background:#fef9c3;color:#854d0e;}
+    .b-matched{background:#eff6ff;color:#1d4ed8;}
+    .b-new{background:#f3f4f6;color:#374151;}
+
+    .btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+    .btn-primary{background:#8b5cf6;color:#fff;} .btn-primary:hover{background:#7c3aed;}
+    .btn-secondary{background:#fff;color:#374151;border:1px solid #e5e7eb;} .btn-secondary:hover{background:#f9fafb;}
+    .btn-sm{padding:5px 10px;font-size:11px;}
+
+    .add-row-btn{display:flex;align-items:center;gap:8px;width:100%;padding:13px 20px;background:none;border:none;border-top:1px dashed #ede9fe;color:#8b5cf6;font-size:13px;font-weight:600;cursor:pointer;text-align:left;transition:background .12s;}
+    .add-row-btn:hover{background:#f5f3ff;}
+
+    .form-wrap{display:none;padding:24px;border-top:2px solid #f5f3ff;background:#fdfcff;}
+    .form-wrap.open{display:block;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .form-section{grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#9ca3af;padding-bottom:8px;border-bottom:1px solid #ebebeb;margin-top:6px;}
+    .form-section.s-recipient{color:#7c3aed;border-bottom-color:#ede9fe;}
+    .form-group{display:flex;flex-direction:column;gap:5px;}
+    .form-group label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#6b7280;}
+    .form-group input,.form-group select,.form-group textarea{background:#fff;border:1px solid #e5e7eb;border-radius:7px;padding:9px 12px;font-size:13px;color:#1a1a2e;transition:border-color .15s;}
+    .form-group input:focus,.form-group select:focus{border-color:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.08);}
+    .form-group textarea{resize:vertical;min-height:60px;}
+    .slot-row{display:flex;gap:8px;flex-wrap:wrap;}
+    .slot-opt{display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid #e5e7eb;border-radius:7px;cursor:pointer;font-size:12px;color:#374151;background:#f9fafb;transition:.15s;}
+    .slot-opt.sel{border-color:#8b5cf6;background:#f5f3ff;color:#5b21b6;}
+    .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #ebebeb;}
+
+    .hint-list{font-size:11px;color:#9ca3af;margin-top:5px;line-height:1.9;}
+    .hint-item{cursor:pointer;color:#7c3aed;text-decoration:underline dotted;}
+    .hint-item:hover{color:#6d28d9;}
+
+    /* Tabs */
+    .tab-row{display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid #f3f4f6;}
+    .tab{padding:10px 22px;font-size:13px;font-weight:600;cursor:pointer;color:#6b7280;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s;}
+    .tab:hover{color:#374151;}
+    .tab.active{color:#8b5cf6;border-bottom-color:#8b5cf6;}
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;}
+
+    /* Proceed bar */
+    .proceed-bar{display:flex;align-items:center;justify-content:space-between;background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:14px 20px;margin-top:8px;}
+    .btn-proceed{background:#8b5cf6;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;} .btn-proceed:hover{background:#7c3aed;}
+
+    /* Run match button */
+    .run-match-bar{display:flex;align-items:center;gap:14px;background:#1b1b2f;border-radius:10px;padding:14px 20px;cursor:pointer;width:100%;margin-bottom:16px;border:1px solid rgba(139,92,246,.25);}
+    .run-match-bar:hover{background:#252540;}
+
+    .token-card{background:#0d1117;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-family:monospace;font-size:11.5px;color:#8b949e;line-height:1.7;}
+    .tc-hd{color:#8b5cf6;font-weight:700;margin-bottom:6px;font-size:12px;}
+    .tc-match{color:#58a6ff;} .tc-arrow{color:#f0883e;} .tc-audit{color:#bc8cff;}
+
+    .section-label{display:flex;align-items:center;gap:8px;margin:0 0 10px;}
+    .section-label .slabel{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;}
+    .pill-green{background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:20px;padding:1px 9px;font-size:11px;font-weight:600;}
+    .pill-purple{background:#f5f3ff;color:#5b21b6;border:1px solid #c4b5fd;border-radius:20px;padding:1px 9px;font-size:11px;font-weight:600;}
+
+    /* Supply reference block */
+    .supply-ref{background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;}
+    .supply-ref thead th{background:#f9fafb;}
+    .supply-ref-note{background:#f9fafb;border-top:1px solid #f3f4f6;padding:10px 16px;font-size:11px;color:#9ca3af;}
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;">
+    <div style="background:#1b1b2f;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;color:#10b981;letter-spacing:.04em;">SGTraDEX</div>
+    <div style="font-size:13px;color:#9ca3af;">/ Tweak Preview /</div>
+    <div style="font-size:13px;font-weight:700;color:#1a1a2e;">Demand + Match Results — Reworked</div>
+    <div style="margin-left:auto;background:#fef9c3;color:#854d0e;border:1px solid #fde68a;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;">PREVIEW ONLY</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-row">
+    <button class="tab active" id="tab-btn-demand" onclick="switchTab('demand',this)">Manage Demand</button>
+    <button class="tab"        id="tab-btn-match"  onclick="switchTab('match',this)">Match Results</button>
+  </div>
+
+
+  <!-- ════════════════════════════════════════════
+       TAB 1 — MANAGE DEMAND
+  ════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="panel-demand">
+
+    <div class="ph">
+      <h2>Manage Demand</h2>
+      <p>Your current freight requests. Add new ones below, then proceed to run an encrypted match.</p>
+    </div>
+
+    <div class="enc-banner-purple">🔒 Pickup, dropoff, and recipient details are HMAC-encrypted before broadcast. Counterparties never see plaintext unless a match is confirmed.</div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid #f3f4f6;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <h3 style="margin:0;font-size:15px;font-weight:700;">Demand Requests</h3>
+          <span class="pill-purple" id="demand-count">3</span>
+        </div>
+        <span style="font-size:12px;color:#9ca3af;">This week</span>
+      </div>
+
+      <table>
+        <thead><tr>
+          <th>Day &amp; Slot</th><th>Route</th><th>Recipient</th><th>Weight</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody id="demand-tbody"></tbody>
+      </table>
+
+      <button class="add-row-btn" onclick="toggleForm()">＋ Add New Demand Request</button>
+
+      <div class="form-wrap" id="demand-form">
+        <div class="pii-banner">
+          <span style="font-size:15px;">🔴</span>
+          <div>
+            <div class="pii-title">PII Data — Everything is Encrypted</div>
+            <div class="pii-sub">Pickup/dropoff addresses, GPS coordinates, and recipient names are HMAC-encrypted before leaving your device.</div>
+          </div>
+        </div>
+        <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:20px;">New Demand Request</div>
+        <div class="form-grid">
+
+          <div class="form-section">Route</div>
+          <div class="form-group">
+            <label>Pickup Address</label>
+            <input type="text" id="d-origin" placeholder="Enter pickup address...">
+            <div class="hint-list">
+              <span style="font-weight:600;color:#374151;">Sample addresses:</span><br>
+              <span class="hint-item" onclick="paste('d-origin',this)">31 Jurong Port Road, Singapore 619115</span><br>
+              <span class="hint-item" onclick="paste('d-origin',this)">30 Tuas Ave 1, Singapore 639494</span><br>
+              <span class="hint-item" onclick="paste('d-origin',this)">3 Tampines Industrial Avenue 2, Singapore 528763</span><br>
+              <span class="hint-item" onclick="paste('d-origin',this)">21 Woodlands Close, Singapore 737854</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Dropoff Address</label>
+            <input type="text" id="d-dest" placeholder="Enter dropoff address...">
+            <div class="hint-list">
+              <span style="font-weight:600;color:#374151;">Sample addresses:</span><br>
+              <span class="hint-item" onclick="paste('d-dest',this)">30 Airport Boulevard, Singapore 819642</span><br>
+              <span class="hint-item" onclick="paste('d-dest',this)">12 Pasir Panjang Road, Singapore 117438</span><br>
+              <span class="hint-item" onclick="paste('d-dest',this)">3 Yishun Industrial Street 1, Singapore 768160</span><br>
+              <span class="hint-item" onclick="paste('d-dest',this)">1 Keppel Distripark, Singapore 099452</span>
+            </div>
+          </div>
+
+          <div class="form-section s-recipient">Recipient / Receiver</div>
+          <div class="form-group">
+            <label>Recipient Name <span style="font-weight:400;color:#9ca3af;text-transform:none;letter-spacing:0;">(end customer)</span></label>
+            <input type="text" id="d-recipient" placeholder="Enter company or customer name...">
+            <div class="hint-list">
+              <span style="font-weight:600;color:#374151;">Sample recipients:</span><br>
+              <span class="hint-item" onclick="paste('d-recipient',this)">Flextronics International Ltd</span><br>
+              <span class="hint-item" onclick="paste('d-recipient',this)">Olam International Pte Ltd</span><br>
+              <span class="hint-item" onclick="paste('d-recipient',this)">DB Schenker Singapore</span><br>
+              <span class="hint-item" onclick="paste('d-recipient',this)">Zuellig Pharma Pte Ltd</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Receiver Contact <span style="font-weight:400;color:#9ca3af;text-transform:none;letter-spacing:0;">(optional)</span></label>
+            <input type="text" id="d-receiver" placeholder="e.g. Warehouse Ops, +65 9123 4567">
+            <div class="hint-list">
+              <span style="font-weight:600;color:#374151;">Sample contacts:</span><br>
+              <span class="hint-item" onclick="paste('d-receiver',this)">Inbound Logistics Team</span><br>
+              <span class="hint-item" onclick="paste('d-receiver',this)">Warehouse — Gate 3</span><br>
+              <span class="hint-item" onclick="paste('d-receiver',this)">Supply Chain Ops, +65 6234 5678</span><br>
+              <span class="hint-item" onclick="paste('d-receiver',this)">Distribution Centre Manager</span>
+            </div>
+          </div>
+
+          <div class="form-section">Schedule &amp; Cargo</div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" value="2026-04-07">
+          </div>
+          <div class="form-group">
+            <label>Time Slot</label>
+            <div class="slot-row">
+              <label class="slot-opt"><input type="radio" name="d-slot"> Morning</label>
+              <label class="slot-opt sel"><input type="radio" name="d-slot" checked> Afternoon</label>
+              <label class="slot-opt"><input type="radio" name="d-slot"> Evening</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Weight Required (tonnes)</label>
+            <input type="number" value="10" min="1">
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select><option>Normal</option><option selected>Express</option><option>Economy</option></select>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Cargo Description</label>
+            <textarea placeholder="e.g. Electronics components, palletised, fragile — no stacking"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" onclick="toggleForm()">Cancel</button>
+          <button class="btn btn-primary" onclick="addDemand()">Add Request</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Proceed to Matching bar -->
+    <div class="proceed-bar">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#5b21b6;">Ready to find available capacity?</div>
+        <div style="font-size:12px;color:#7c3aed;margin-top:2px;">Run an encrypted match against all broadcast supply — no raw data is shared.</div>
+      </div>
+      <button class="btn-proceed" onclick="goToMatch()">Proceed to Matching →</button>
+    </div>
+
+  </div>
+
+
+  <!-- ════════════════════════════════════════════
+       TAB 2 — MATCH RESULTS
+  ════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-match">
+
+    <div class="ph">
+      <h2>Match Results</h2>
+      <p>Run an encrypted match on your demand requests. Supply has already been broadcast — its status is shown below for reference.</p>
+    </div>
+
+    <!-- ── DEMAND — primary section, owns the match action ── -->
+    <div class="section-label">
+      <span class="slabel">Your Demand Requests</span>
+      <span class="pill-purple" id="demand-pill">3 requests</span>
+    </div>
+
+    <div class="enc-banner-purple">🔒 Your demand details are HMAC-encrypted into tokens. The match runs only against supply tokens already in the pool — no plaintext is shared during matching.</div>
+
+    <!-- Encrypt & Match button — clearly attached to demand -->
+    <button class="run-match-bar" onclick="runMatch()">
+      <span style="font-size:22px;">🔒</span>
+      <div style="flex:1;text-align:left;">
+        <div style="font-size:14px;font-weight:700;color:#fff;">Encrypt &amp; Match — All Demand</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;" id="match-sub">Runs a private set intersection against all broadcast supply tokens</div>
+      </div>
+      <span style="color:#8b5cf6;font-size:12px;font-weight:700;background:rgba(139,92,246,.15);padding:7px 16px;border-radius:6px;border:1px solid rgba(139,92,246,.35);white-space:nowrap;">▶ Run now</span>
+    </button>
+
+    <!-- PSI log -->
+    <div class="token-card">
+      <div class="tc-hd">// PSI Protocol Log</div>
+      <div id="log-lines">Waiting to run match...</div>
+    </div>
+
+    <!-- Demand table -->
+    <div class="card" style="overflow:hidden;margin-bottom:36px;">
+      <table>
+        <thead><tr>
+          <th>Route</th><th>Schedule</th><th>Recipient</th><th>Weight</th><th>PSI Token</th><th>Matched With</th><th>Status</th><th>Action</th>
+        </tr></thead>
+        <tbody id="mr-demand-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- ── SUPPLY — reference only, clearly separated ── -->
+    <div style="height:1px;background:#e5e7eb;margin-bottom:28px;"></div>
+
+    <div class="section-label">
+      <span class="slabel" style="color:#9ca3af;">Broadcast Supply — Status Reference</span>
+      <span class="pill-green" id="supply-pill">4 entries</span>
+      <span style="margin-left:auto;font-size:11px;color:#9ca3af;font-style:italic;">Already broadcast · no action needed here</span>
+    </div>
+
+    <div class="enc-banner-green">Supply was broadcast separately via Manage Supply. This view shows its current status — it updates automatically when your demand query finds an intersection.</div>
+
+    <div class="supply-ref">
+      <table>
+        <thead><tr>
+          <th>Route</th><th>Schedule</th><th>Spare Capacity</th><th>PSI Token</th><th>Status</th>
+        </tr></thead>
+        <tbody id="supply-tbody"></tbody>
+      </table>
+      <div class="supply-ref-note">To manage or withdraw supply entries, go to <strong>Manage Supply</strong>.</div>
+    </div>
+
+  </div>
+
+</div><!-- /page -->
+
+<script>
+// ── Data ──
+const supplyData = [
+  { id:'s1', day:'Mon', slot:'Morning',   from:'Tuas',      to:'Changi',        truck:'SGX 1234 A · 10-Wheeler', spareTons:18, totalTons:30, status:'broadcast' },
+  { id:'s2', day:'Tue', slot:'Afternoon', from:'Jurong',    to:'Tampines',      truck:'GBK 4821 T · 6-Wheeler',  spareTons:12, totalTons:20, status:'broadcast' },
+  { id:'s3', day:'Thu', slot:'Morning',   from:'Tuas',      to:'Changi',        truck:'SGX 1234 A · 10-Wheeler', spareTons:10, totalTons:30, status:'broadcast' },
+  { id:'s4', day:'Wed', slot:'Morning',   from:'Woodlands', to:'Pasir Panjang', truck:'PHJ 9901 K · 14-Wheeler', spareTons:25, totalTons:40, status:'broadcast' },
+];
+
+const demandData = [
+  { id:'d1', day:'Mon', slot:'Morning',   from:'Jurong',    to:'Changi',   tons:15, recipient:'Flextronics International Ltd', receiver:'Inbound Logistics Team', status:'broadcast' },
+  { id:'d2', day:'Tue', slot:'Afternoon', from:'Woodlands', to:'Tampines', tons:8,  recipient:'Olam International Pte Ltd',    receiver:'Warehouse — Gate 3',      status:'broadcast' },
+  { id:'d3', day:'Wed', slot:'Morning',   from:'Tuas',      to:'Keppel',   tons:20, recipient:'DB Schenker Singapore',          receiver:'',                        status:'broadcast' },
+];
+
+const matchResults = {};
+
+// ── Badges ──
+function supplyBadge(status) {
+  if (status === 'matched')   return `<span class="badge b-matched"><span class="bdot" style="background:#1d4ed8;"></span>Matched</span>`;
+  return `<span class="badge b-broadcast"><span class="bdot" style="background:#d97706;"></span>Broadcasted</span>`;
+}
+function demandBadge(status) {
+  if (status === 'matched')   return `<span class="badge b-matched"><span class="bdot" style="background:#1d4ed8;"></span>Matched</span>`;
+  return `<span class="badge b-broadcast"><span class="bdot" style="background:#d97706;"></span>Broadcast</span>`;
+}
+
+// ── Token display ──
+function tok(prefix, id, day, slot) {
+  const h = Math.abs(Array.from(prefix+id+day+slot).reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0)).toString(16).padStart(8,'0');
+  return `hmac::${prefix}${id.replace(/\D/g,'')}·${day.substring(0,3).toLowerCase()}·${slot.substring(0,2).toLowerCase()}::${h.slice(0,4)}…`;
+}
+function tokEl(prefix, id, day, slot) {
+  return `<span style="font-family:monospace;font-size:10px;color:#58a6ff;background:#0d1117;padding:2px 7px;border-radius:4px;">${tok(prefix,id,day,slot)}</span>`;
+}
+
+// ── Render: Manage Demand table ──
+function renderDemandTable() {
+  document.getElementById('demand-tbody').innerHTML = demandData.map(r => `
+    <tr>
+      <td><div style="font-weight:600;">${r.day}</div><div style="font-size:11px;color:#9ca3af;">${r.slot}</div></td>
+      <td><div style="font-weight:600;">${r.from} → ${r.to}</div></td>
+      <td><div style="font-size:12px;font-weight:600;">${r.recipient||'—'}</div><div style="font-size:11px;color:#9ca3af;">${r.receiver||''}</div></td>
+      <td style="font-weight:600;color:#5b21b6;">${r.tons}t</td>
+      <td>${demandBadge(r.status)}</td>
+      <td><button class="btn btn-secondary btn-sm">Edit</button></td>
+    </tr>`).join('');
+  document.getElementById('demand-count').textContent = demandData.length;
+}
+
+// ── Render: Match Results — demand table ──
+function renderMrDemand() {
+  document.getElementById('mr-demand-tbody').innerHTML = demandData.map(r => {
+    const mr = matchResults[r.id];
+    const matchCell = mr
+      ? `<div style="font-weight:600;font-size:12px;">${mr.from} → ${mr.to}</div><div style="font-size:11px;color:#10b981;font-weight:600;margin-top:2px;">↓ ${mr.kmSaved} km saved</div>`
+      : `<span style="font-size:11px;color:#d1d5db;font-style:italic;">— awaiting match</span>`;
+    const actionCell = r.status === 'matched'
+      ? `<div style="display:flex;flex-direction:column;gap:5px;">
+           <button class="btn btn-primary btn-sm" onclick="confirmDemand('${r.id}')">✓ Confirm</button>
+           <button class="btn btn-secondary btn-sm" onclick="declineDemand('${r.id}')">✕ Decline</button>
+         </div>`
+      : `<span style="font-size:11px;color:#9ca3af;">Runs on next match</span>`;
+    return `<tr id="mr-d-${r.id}">
+      <td><div style="font-weight:600;">${r.from} → ${r.to}</div></td>
+      <td style="font-size:12px;color:#6b7280;">${r.day} · ${r.slot}</td>
+      <td><div style="font-size:12px;">${r.recipient||'—'}</div><div style="font-size:11px;color:#9ca3af;">${r.receiver||''}</div></td>
+      <td style="font-weight:600;color:#5b21b6;">${r.tons}t</td>
+      <td>${tokEl('D',r.id,r.day,r.slot)}</td>
+      <td id="mr-d-match-${r.id}">${matchCell}</td>
+      <td id="mr-d-status-${r.id}">${demandBadge(r.status)}</td>
+      <td id="mr-d-action-${r.id}">${actionCell}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('demand-pill').textContent = demandData.length + ' requests';
+}
+
+// ── Render: Match Results — supply reference table (no actions) ──
+function renderSupplyTable() {
+  document.getElementById('supply-tbody').innerHTML = supplyData.map(r => `
+    <tr id="mr-s-${r.id}" style="opacity:${r.status==='matched'?'1':'0.85'};">
+      <td><div style="font-weight:600;">${r.from} → ${r.to}</div><div style="font-size:11px;color:#9ca3af;">${r.truck}</div></td>
+      <td style="font-size:12px;color:#6b7280;">${r.day} · ${r.slot}</td>
+      <td><span style="font-weight:600;color:#10b981;">${r.spareTons}t</span> <span style="font-size:11px;color:#9ca3af;">of ${r.totalTons}t</span></td>
+      <td>${tokEl('S',r.id,r.day,r.slot)}</td>
+      <td id="mr-s-status-${r.id}">${supplyBadge(r.status)}</td>
+    </tr>`).join('');
+  document.getElementById('supply-pill').textContent = supplyData.length + ' entries';
+}
+
+// ── Run encrypted match ──
+function runMatch() {
+  const log = document.getElementById('log-lines');
+  const sub = document.getElementById('match-sub');
+  sub.textContent = 'Running encrypted match...';
+  log.innerHTML = `<div style="color:#6b7280;">Encrypting ${demandData.length} demand entries into HMAC tokens...</div>`;
+
+  const broadcastCount = supplyData.filter(s => s.status !== 'withdrawn').length;
+  const steps = [
+    { delay: 500,  html: `<div style="color:#6b7280;">Comparing against ${broadcastCount} broadcast supply tokens via PSI...</div>` },
+    { delay: 1000, html: `<div class="tc-match">✓ Token intersection: demand[D1·Mon·AM] ↔ supply[S1·Mon·AM]</div>` },
+    { delay: 1400, html: `<div class="tc-match">✓ Token intersection: demand[D2·Tue·PM] ↔ supply[S2·Tue·PM]</div>` },
+    { delay: 1800, html: `<div class="tc-arrow">→ Decrypting matched pairs — queuing for confirmation...</div>` },
+    { delay: 2200, html: `<div style="color:#6b7280;">No intersection: demand[D3·Wed·AM] — no supply token for Wed·AM in pool</div>` },
+    { delay: 2600, html: `<div class="tc-audit">Audit: ${demandData.length} demand tokens processed · 2 matches · 1 unmatched · platform never saw plaintext</div>` },
+  ];
+  steps.forEach(s => setTimeout(() => { log.innerHTML += s.html; }, s.delay));
+
+  setTimeout(() => {
+    demandData.forEach(d => {
+      const matchedS = supplyData.find(s => s.day === d.day && s.slot === d.slot);
+      if (matchedS) {
+        d.status = 'matched';
+        matchedS.status = 'matched';
+        matchResults[d.id] = { from: matchedS.from, to: matchedS.to, kmSaved: Math.floor(35 + Math.random()*30) };
+      }
+    });
+    sub.textContent = `${Object.keys(matchResults).length} matches found — awaiting confirmation`;
+    renderMrDemand();
+    renderSupplyTable();
+    renderDemandTable();
+  }, 2900);
+}
+
+function confirmDemand(id) {
+  demandData.find(r => r.id === id).status = 'matched';
+  renderMrDemand(); renderDemandTable();
+  showToast('Match confirmed.');
+}
+
+function declineDemand(id) {
+  demandData.find(r => r.id === id).status = 'broadcast';
+  const s = supplyData.find(s => matchResults[id] && s.from === matchResults[id].from);
+  if (s && s.status === 'matched') s.status = 'broadcast';
+  delete matchResults[id];
+  renderMrDemand(); renderSupplyTable(); renderDemandTable();
+  showToast('Declined. Demand re-broadcast for next match.');
+}
+
+// ── Add demand ──
+function toggleForm() { document.getElementById('demand-form').classList.toggle('open'); }
+
+function addDemand() {
+  const origin    = document.getElementById('d-origin').value.trim();
+  const dest      = document.getElementById('d-dest').value.trim();
+  const recipient = document.getElementById('d-recipient').value.trim();
+  const receiver  = document.getElementById('d-receiver').value.trim();
+  if (!origin || !dest) { alert('Please enter both pickup and dropoff addresses.'); return; }
+  const newId = 'd' + (demandData.length + 1);
+  demandData.push({ id:newId, day:'Next Mon', slot:'Afternoon',
+    from:origin.split(',')[0], to:dest.split(',')[0],
+    tons:10, recipient, receiver, status:'broadcast' });
+  ['d-origin','d-dest','d-recipient','d-receiver'].forEach(i => document.getElementById(i).value='');
+  document.getElementById('demand-form').classList.remove('open');
+  renderDemandTable(); renderMrDemand();
+  showToast('Request added and broadcast.');
+}
+
+function paste(id, el) { document.getElementById(id).value = el.textContent; }
+
+// ── Navigation ──
+function goToMatch() { switchTab('match', document.getElementById('tab-btn-match')); }
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'match') { renderMrDemand(); renderSupplyTable(); }
+}
+
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1b1b2f;color:#a78bfa;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:999;transition:opacity .3s;border:1px solid rgba(139,92,246,.3);';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg; t.style.opacity='1';
+  clearTimeout(t._t); t._t = setTimeout(()=>{t.style.opacity='0';},2800);
+}
+
+// ── Init ──
+renderDemandTable();
+renderMrDemand();
+renderSupplyTable();
+</script>
+</body>
+</html>
